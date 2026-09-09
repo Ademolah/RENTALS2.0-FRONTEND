@@ -1,10 +1,15 @@
-import { Share, Heart, Medal } from 'lucide-react';
+import { useParams, Link } from 'react-router-dom';
+import { Share, Heart, Medal, ArrowLeft } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
 
 export default function PropertyDetail() {
+  const { id } = useParams();
+
+  // Temporary mock data reflecting the selected property ID
   const property = {
-    title: "Minimalist Luxury Suite with Ocean View",
+    id,
+    title: `Minimalist Luxury Suite (Property ${id})`,
     location: "Ikoyi, Lagos",
     price: 150000,
     isRentalVerified: true
@@ -13,6 +18,12 @@ export default function PropertyDetail() {
   return (
     <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-6">
       
+      {/* Back to listings button */}
+      <Link to="/" className="inline-flex items-center space-x-2 text-sm font-semibold text-gray-600 hover:text-brand-dark mb-4 transition-colors">
+        <ArrowLeft className="w-4 h-4" />
+        <span>Back to listings</span>
+      </Link>
+
       {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
@@ -43,10 +54,10 @@ export default function PropertyDetail() {
       {/* The Split Screen Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
         
-        {/* LEFT COLUMN: Scrollable Content (Takes up 7 of 12 columns on desktop) */}
+        {/* LEFT COLUMN: Scrollable Content */}
         <div className="lg:col-span-7 flex flex-col gap-8">
           
-          {/* Main Image Grid (1 large, 2 small) */}
+          {/* Main Image Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-2 h-[400px] md:h-[500px] rounded-2xl overflow-hidden">
             <img 
               src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80" 
@@ -55,7 +66,7 @@ export default function PropertyDetail() {
             />
             <div className="hidden md:grid grid-rows-2 gap-2">
               <img 
-                src="https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80" 
+                src="https://images.unsplash.com/photo-1502672260266-1c1de24244ec?auto=format&fit=crop&w=800&q=80" 
                 className="w-full h-full object-cover cursor-pointer hover:opacity-90 transition-opacity"
                 alt="Interior"
               />
@@ -89,21 +100,19 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          {/* Mobile Booking Widget (Only shows on mobile, hidden on Desktop) */}
+          {/* Mobile Booking Widget */}
           <div className="block lg:hidden">
             <BookingWidget price={property.price} />
           </div>
 
         </div>
 
-        {/* RIGHT COLUMN: Sticky Map & Booking Widget (Takes up 5 of 12 columns on desktop) */}
+        {/* RIGHT COLUMN: Sticky Map & Booking Widget */}
         <div className="lg:col-span-5 h-[600px] lg:h-[calc(100vh-8rem)] lg:sticky lg:top-28 flex flex-col gap-6">
-          {/* Desktop Booking Widget (Hidden on mobile) */}
           <div className="hidden lg:block w-full max-w-md ml-auto">
             <BookingWidget price={property.price} />
           </div>
           
-          {/* The Map */}
           <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-card">
             <InteractiveMap />
           </div>

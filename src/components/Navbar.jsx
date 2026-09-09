@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { Home, Key, Map, Building2, Menu, UserCircle, Search as SearchIcon } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Home, Key, Map, Building2, Menu, UserCircle, LogOut, LayoutDashboard } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
+import AuthModal from '../context/AuthModal';
 
-export default function Navbar() {
-  const [activeTab, setActiveTab] = useState('apartments');
+export default function Navbar({ activeCategory, onCategoryChange }) {
+  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { user, logout, redirectUserByRole } = useAuth();
 
   const categories = [
-    { id: 'apartments', label: 'Apartments', icon: Home },
+    { id: 'apartment', label: 'Apartments', icon: Home },
     { id: 'shortlet', label: 'Shortlets', icon: Key },
     { id: 'vacation', label: 'Vacation', icon: Map },
     { id: 'hotel', label: 'Hotels', icon: Building2 },
@@ -13,31 +18,31 @@ export default function Navbar() {
 
   return (
     <>
-      {/* TOP NAVBAR (Desktop & Mobile Shell) */}
+      {/* TOP NAVBAR */}
       <nav className="sticky top-0 z-40 w-full bg-white border-b border-gray-100 shadow-navbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            {/* Logo Section */}
-            <div className="flex-shrink-0 flex items-center cursor-pointer text-brand-primary">
+            {/* Logo */}
+            <Link to="/" className="flex-shrink-0 flex items-center text-brand-primary">
               <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center mr-2 shadow-sm">
                 <span className="text-white text-xl font-bold">R</span>
               </div>
               <span className="font-bold text-2xl hidden lg:block text-brand-primary tracking-tight">
                 Rentals
               </span>
-            </div>
+            </Link>
 
-            {/* DESKTOP CATEGORY TABS (Hidden on Mobile) */}
+            {/* DESKTOP CATEGORY NAVIGATION */}
             <div className="hidden md:flex flex-1 justify-center px-8">
               <div className="flex space-x-1 bg-gray-50 p-1 rounded-full border border-gray-100 shadow-inner">
-                {categories.map((category) => {
-                  const Icon = category.icon;
-                  const isActive = activeTab === category.id;
+                {categories.map((cat) => {
+                  const Icon = cat.icon;
+                  const isActive = activeCategory === cat.id;
                   return (
                     <button
-                      key={category.id}
-                      onClick={() => setActiveTab(category.id)}
+                      key={cat.id}
+                      onClick={() => onCategoryChange && onCategoryChange(cat.id)}
                       className={`flex items-center space-x-2 px-5 py-2.5 rounded-full text-sm font-medium transition-all duration-200 ${
                         isActive 
                           ? 'bg-white shadow-sm text-brand-dark' 
@@ -45,57 +50,107 @@ export default function Navbar() {
                       }`}
                     >
                       <Icon className={`w-4 h-4 ${isActive ? 'text-brand-primary' : ''}`} />
-                      <span>{category.label}</span>
+                      <span>{cat.label}</span>
                     </button>
                   );
                 })}
               </div>
             </div>
 
-            {/* Auth & Menu Section */}
-            <div className="flex items-center space-x-4">
-              <div className="hidden md:block font-medium text-sm text-brand-dark cursor-pointer hover:bg-gray-50 px-4 py-2 rounded-full transition-colors">
-                List your property
-              </div>
+            {/* RIGHT SIDE: List Property & Auth Menu */}
+            <div className="flex items-center space-x-2 md:space-x-4">
               
-              <button className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white">
-                <Menu className="w-5 h-5 text-gray-500" />
-                <UserCircle className="w-8 h-8 text-gray-400" />
+              {/* Desktop "List your property" */}
+              <button 
+                onClick={() => user ? redirectUserByRole('LANDLORD') : setIsAuthOpen(true)}
+                className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
+              >
+                List your property
               </button>
+
+              {/* AUTH / PROFILE MENU */}
+              <div className="relative">
+                <button 
+                  onClick={() => setIsMenuOpen(!isMenuOpen)}
+                  className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white"
+                >
+                  <Menu className="w-5 h-5 text-gray-500" />
+                  <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-sm">
+                    {user ? user.firstName?.[0]?.toUpperCase() : <UserCircle className="w-8 h-8 text-gray-400" />}
+                  </div>
+                </button>
+
+                {/* Dropdown Menu */}
+                {isMenuOpen && (
+                  <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl shadow-2xl border border-gray-100 py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    {user ? (
+                      <>
+                        <div className="px-4 py-3 border-b border-gray-100">
+                          <p className="text-xs text-gray-400">Signed in as</p>
+                          <p className="text-sm font-bold text-brand-dark truncate">{user.firstName} {user.lastName}</p>
+                          <span className="inline-block mt-1 px-2 py-0.5 bg-gray-100 text-[10px] font-bold text-gray-600 rounded-md uppercase">
+                            {user.role}
+                          </span>
+                        </div>
+                        
+                        <button
+                          onClick={() => { setIsMenuOpen(false); redirectUserByRole(user.role); }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 flex items-center space-x-2"
+                        >
+                          <LayoutDashboard className="w-4 h-4 text-gray-500" />
+                          <span>Dashboard</span>
+                        </button>
+
+                        <button
+                          onClick={() => { setIsMenuOpen(false); logout(); }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center space-x-2 border-t border-gray-100"
+                        >
+                          <LogOut className="w-4 h-4 text-red-500" />
+                          <span>Log Out</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          onClick={() => { setIsMenuOpen(false); setIsAuthOpen(true); }}
+                          className="w-full text-left px-4 py-2.5 text-sm font-semibold text-brand-dark hover:bg-gray-50"
+                        >
+                          Log in / Sign up
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
+
           </div>
         </div>
       </nav>
 
-      {/* MOBILE BOTTOM NAVIGATION (Hidden on Desktop) */}
-      <div className="md:hidden fixed bottom-0 left-0 z-50 w-full h-16 bg-white border-t border-gray-200 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] px-6 pb-safe">
-        <div className="flex h-full justify-between items-center max-w-md mx-auto">
-          {categories.map((category) => {
-            const Icon = category.icon;
-            const isActive = activeTab === category.id;
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-50">
+        <div className="flex justify-around items-center h-16 pb-safe">
+          {categories.map((cat) => {
+            const Icon = cat.icon;
+            const isActive = activeCategory === cat.id;
             return (
               <button
-                key={category.id}
-                onClick={() => setActiveTab(category.id)}
-                className="flex flex-col items-center justify-center w-full space-y-1"
+                key={cat.id}
+                onClick={() => onCategoryChange && onCategoryChange(cat.id)}
+                className="flex flex-col items-center justify-center w-full h-full space-y-1"
               >
-                <Icon 
-                  className={`w-6 h-6 transition-colors ${
-                    isActive ? 'text-brand-primary' : 'text-gray-400'
-                  }`} 
-                />
-                <span 
-                  className={`text-[10px] font-medium transition-colors ${
-                    isActive ? 'text-brand-dark' : 'text-gray-500'
-                  }`}
-                >
-                  {category.label}
+                <Icon className={`w-6 h-6 ${isActive ? 'text-brand-primary' : 'text-gray-400'}`} />
+                <span className={`text-[10px] font-medium ${isActive ? 'text-brand-dark' : 'text-gray-500'}`}>
+                  {cat.label}
                 </span>
               </button>
             );
           })}
         </div>
       </div>
+
+      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
     </>
   );
 }
