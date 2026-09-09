@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: #FF385C;
+  --color-brand-hover: #E00B41;
+  --color-brand-dark: #222222;
+  --color-brand-light: #F7F7F7;
+  
+  /* Status Colors */
+  --color-status-available: #008A05;
+  --color-status-booked: #E51C23;
+
+  /* Custom Typography */
+  --font-sans: 'Circular', 'Inter', system-ui, sans-serif;
+
+  /* Custom Shadows for that elegant floating effect */
+  --shadow-navbar: 0 1px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.05);
+  --shadow-search: 0 10px 30px rgba(0, 0, 0, 0.1);
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brand-light);
+    color: var(--color-brand-dark);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+}
