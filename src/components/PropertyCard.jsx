@@ -1,9 +1,9 @@
+import { Link } from 'react-router-dom';
 import { Star, Heart } from 'lucide-react';
 
 export default function PropertyCard({ property }) {
-  // We will build a full carousel later, this handles the visual structure for now
   return (
-    <div className="group cursor-pointer flex flex-col gap-3">
+    <Link to={`/property/${property.id}`} className="group cursor-pointer flex flex-col gap-3">
       {/* Image Container */}
       <div className="relative aspect-[20/19] overflow-hidden rounded-xl bg-gray-200">
         <img 
@@ -39,7 +39,14 @@ export default function PropertyCard({ property }) {
           </div>
 
           {/* Favorite Button */}
-          <button className="text-white hover:scale-110 transition-transform drop-shadow-md">
+          <button 
+            type="button"
+            onClick={(e) => {
+              e.preventDefault(); // Prevent navigating when clicking heart
+              // Toggle wishlist state logic here
+            }}
+            className="text-white hover:scale-110 transition-transform drop-shadow-md"
+          >
             <Heart className="w-6 h-6 fill-black/20 stroke-white stroke-[1.5]" />
           </button>
         </div>
@@ -63,6 +70,6 @@ export default function PropertyCard({ property }) {
           <span className="text-gray-800 text-sm">night</span>
         </div>
       </div>
-    </div>
+    </Link>
   );
 }
