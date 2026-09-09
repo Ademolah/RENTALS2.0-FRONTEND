@@ -7,6 +7,9 @@ import AdvancedSearch from './components/AdvancedSearch';
 import Home from './pages/Home';
 import PropertyDetail from './pages/PropertyDetail';
 import Footer from './components/Footer';
+import LandlordDashboard from './pages/LandlordDashboard';
+import GuestDashboard from './pages/GuestDashboard';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState('apartment');
@@ -38,9 +41,9 @@ function App() {
           <Route path="/property/:id" element={<PropertyDetail />} />
           
           {/* Role-Based Dashboard Placeholders */}
-          <Route path="/dashboard/guest" element={<div className="p-12 text-center text-2xl font-bold text-brand-dark">Guest Dashboard</div>} />
-          <Route path="/dashboard/landlord" element={<div className="p-12 text-center text-2xl font-bold text-brand-dark">Landlord Dashboard</div>} />
-          <Route path="/dashboard/admin" element={<div className="p-12 text-center text-2xl font-bold text-brand-dark">Rentals Admin Dashboard</div>} />
+          <Route path="/dashboard/guest" element={<GuestDashboard />} />
+          <Route path="/dashboard/landlord" element={<LandlordDashboard />} />
+          <Route path="/dashboard/admin" element={<AdminDashboard />} />
         </Routes>
       </div>
 

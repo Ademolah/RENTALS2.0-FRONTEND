@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import PriceTagIcon from './PriceTagIcon'; // 💡 Adjusted local pathway to match where you save Part 1
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
@@ -30,9 +31,11 @@ export default function WelcomeOverlay() {
         </button>
         
         <div className="text-center mt-4">
-          <div className="w-16 h-16 bg-brand-primary rounded-full flex items-center justify-center mx-auto mb-6">
-            <span className="text-white text-2xl font-bold">R</span>
+          {/* ✅ REPLACED "R" container with the new PriceTagIcon stylized framework */}
+          <div className="w-20 h-20 bg-[#F25F5C]/10 rounded-2xl flex items-center justify-center mx-auto mb-6 transition-transform hover:scale-105 duration-200">
+            <PriceTagIcon className="w-10 h-10" color="#F25F5C" />
           </div>
+          
           <h2 className="text-3xl font-bold text-brand-dark mb-4 tracking-tight">
             Welcome to Rentals
           </h2>
@@ -41,7 +44,7 @@ export default function WelcomeOverlay() {
           </p>
           <button 
             onClick={handleClose}
-            className="w-full py-4 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-semibold text-lg transition-colors shadow-lg"
+            className="w-full py-4 bg-[#F25F5C] hover:bg-[#F25F5C]/90 text-white rounded-xl font-semibold text-lg transition-colors shadow-lg shadow-[#F25F5C]/20"
           >
             Start Exploring
           </button>
