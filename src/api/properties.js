@@ -13,8 +13,14 @@ export const getPropertyById = async (id) => {
 };
 
 export const createProperty = async (formData) => {
+  const token = localStorage.getItem('rentals_token');
+
   const response = await apiClient.post('/properties', formData, {
-    headers: { 'Content-Type': 'multipart/form-data' },
+    headers: {
+      // Do NOT set 'Content-Type': 'multipart/form-data' here! 
+      // Let Axios automatically set it with the correct boundary.
+      Authorization: `Bearer ${token}`
+    },
   });
   return response.data;
 };

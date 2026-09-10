@@ -2,7 +2,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser as loginApi, registerUser as registerApi } from '../api/auth';
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
@@ -10,7 +10,6 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Check if user session exists on app load
     const storedToken = localStorage.getItem('rentals_token');
     const storedUser = localStorage.getItem('rentals_user');
     
@@ -18,35 +17,55 @@ export function AuthProvider({ children }) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (err) {
-        logout();
+        localStorage.removeItem('rentals_token');
+        localStorage.removeItem('rentals_user');
       }
     }
     setLoading(false);
   }, []);
 
+  // Helper function to cleanly extract token and user from various response structures
+  const extractAuthData = (apiResponse) => {
+  // Since response.data was already extracted by auth.js, apiResponse is the raw root object
+  const token = apiResponse?.token;
+  
+  // Directly grab user from the root level or nested inside the wrapper object
+  const user = apiResponse?.user || apiResponse?.data?.user;
+
+  return { token, user };
+};
+
+
   const login = async (credentials) => {
-    const data = await loginApi(credentials);
-    const { token, user: userPayload } = data;
+    const rawResponse = await loginApi(credentials);
+    const { token, user: userPayload } = extractAuthData(rawResponse);
     
+    if (!token || !userPayload) {
+      throw new Error("Unable to parse user session from server response.");
+    }
+
     localStorage.setItem('rentals_token', token);
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
 
-    // Automatic Role-Based Dashboard Routing
     redirectUserByRole(userPayload.role);
-    return data;
+    return rawResponse;
   };
 
   const register = async (userData) => {
-    const data = await registerApi(userData);
-    const { token, user: userPayload } = data;
+    const rawResponse = await registerApi(userData);
+    const { token, user: userPayload } = extractAuthData(rawResponse);
+
+    if (!token || !userPayload) {
+      throw new Error("Unable to parse user session from server response.");
+    }
 
     localStorage.setItem('rentals_token', token);
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
 
     redirectUserByRole(userPayload.role);
-    return data;
+    return rawResponse;
   };
 
   const logout = () => {
@@ -74,9 +93,15 @@ export function AuthProvider({ children }) {
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, redirectUserByRole }}>
-      {!loading && children}
+      {children}
     </AuthContext.Provider>
   );
 }
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

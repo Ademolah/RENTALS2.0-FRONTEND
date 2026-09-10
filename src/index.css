@@ -21,6 +21,14 @@
   --shadow-search: 0 10px 30px rgba(0, 0, 0, 0.1);
 }
 
+
+/* Keyframes for the sleek button shine effect */
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
 @layer base {
   body {
     background-color: var(--color-brand-light);
