@@ -49,23 +49,29 @@ export default function Home({ searchFilters = {}, activeCategory = 'apartment' 
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
-          {properties.map((prop) => (
+        {properties.map((prop) => (
             <PropertyCard 
-              key={prop._id || prop.id} 
-              property={{
-                id: prop._id || prop.id,
+            key={prop._id} 
+            property={{
+                id: prop._id,
                 title: prop.title,
-                location: prop.location || `${prop.address?.city || 'Ikoyi'}, ${prop.address?.state || 'Lagos'}`,
-                price: prop.pricePerNight || prop.price || 0,
-                rating: prop.rating || "5.0",
+                // Safely map the nested address object
+                location: `${prop.address?.city}, ${prop.address?.state}`,
+                // Map directly to your DB's pricePerNight
+                price: prop.pricePerNight,
+                // Ratings and Verification aren't in your schema yet, so we provide premium fallbacks
+                rating: prop.rating || "5.0", 
                 dates: "Available Now",
-                isRentalVerified: prop.isVerified ?? true,
-                isAvailable: prop.isAvailable ?? true,
-                image: prop.images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
-              }} 
+                isRentalVerified: prop.isVerified ?? true, 
+                isAvailable: prop.isAvailable,
+                // Secure fallback for empty image arrays to ensure the UI remains pristine
+                image: prop.images && prop.images.length > 0 
+                ? prop.images[0] 
+                : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
+            }} 
             />
-          ))}
-        </div>
+        ))}
+    </div>
       )}
     </main>
   );
