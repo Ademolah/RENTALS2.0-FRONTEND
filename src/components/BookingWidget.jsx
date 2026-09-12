@@ -1,9 +1,9 @@
-import { useState } from 'react';
-import { Star, Loader2 } from 'lucide-react';
+import { useState, useMemo } from 'react';
+import { Star, Loader2, ShieldCheck, Plus, Minus } from 'lucide-react';
 import { initiateBooking } from '../api/reservation';
 import { useAuth } from '../context/AuthContext';
 
-export default function BookingWidget({ propertyId, price }) {
+export default function BookingWidget({ property }) {
   const { user } = useAuth();
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
@@ -11,15 +11,33 @@ export default function BookingWidget({ propertyId, price }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Live Price Engine
+  const pricingDetails = useMemo(() => {
+    if (!checkIn || !checkOut || !property?.price) return null;
+    
+    const start = new Date(checkIn);
+    const end = new Date(checkOut);
+    const diffTime = end.getTime() - start.getTime();
+    const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    if (nights <= 0) return null;
+
+    const baseTotal = nights * property.price;
+    const platformFee = Math.round(baseTotal * 0.05); // 5% Platform Escrow Fee
+    const grandTotal = baseTotal + platformFee;
+
+    return { nights, baseTotal, platformFee, grandTotal };
+  }, [checkIn, checkOut, property]);
+
   const handleReservation = async (e) => {
     e.preventDefault();
     if (!user) {
-      setError('Please log in to proceed with this booking.');
+      setError('Please log in to secure this reservation.');
       return;
     }
 
-    if (!checkIn || !checkOut) {
-      setError('Select valid check-in and check-out dates.');
+    if (!pricingDetails || pricingDetails.nights <= 0) {
+      setError('Please select valid check-in and check-out dates.');
       return;
     }
 
@@ -28,95 +46,164 @@ export default function BookingWidget({ propertyId, price }) {
 
     try {
       const response = await initiateBooking({
-        propertyId,
+        propertyId: property.id,
         checkInDate: checkIn,
         checkOutDate: checkOut,
-        guestsCount: Number(guests)
+        guestsCount: guests,
+        totalAmount: pricingDetails.grandTotal
       });
 
-      // Paystack checkout URL returned from backend API
       const checkoutUrl = response.checkoutUrl || response.data?.checkoutUrl || response.authorization_url;
 
       if (checkoutUrl) {
-        window.location.href = checkoutUrl; // Redirect to Paystack
+        window.location.href = checkoutUrl;
       } else {
-        setError('Booking created, but payment initialization failed.');
+        setError('Reservation secured, but payment gateway failed to load.');
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'Failed to initialize booking.');
+      setError(err.response?.data?.message || 'Failed to secure reservation. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
+  const today = new Date().toISOString().split('T')[0];
+  const currentPrice = property?.price || 0;
+  const maxAllowedGuests = property?.maxGuests || 1;
+  
+  // Check Availability Status
+  const isBooked = property?.isAvailable === false;
+  const nextAvailable = property?.nextAvailableDate 
+    ? new Date(property.nextAvailableDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Unknown';
+
   return (
-    <div className="bg-white border border-gray-200 p-6 rounded-2xl shadow-card sticky top-28">
+    <div className="bg-white border border-gray-200 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] sticky top-28">
+      
+      {/* Header */}
       <div className="flex items-baseline justify-between mb-6">
         <div className="flex items-baseline space-x-1">
-          <span className="text-2xl font-bold text-brand-dark">₦{Number(price).toLocaleString()}</span>
-          <span className="text-gray-500 text-sm">night</span>
+          <span className="text-2xl font-bold text-gray-900 tracking-tight">
+            ₦{Number(currentPrice).toLocaleString()}
+          </span>
+          <span className="text-gray-500 text-sm font-medium">/ night</span>
         </div>
         <div className="flex items-center space-x-1">
-          <Star className="w-4 h-4 fill-brand-dark text-brand-dark" />
-          <span className="font-semibold text-sm">4.92</span>
+          <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
+          <span className="font-semibold text-sm text-gray-900">{property?.rating || "5.0"}</span>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100">
-          {error}
+        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start">
+          <span>{error}</span>
         </div>
       )}
 
+      {/* Booking Form */}
       <form onSubmit={handleReservation} className="space-y-4">
-        <div className="border border-gray-300 rounded-xl overflow-hidden">
+        <div className={`border border-gray-300 rounded-2xl overflow-hidden ${isBooked ? 'opacity-50' : ''}`}>
           <div className="flex border-b border-gray-300">
-            <div className="flex-1 p-3 border-r border-gray-300">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-brand-dark block">Check-in</label>
+            <div className="flex-1 p-3 border-r border-gray-300 relative">
+              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Check-in</label>
               <input 
                 type="date" 
                 required
+                min={today}
                 value={checkIn}
                 onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full text-xs outline-none bg-transparent font-medium mt-1"
+                disabled={isBooked}
+                className="w-full text-sm outline-none bg-transparent font-medium mt-1 cursor-pointer text-gray-900 disabled:cursor-not-allowed"
               />
             </div>
-            <div className="flex-1 p-3">
-              <label className="text-[10px] font-bold uppercase tracking-wider text-brand-dark block">Check-out</label>
+            <div className="flex-1 p-3 relative">
+              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Check-out</label>
               <input 
                 type="date" 
                 required
+                min={checkIn || today}
                 value={checkOut}
                 onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full text-xs outline-none bg-transparent font-medium mt-1"
+                disabled={isBooked}
+                className="w-full text-sm outline-none bg-transparent font-medium mt-1 cursor-pointer text-gray-900 disabled:cursor-not-allowed"
               />
             </div>
           </div>
-          <div className="p-3">
-            <label className="text-[10px] font-bold uppercase tracking-wider text-brand-dark block">Guests</label>
-            <select 
-              value={guests}
-              onChange={(e) => setGuests(e.target.value)}
-              className="w-full text-xs outline-none bg-transparent font-medium mt-1"
-            >
-              <option value={1}>1 Guest</option>
-              <option value={2}>2 Guests</option>
-              <option value={3}>3 Guests</option>
-              <option value={4}>4+ Guests</option>
-            </select>
+          
+          {/* Plus / Minus Guest Counter */}
+          <div className="p-4 flex justify-between items-center bg-gray-50/50">
+            <div>
+              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Guests</label>
+              <span className="text-xs text-gray-500 font-medium">Max {maxAllowedGuests}</span>
+            </div>
+            <div className="flex items-center space-x-4">
+              <button 
+                type="button" 
+                onClick={() => setGuests(prev => Math.max(1, prev - 1))}
+                disabled={guests <= 1 || isBooked}
+                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+              >
+                <Minus className="w-4 h-4" />
+              </button>
+              <span className="font-semibold text-gray-900 w-4 text-center">{guests}</span>
+              <button 
+                type="button" 
+                onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
+                disabled={guests >= maxAllowedGuests || isBooked}
+                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+              >
+                <Plus className="w-4 h-4" />
+              </button>
+            </div>
           </div>
         </div>
 
-        <button 
-          type="submit"
-          disabled={loading}
-          className="w-full py-3.5 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-bold text-base transition-colors shadow-md flex items-center justify-center"
-        >
-          {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Reserve & Pay via Paystack'}
-        </button>
+        {/* Dynamic Button State */}
+        {isBooked ? (
+          <div className="w-full py-4 bg-gray-100 text-gray-500 rounded-xl font-bold text-sm text-center cursor-not-allowed border border-gray-200">
+            Currently Booked (Available {nextAvailable})
+          </div>
+        ) : (
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full py-4 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                <span>Securing...</span>
+              </>
+            ) : (
+              'Book Now'
+            )}
+          </button>
+        )}
       </form>
 
-      <p className="text-center text-gray-500 text-xs mt-4">Protected by Rentals Escrow Security</p>
+      <div className="flex items-center justify-center space-x-2 text-gray-500 mt-4 mb-2">
+        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+        <span className="text-xs font-medium">Platform Escrow Protection</span>
+      </div>
+
+      {pricingDetails && !isBooked && (
+        <div className="space-y-3 pt-5 mt-5 border-t border-gray-100 animate-in fade-in duration-300">
+          <div className="flex justify-between text-gray-600 text-sm">
+            <span className="underline decoration-gray-300 underline-offset-4">
+              ₦{currentPrice.toLocaleString()} x {pricingDetails.nights} nights
+            </span>
+            <span>₦{pricingDetails.baseTotal.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between text-gray-600 text-sm">
+            <span className="underline decoration-gray-300 underline-offset-4">Taxes</span>
+            <span>₦{pricingDetails.platformFee.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-200">
+            <span>Total</span>
+            <span>₦{pricingDetails.grandTotal.toLocaleString()}</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
