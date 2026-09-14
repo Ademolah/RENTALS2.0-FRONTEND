@@ -12,19 +12,26 @@ import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
-  const [activeCategory, setActiveCategory] = useState('apartment');
+  const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
 
   return (
     <div className="min-h-screen flex flex-col relative">
       <WelcomeOverlay />
       
-      <div className="sticky top-0 z-40 bg-white pb-4 border-b border-gray-100 shadow-sm">
-        <Navbar 
-          activeCategory={activeCategory} 
-          onCategoryChange={setActiveCategory} 
-        />
-        <AdvancedSearch onSearch={setSearchFilters} />
+      <div className="sticky top-0 z-40 bg-white pb-4 border-b border-gray-100 shadow-sm flex flex-col">
+        {/* Z-50 forces the Navbar and its dropdowns to float above everything else */}
+        <div className="relative z-50">
+          <Navbar 
+            activeCategory={activeCategory} 
+            onCategoryChange={setActiveCategory} 
+          />
+        </div>
+        
+        {/* Z-30 keeps the search bar safely beneath the Navbar's dropdown */}
+        <div className="relative z-30">
+          <AdvancedSearch onSearch={setSearchFilters} />
+        </div>
       </div>
 
       <div className="flex-grow">

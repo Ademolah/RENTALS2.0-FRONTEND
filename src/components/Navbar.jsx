@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Home, Key, Map, Building2, Menu, UserCircle, LogOut, LayoutDashboard } from 'lucide-react';
+import { 
+  Home, Key, Map, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
+  CarFront, // For Car Rentals (Sleek, premium front-facing car)
+  Crown,    // For VIP Reservation (Gives that exclusive, high-end feel)
+  Martini,  // Alternative for VIP Reservation (If you want to emphasize Lounge/Club)
+  UtensilsCrossed // Alternative for VIP Reservation (If you want to emphasize Restaurant)
+} from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from '../context/AuthModal';
 
@@ -10,9 +16,9 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   const { user, logout, redirectUserByRole } = useAuth();
 
   const categories = [
-    { id: 'apartment', label: 'Apartments', icon: Home },
     { id: 'shortlet', label: 'Shortlets', icon: Key },
-    { id: 'vacation', label: 'Vacation', icon: Map },
+    { id: 'car', label: 'Car Rentals', icon: CarFront },
+    { id: 'vip', label: 'VIP Reservations', icon: Crown },
     { id: 'hotel', label: 'Hotels', icon: Building2 },
   ];
 

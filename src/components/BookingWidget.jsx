@@ -183,7 +183,7 @@ export default function BookingWidget({ property }) {
 
       <div className="flex items-center justify-center space-x-2 text-gray-500 mt-4 mb-2">
         <ShieldCheck className="w-4 h-4 text-emerald-600" />
-        <span className="text-xs font-medium">Platform Escrow Protection</span>
+        <span className="text-xs font-medium">Rentals Protection</span>
       </div>
 
       {pricingDetails && !isBooked && (

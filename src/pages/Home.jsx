@@ -3,7 +3,7 @@ import PropertyCard from '../components/PropertyCard';
 import { getProperties } from '../api/properties';
 import { Loader2, Search } from 'lucide-react';
 
-export default function Home({ searchFilters = {}, activeCategory = 'APARTMENT' }) {
+export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }) {
   const [properties, setProperties] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSearchCleared, setIsSearchCleared] = useState(false);
