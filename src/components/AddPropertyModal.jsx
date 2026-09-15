@@ -53,6 +53,26 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
+  // 1. Define the Location Taxonomy
+  const LOCATION_DATA = {
+    "Lagos": [
+      "Ikoyi", "Banana Island", "Victoria Island", "Lekki Phase 1", 
+      "Lekki", "Ajah", "Ikeja", "Magodo", "Maryland", "Gbagada", 
+      "Surulere", "Yaba", "Festac"
+    ].sort(),
+    "Abuja": [
+      "Asokoro", "Maitama", "Wuse 2", "Wuse", "Garki", 
+      "Central Business District", "Jabi", "Utako", "Gwarinpa", 
+      "Apo", "Kubwa", "Lugbe"
+    ].sort()
+  };
+
+  // 2. Add this handler to reset the city if the landlord changes the state midway
+  const handleStateChange = (e) => {
+    setStateName(e.target.value);
+    setCity(''); // Instantly clears the city so they don't submit "Lagos" with "Maitama"
+  };
+
   useEffect(() => {
     return () => previewUrls.forEach(url => URL.revokeObjectURL(url));
   }, [previewUrls]);
@@ -288,25 +308,43 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     />
                   </div>
 
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">City</label>
-                    <input 
-                      type="text" required
-                      placeholder="e.g. Ikoyi"
-                      value={city} onChange={(e) => setCity(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
-                    />
-                  </div>
-
+                  {/* STATE MOVED TO FIRST POSITION */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">State</label>
-                    <input 
-                      type="text" required
-                      placeholder="e.g. Lagos"
-                      value={stateName} onChange={(e) => setStateName(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
-                    />
+                    <select 
+                      required
+                      value={stateName} 
+                      onChange={handleStateChange}
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none"
+                    >
+                      <option value="" disabled>Select State</option>
+                      {Object.keys(LOCATION_DATA).map(state => (
+                        <option key={state} value={state}>{state}</option>
+                      ))}
+                    </select>
                   </div>
+
+                  {/* DYNAMIC CITY DROPDOWN */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">City / Neighborhood</label>
+                    <select 
+                      required
+                      value={city} 
+                      onChange={(e) => setCity(e.target.value)}
+                      disabled={!stateName} // Locked until a state is chosen
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      <option value="" disabled>
+                        {stateName ? 'Select City' : 'Select State First'}
+                      </option>
+                      
+                      {/* Only renders the cities belonging to the chosen state */}
+                      {stateName && LOCATION_DATA[stateName].map(loc => (
+                        <option key={loc} value={loc}>{loc}</option>
+                      ))}
+                    </select>
+                  </div>
+
                 </div>
               </section>
 
