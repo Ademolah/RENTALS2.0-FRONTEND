@@ -2,7 +2,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
-  Sparkles, 
+  Plus,
   ChevronRight, 
   CheckCircle, 
   Clock, 
@@ -14,10 +14,14 @@ import {
 
 
 import AddPropertyModal from '../components/AddPropertyModal';
+import AddCarModal from '../components/AddCarModal';
 
 export default function LandlordDashboard() {
   const { user } = useAuth();
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
+  const [isCarModalOpen, setIsCarModalOpen] = useState(false);
   
   // State for the mock reservations
   const [reservations, setReservations] = useState([
@@ -93,17 +97,14 @@ export default function LandlordDashboard() {
 <div className="relative shrink-0" ref={dropdownRef}>
   <button 
     onClick={() => setIsListMenuOpen(!isListMenuOpen)}
-    className={`group relative overflow-hidden rounded-full bg-gray-900 px-6 py-3.5 transition-all duration-300 hover:bg-black hover:shadow-xl hover:scale-[1.02] active:scale-95 flex items-center space-x-2 text-white ${
+    className={`rounded-full bg-gray-900 px-6 py-3.5 transition-all duration-200 hover:bg-black hover:shadow-lg active:scale-[0.98] flex items-center space-x-2 text-white ${
       isListMenuOpen ? 'ring-2 ring-gray-900 ring-offset-2' : ''
     }`}
   >
-    {/* Shimmer effect overlay */}
-    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-    
-    <div className="relative flex items-center justify-center space-x-2">
-      <Sparkles className="w-4 h-4" />
+    <div className="flex items-center justify-center space-x-2">
+      <Plus className="w-4 h-4 stroke-[2.5]" />
       <span className="font-semibold text-sm tracking-wide">Create Listing</span>
-      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isListMenuOpen ? 'rotate-180' : ''}`} />
+      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isListMenuOpen ? 'rotate-180' : ''}`} />
     </div>
   </button>
 
@@ -111,6 +112,7 @@ export default function LandlordDashboard() {
   {isListMenuOpen && (
     <div className="absolute right-0 mt-3 w-64 bg-white rounded-[1.5rem] shadow-[0_15px_50px_rgba(0,0,0,0.12)] border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2 origin-top-right">
       
+      {/* PROPERTY LISTING */}
       <button 
         onClick={() => { setIsModalOpen(true); setIsListMenuOpen(false); }}
         className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
@@ -124,6 +126,7 @@ export default function LandlordDashboard() {
         </div>
       </button>
 
+      {/* HOTEL LISTING */}
       <button 
         onClick={() => { /* Handle Hotel Modal */ setIsListMenuOpen(false); }}
         className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
@@ -137,8 +140,9 @@ export default function LandlordDashboard() {
         </div>
       </button>
 
+      {/* CAR LISTING (Wired to AddCarModal) */}
       <button 
-        onClick={() => { /* Handle Car Modal */ setIsListMenuOpen(false); }}
+        onClick={() => { setIsCarModalOpen(true); setIsListMenuOpen(false); }}
         className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
       >
         <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
@@ -152,6 +156,7 @@ export default function LandlordDashboard() {
 
       <div className="h-[1px] w-full bg-gray-100 my-1"></div>
 
+      {/* VIP RESERVATION */}
       <button 
         onClick={() => { /* Handle VIP Modal */ setIsListMenuOpen(false); }}
         className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
@@ -317,6 +322,14 @@ export default function LandlordDashboard() {
         onPropertyAdded={(newProp) => {
           console.log("New property added successfully:", newProp);
           // Optional: update local list state or refetch properties
+        }}
+      />
+
+      <AddCarModal 
+        isOpen={isCarModalOpen} 
+        onClose={() => setIsCarModalOpen(false)} 
+        onCarAdded={(newCar) => {
+          console.log("New vehicle added:", newCar);
         }}
       />
     </div>
