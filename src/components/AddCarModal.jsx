@@ -1,15 +1,38 @@
 import { useState } from 'react';
 import { 
-  X, UploadCloud, AlertCircle, 
+  X, UploadCloud, AlertCircle, CheckCircle2, 
   Car, Check, MapPin, Settings2, Image as ImageIcon 
 } from 'lucide-react';
 import axios from 'axios';
+
+const BrandSuccessToast = ({ message, isVisible, onClose }) => {
+  if (!isVisible) return null;
+  return (
+    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
+      <div className="bg-brand-dark text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-brand-primary/30">
+        <div className="bg-brand-primary p-1.5 rounded-full shadow-inner">
+          <CheckCircle2 className="w-5 h-5 text-white" />
+        </div>
+        <span className="font-medium text-sm tracking-wide">{message}</span>
+        <button onClick={onClose} className="pl-4 text-gray-400 hover:text-white transition-colors">
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+    </div>
+  );
+};
+
+
+const API = import.meta.env.VITE_API_URL;
 
 export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const [showToast, setShowToast] = useState(false);
+
   // Form State
+  const [features, setFeatures] = useState('');
   const [make, setMake] = useState('');
   const [carModel, setCarModel] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
@@ -26,12 +49,19 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
 
   const handleFileChange = (e) => {
     const files = Array.from(e.target.files);
-    if (files.length > 5) {
+    
+    // Check if the current files plus the new ones exceed the 5-image limit
+    if (selectedFiles.length + files.length > 5) {
       setError('Maximum 5 images allowed.');
       return;
     }
-    setSelectedFiles(files);
+    
+    // Append the new files to the existing state array
+    setSelectedFiles((prev) => [...prev, ...files]);
     setError('');
+    
+    // Reset the input value so the user can re-upload a file they just deleted
+    e.target.value = null; 
   };
 
   const handleSubmit = async (e) => {
@@ -48,11 +78,12 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
     try {
       const formData = new FormData();
       formData.append('make', make);
-      formData.append('model', carModel);
+      formData.append('carModel', carModel); 
       formData.append('year', year.toString());
       formData.append('category', category);
       formData.append('transmission', transmission);
       formData.append('pricePer12Hours', pricePer12Hours.toString());
+      formData.append('features', features);
       
       formData.append('location', JSON.stringify({
         city: city,
@@ -63,18 +94,28 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
         formData.append('images', file);
       });
 
-      const response = await axios.post('/api/v1/cars', formData, {
+      const response = await axios.post(`${API}/cars`, formData, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'Authorization': `Bearer ${localStorage.getItem('rentals_token')}`
         }
       });
 
-      if (onCarAdded) onCarAdded(response.data.data.car);
-      onClose();
+      // 1. Trigger the bespoke success toast
+      setShowToast(true);
+
+      // 2. Delay the modal close by 2 seconds so the user can read the success message
+      setTimeout(() => {
+        if (onCarAdded) onCarAdded(response.data.data.car);
+        setShowToast(false);
+        onClose();
+        // Optional: Reset form fields here if needed
+      }, 2000);
+
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to list vehicle.');
+      console.error('Error listing vehicle:', err);
     } finally {
-      setLoading(false);
+      setLoading(false); // Remove loading state immediately so the button resets while toast shows
     }
   };
 
@@ -168,6 +209,23 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
             </div>
           </div>
 
+          {/* Features Input */}
+        <div>
+          <label className="block text-xs font-bold text-gray-700 tracking-wide mb-1 uppercase">
+            Vehicle Features
+          </label>
+          <input 
+            type="text" 
+            value={features}
+            onChange={(e) => setFeatures(e.target.value)}
+            placeholder="e.g. Leather Seats, Bluetooth, Chauffeur Included" 
+            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-gray-400"
+          />
+          <p className="text-[10px] text-gray-500 mt-1.5 ml-1">
+            Separate multiple features with commas.
+          </p>
+        </div>
+
           {/* Location */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Location</h3>
@@ -201,25 +259,67 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
           <div className="space-y-4">
             <div className="flex justify-between items-end border-b border-gray-100 pb-2">
               <h3 className="text-sm font-bold text-gray-900">Vehicle Imagery</h3>
-              <span className="text-xs text-gray-500">{selectedFiles.length}/5 uploaded</span>
+              <span className="text-xs text-gray-500 font-medium">
+                {selectedFiles.length}/5 uploaded
+              </span>
             </div>
             
-            <div className="relative group">
-              <input 
-                type="file" 
-                multiple 
-                accept="image/*"
-                onChange={handleFileChange}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-              <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 group-hover:bg-gray-100 group-hover:border-gray-400 transition-colors">
-                <ImageIcon className="w-6 h-6 text-gray-400 mb-2" />
-                <span className="text-sm font-semibold text-gray-700">Upload Photos</span>
-                <span className="text-xs text-gray-500 mt-1 text-center max-w-xs">
-                  JPEG or PNG. High resolution strictly required.
-                </span>
+            {/* Upload Dropzone - Hides smoothly when 5 images are reached */}
+            {selectedFiles.length < 5 && (
+              <div className="relative group">
+                <input 
+                  type="file" 
+                  multiple 
+                  accept="image/jpeg, image/png, image/webp"
+                  onChange={handleFileChange}
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                />
+                <div className="border border-dashed border-gray-300 rounded-xl p-6 flex flex-col items-center justify-center bg-gray-50 group-hover:bg-gray-100 group-hover:border-gray-400 transition-colors">
+                  <ImageIcon className="w-6 h-6 text-gray-400 mb-2" />
+                  <span className="text-sm font-semibold text-gray-700">Upload Photos</span>
+                  <span className="text-xs text-gray-500 mt-1 text-center max-w-xs">
+                    JPEG or PNG. High resolution strictly required.
+                  </span>
+                </div>
               </div>
-            </div>
+            )}
+
+            {/* Pristine Image Preview Grid */}
+            {selectedFiles.length > 0 && (
+              <div className="grid grid-cols-4 gap-3 mt-4">
+                {selectedFiles.map((file, index) => (
+                  <div 
+                    key={`${file.name}-${index}`} 
+                    className={`relative rounded-xl overflow-hidden border border-gray-200 group bg-gray-100 ${
+                      index === 0 ? 'col-span-4 aspect-video' : 'col-span-1 aspect-square'
+                    }`}
+                  >
+                    {/* The Image */}
+                    <img 
+                      src={URL.createObjectURL(file)} 
+                      alt={`preview-${index}`} 
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    
+                    {/* Cover Image Badge */}
+                    {index === 0 && (
+                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-900 shadow-sm">
+                        Cover Image
+                      </div>
+                    )}
+
+                    {/* Elegant Remove Button */}
+                    <button
+                      type="button"
+                      onClick={(e) => removeImage(index, e)}
+                      className="absolute top-3 right-3 p-1.5 bg-white/95 backdrop-blur-sm hover:bg-red-50 hover:text-red-600 text-gray-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200"
+                    >
+                      <X className="w-4 h-4 stroke-[2.5]" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Pricing */}
