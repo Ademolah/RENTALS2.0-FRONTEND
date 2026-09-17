@@ -371,6 +371,13 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
         </div>
 
       </div>
+
+      <BrandSuccessToast 
+        message="Vehicle successfully added to your premium fleet!" 
+        isVisible={showToast} 
+        onClose={() => setShowToast(false)} 
+      />
+      
     </div>
   );
 }
