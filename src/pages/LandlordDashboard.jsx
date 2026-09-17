@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { 
   Sparkles, 
@@ -8,8 +9,10 @@ import {
   MapPin, 
   ShieldCheck,
   TrendingUp,
-  Wallet
+  Wallet, ChevronDown, Building, Car, Hotel, Crown
 } from 'lucide-react';
+
+
 import AddPropertyModal from '../components/AddPropertyModal';
 
 export default function LandlordDashboard() {
@@ -44,6 +47,20 @@ export default function LandlordDashboard() {
     }
   ]);
 
+  // Dropdown state and click-outside handler
+  const [isListMenuOpen, setIsListMenuOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsListMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   // Handler to trigger the critical Escrow Check-In confirmation
   const handleConfirmCheckIn = (id) => {
     setReservations(prev => prev.map(res => 
@@ -72,19 +89,85 @@ export default function LandlordDashboard() {
               </p>
             </div>
 
-            {/* SLEEK, SHINING LIST PROPERTY BUTTON */}
-            <button 
-              onClick={() => setIsModalOpen(true)}
-              className="group relative overflow-hidden rounded-full bg-gray-900 px-6 py-3.5 transition-all duration-300 hover:bg-black hover:shadow-xl hover:scale-[1.02] shrink-0 active:scale-95"
-            >
-              {/* Shimmer effect overlay */}
-              <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-              
-              <div className="relative flex items-center justify-center space-x-2 text-white">
-                <Sparkles className="w-4 h-4" />
-                <span className="font-semibold text-sm tracking-wide">List a New Property</span>
-              </div>
-            </button>
+            {/* SLEEK, SHINING LISTING DROPDOWN */}
+<div className="relative shrink-0" ref={dropdownRef}>
+  <button 
+    onClick={() => setIsListMenuOpen(!isListMenuOpen)}
+    className={`group relative overflow-hidden rounded-full bg-gray-900 px-6 py-3.5 transition-all duration-300 hover:bg-black hover:shadow-xl hover:scale-[1.02] active:scale-95 flex items-center space-x-2 text-white ${
+      isListMenuOpen ? 'ring-2 ring-gray-900 ring-offset-2' : ''
+    }`}
+  >
+    {/* Shimmer effect overlay */}
+    <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
+    
+    <div className="relative flex items-center justify-center space-x-2">
+      <Sparkles className="w-4 h-4" />
+      <span className="font-semibold text-sm tracking-wide">Create Listing</span>
+      <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${isListMenuOpen ? 'rotate-180' : ''}`} />
+    </div>
+  </button>
+
+  {/* PREMIUM DROPDOWN MENU */}
+  {isListMenuOpen && (
+    <div className="absolute right-0 mt-3 w-64 bg-white rounded-[1.5rem] shadow-[0_15px_50px_rgba(0,0,0,0.12)] border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2 origin-top-right">
+      
+      <button 
+        onClick={() => { setIsModalOpen(true); setIsListMenuOpen(false); }}
+        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
+      >
+        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
+          <Building className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
+        </div>
+        <div className="text-left">
+          <div className="text-sm font-bold">Property Listing</div>
+          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Apartments & Shortlets</div>
+        </div>
+      </button>
+
+      <button 
+        onClick={() => { /* Handle Hotel Modal */ setIsListMenuOpen(false); }}
+        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
+      >
+        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
+          <Hotel className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
+        </div>
+        <div className="text-left">
+          <div className="text-sm font-bold">Hotel Listing</div>
+          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Rooms & Suites</div>
+        </div>
+      </button>
+
+      <button 
+        onClick={() => { /* Handle Car Modal */ setIsListMenuOpen(false); }}
+        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
+      >
+        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
+          <Car className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
+        </div>
+        <div className="text-left">
+          <div className="text-sm font-bold">Car Listing</div>
+          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Rentals & Chauffeurs</div>
+        </div>
+      </button>
+
+      <div className="h-[1px] w-full bg-gray-100 my-1"></div>
+
+      <button 
+        onClick={() => { /* Handle VIP Modal */ setIsListMenuOpen(false); }}
+        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
+      >
+        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
+          <Crown className="w-4 h-4 text-brand-primary/70 group-hover:text-brand-primary" />
+        </div>
+        <div className="text-left">
+          <div className="text-sm font-bold text-gray-900 group-hover:text-brand-primary">VIP Reservation</div>
+          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Exclusive Experiences</div>
+        </div>
+      </button>
+
+    </div>
+  )}
+</div>
             
           </div>
         </div>
