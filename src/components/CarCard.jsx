@@ -26,26 +26,27 @@ export default function CarCard({ car }) {
       </div>
 
       {/* Content Details */}
-      <div className="flex flex-col px-1">
-        <div className="flex justify-between items-start">
-          <div className="flex-1 pr-2">
-            <h3 className="text-lg font-bold text-gray-900 truncate">
-              {make} {model} <span className="text-gray-500 text-sm font-medium ml-1">{car.year}</span>
-            </h3>
-            <div className="flex items-center text-gray-500 text-sm mt-1">
-              <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-              <span className="truncate">{car.location?.city || 'Lagos'}, {car.location?.state || 'LA'}</span>
-            </div>
-          </div>
-          
-          <div className="text-right flex-shrink-0">
-            <div className="text-lg font-extrabold text-brand-dark">
-              ₦{price.toLocaleString()}
-            </div>
-            <div className="text-[11px] uppercase tracking-wider text-gray-500 font-bold mt-0.5">
-              per 12 hrs
-            </div>
-          </div>
+      <div className="flex flex-col px-1 mt-1">
+        
+        {/* Title & Year */}
+        <h3 className="text-lg font-bold text-gray-900 truncate">
+          {make} {model} <span className="text-gray-500 text-sm font-medium ml-1">{car.year}</span>
+        </h3>
+        
+        {/* Location */}
+        <div className="flex items-center text-gray-500 text-sm mt-1">
+          <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
+          <span className="truncate">{car.location?.city || 'Lagos'}, {car.location?.state || 'LA'}</span>
+        </div>
+        
+        {/* Price - Moved below to prevent horizontal overflow */}
+        <div className="mt-2.5 flex items-baseline space-x-1.5">
+          <span className="text-lg font-extrabold text-brand-dark">
+            ₦{price.toLocaleString()}
+          </span>
+          <span className="text-[11px] uppercase tracking-wider text-gray-500 font-bold">
+            per 12 hrs
+          </span>
         </div>
 
         {/* Elegant Divider */}

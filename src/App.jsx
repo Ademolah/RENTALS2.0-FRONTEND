@@ -11,6 +11,7 @@ import Footer from './components/Footer';
 import LandlordDashboard from './pages/LandlordDashboard';
 import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
+import CarDetails from './pages/CarDetails';
 
 function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
@@ -63,6 +64,7 @@ function App() {
             } 
           />
           <Route path="/property/:id" element={<PropertyDetail />} />
+          <Route path="/cars/:id" element={<CarDetails />} />
           
           {/* Role-Based Dashboard Placeholders */}
           <Route path="/dashboard/guest" element={<GuestDashboard />} />
