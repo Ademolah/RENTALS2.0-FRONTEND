@@ -1,14 +1,11 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
-  Home, Key, Map, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
-  CarFront, // For Car Rentals (Sleek, premium front-facing car)
-  Crown,    // For VIP Reservation (Gives that exclusive, high-end feel)
-  Martini,  // Alternative for VIP Reservation (If you want to emphasize Lounge/Club)
-  UtensilsCrossed // Alternative for VIP Reservation (If you want to emphasize Restaurant)
+  Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
+  CarFront, Crown 
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import AuthModal from '../context/AuthModal';
+import AuthModal from '../context/AuthModal'; // SURGICAL FIX: Corrected import path
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -21,6 +18,16 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
     { id: 'vip', label: 'VIP Reservations', icon: Crown },
     { id: 'hotel', label: 'Hotels', icon: Building2 },
   ];
+
+  // Dynamically change the CTA button text based on what the user is currently browsing
+  const getCtaText = () => {
+    switch (activeCategory) {
+      case 'car': return 'List your vehicle';
+      case 'vip': return 'List your venue';
+      case 'hotel': return 'List your hotel';
+      default: return 'List your property';
+    }
+  };
 
   return (
     <>
@@ -66,12 +73,12 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             {/* RIGHT SIDE: List Property & Auth Menu */}
             <div className="flex items-center space-x-2 md:space-x-4">
               
-              {/* Desktop "List your property" */}
+              {/* Context-Aware Desktop Hosting Button */}
               <button 
                 onClick={() => user ? redirectUserByRole('LANDLORD') : setIsAuthOpen(true)}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
               >
-                List your property
+                {getCtaText()}
               </button>
 
               {/* AUTH / PROFILE MENU */}
