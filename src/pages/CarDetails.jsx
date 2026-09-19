@@ -441,26 +441,35 @@ export default function CarDetails() {
 
               {/* Dynamic Action Button */}
               <button 
-                type="submit"
-                disabled={bookingLoading || isRedirecting}
-                className="w-full py-4 mt-2 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
-              >
-                {bookingLoading ? (
-                  <>
-                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    <span>Securing vehicle...</span>
-                  </>
-                ) : isRedirecting ? (
-                  <>
-                    <ShieldCheck className="w-5 h-5 mr-2 animate-pulse" />
-                    <span className="animate-pulse">Redirecting to Paystack...</span>
-                  </>
-                ) : !user ? (
-                  'Log in to Reserve'
-                ) : (
-                  'Reserve Vehicle'
-                )}
-              </button>
+              type="submit"
+              // Disable button if loading, redirecting, OR if the car is already booked
+              disabled={bookingLoading || isRedirecting || (car && !car.isAvailable)}
+              className={`w-full py-4 mt-2 text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:cursor-not-allowed duration-200 ${
+                car && !car.isAvailable
+                  ? "bg-gray-400 opacity-90" // Muted gray styling when currently booked
+                  : "bg-gray-900 hover:bg-brand-primary active:scale-95 disabled:opacity-70"
+              }`}
+            >
+              {bookingLoading ? (
+                <>
+                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                  <span>Securing vehicle...</span>
+                </>
+              ) : isRedirecting ? (
+                <>
+                  <ShieldCheck className="w-5 h-5 mr-2 animate-pulse" />
+                  <span className="animate-pulse">Redirecting to Paystack...</span>
+                </>
+              ) : car && !car.isAvailable ? (
+                // Shows status text when vehicle is already reserved
+                'Currently Booked'
+              ) : !user ? (
+                'Log in to Reserve'
+              ) : (
+                'Reserve Vehicle'
+              )}
+            </button>
+
             </form>
 
             <div className="flex items-center justify-center space-x-2 text-gray-500 mt-5">

@@ -30,6 +30,7 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
           // Fetch ALL cars. Do not filter by category='car' because car categories 
           // are things like 'SUV' or 'Sedan' in the DB.
           responseData = await getCars(); 
+        
         } else {
           // Handles shortlet, hotel, and vip reservations
           responseData = await getProperties({ category: activeCategory });
@@ -38,6 +39,8 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
         let results = Array.isArray(responseData) 
           ? responseData 
           : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
+
+          console.log("[DEBUG FRONTEND 2]: Extracted Results array. Length:", results.length, "Booked inside?", results.some(r => r.isAvailable === false));
 
         // 2. SURGICAL FIX: Apply Smart Client-Side Filtering
         if (!isSearchCleared && Object.keys(searchFilters).length > 0) {
