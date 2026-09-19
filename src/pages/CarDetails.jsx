@@ -28,6 +28,24 @@ export default function CarDetails() {
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
 
+  const generateNext14Days = () => {
+  const dates = [];
+  const today = new Date();
+  for (let i = 0; i < 14; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+  };
+
+  const CONCIERGE_TIME_SLOTS = [
+    "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
+    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"
+  ];
+
+  const [availableDates] = useState(generateNext14Days());
+
   useEffect(() => {
     async function fetchCar() {
       try {
@@ -236,25 +254,25 @@ export default function CarDetails() {
           {/* Description */}
           <div>
             <h3 className="text-xl font-bold text-gray-900 mb-4">About this vehicle</h3>
-            <p className="text-gray-600 leading-relaxed">
-              Experience the perfect blend of performance, prestige, and comfort with this meticulously maintained {car.year} {car.make} {car.model}. 
-              Whether you are attending a high-profile corporate event, a VIP wedding, or simply desire a premium driving experience across {car.location?.city}, 
-              this vehicle delivers uncompromising luxury. Fully serviced, immaculately detailed, and available with optional professional chauffeur service.
+            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+              {car.description || "A premium, meticulously maintained vehicle ready for your travel needs."}
             </p>
           </div>
 
           {/* Premium Amenities List */}
-          <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">Features & Amenities</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4">
-              {['Premium Leather Interior', 'Advanced Climate Control', 'Bluetooth / CarPlay', 'Tinted Privacy Glass', 'GPS Navigation', 'Push-Button Start'].map((feature, i) => (
-                <div key={i} className="flex items-center space-x-3">
-                  <CheckCircle2 className="w-5 h-5 text-emerald-500" />
-                  <span className="text-gray-700 font-medium text-sm">{feature}</span>
-                </div>
-              ))}
+          {car.features && car.features.length > 0 && (
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Features & Amenities</h3>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4">
+                {car.features.map((feature, i) => (
+                  <div key={i} className="flex items-center space-x-3">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
+                    <span className="text-gray-700 font-medium text-sm">{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
 
         </div>
 
@@ -278,30 +296,83 @@ export default function CarDetails() {
             <form onSubmit={handleReservation} className="space-y-4">
               
               {/* Timing Grid */}
-              <div className="border border-gray-300 rounded-2xl overflow-hidden bg-white">
-                <div className="flex border-b border-gray-300">
-                  <div className="flex-1 p-3 border-r border-gray-300 relative">
-                    <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block flex items-center"><CalendarIcon className="w-3 h-3 mr-1"/> Date</label>
-                    <input 
-                      type="date" 
-                      required
-                      min={today}
-                      value={pickupDate}
-                      onChange={(e) => setPickupDate(e.target.value)}
-                      className="w-full text-sm outline-none bg-transparent font-semibold mt-1 cursor-pointer text-gray-900"
-                    />
+              {/* Premium Timing Grid */}
+              <div className="space-y-8 p-6 border border-gray-200 rounded-3xl bg-white shadow-sm">
+                
+                {/* Custom Date Selector */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <CalendarIcon className="w-4 h-4 text-gray-400" />
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-900">
+                      Pickup Date
+                    </label>
                   </div>
-                  <div className="flex-1 p-3 relative">
-                    <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block flex items-center"><Clock className="w-3 h-3 mr-1"/> Time</label>
-                    <input 
-                      type="time" 
-                      required
-                      value={pickupTime}
-                      onChange={(e) => setPickupTime(e.target.value)}
-                      className="w-full text-sm outline-none bg-transparent font-semibold mt-1 cursor-pointer text-gray-900"
-                    />
+                  
+                  <div className="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x">
+                    {availableDates.map((date, index) => {
+                      const dateString = date.toISOString().split('T')[0];
+                      const isSelected = pickupDate === dateString;
+                      
+                      return (
+                        <button
+                          key={dateString}
+                          type="button"
+                          onClick={() => setPickupDate(dateString)}
+                          className={`snap-start shrink-0 flex flex-col items-center justify-center w-20 h-24 rounded-2xl transition-all duration-300 border ${
+                            isSelected 
+                              ? 'bg-gray-900 border-gray-900 text-white shadow-lg scale-[1.02]' 
+                              : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900'
+                          }`}
+                        >
+                          <span className={`text-[10px] font-bold uppercase tracking-wider mb-1 ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                            {index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
+                          </span>
+                          <span className="text-2xl font-extrabold tracking-tight">
+                            {date.getDate()}
+                          </span>
+                          <span className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
+                            {date.toLocaleDateString('en-US', { month: 'short' })}
+                          </span>
+                        </button>
+                      );
+                    })}
                   </div>
                 </div>
+
+                <div className="w-full h-px bg-gray-100"></div>
+
+                {/* Custom Time Selector */}
+                <div>
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Clock className="w-4 h-4 text-gray-400" />
+                    <label className="text-xs font-bold uppercase tracking-widest text-gray-900">
+                      Pickup Time
+                    </label>
+                  </div>
+                  
+                  <div className="flex overflow-x-auto gap-3 pb-2 custom-scrollbar snap-x">
+                    {CONCIERGE_TIME_SLOTS.map((time) => {
+                      const isSelected = pickupTime === time;
+                      
+                      return (
+                        <button
+                          key={time}
+                          type="button"
+                          onClick={() => setPickupTime(time)}
+                          className={`snap-start shrink-0 px-6 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 border ${
+                            isSelected 
+                              ? 'bg-gray-900 border-gray-900 text-white shadow-md scale-[1.02]' 
+                              : 'bg-gray-50 border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900'
+                          }`}
+                        >
+                          {time}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              
                 
                 {/* Duration Dropdown */}
                 <div className="p-3 bg-gray-50/50">

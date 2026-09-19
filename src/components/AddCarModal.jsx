@@ -32,8 +32,8 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [showToast, setShowToast] = useState(false);
 
   // Form State
-  const [features, setFeatures] = useState('');
   const [make, setMake] = useState('');
+  const [seatNumber, setSeatNumber ] = useState(4)
   const [carModel, setCarModel] = useState('');
   const [year, setYear] = useState(new Date().getFullYear());
   const [category, setCategory] = useState('LUXURY');
@@ -42,6 +42,25 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [stateLocation, setStateLocation] = useState('Lagos');
   const [pricePer12Hours, setPricePer12Hours] = useState(150000);
   const [selectedFiles, setSelectedFiles] = useState([]);
+
+  // Place this array outside the component or at the top inside it
+const PREDEFINED_FEATURES = [
+  "Leather Seats", "Apple CarPlay", "Android Auto", "360° Camera", 
+  "GPS Navigation", "Premium Audio", "Sunroof / Moonroof", "Tinted Windows", 
+  "Chauffeur Included", "Armored / Bulletproof", "Wi-Fi Hotspot", "Bluetooth"
+];
+
+// Replace your old features string state with this array state
+const [selectedFeatures, setSelectedFeatures] = useState([]);
+const [description, setDescription] = useState(''); // Added for the description
+
+const toggleFeature = (feat) => {
+  setSelectedFeatures(prev => 
+    prev.includes(feat) 
+      ? prev.filter(f => f !== feat) 
+      : [...prev, feat]
+  );
+};
 
   if (!isOpen) return null;
 
@@ -80,10 +99,14 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
       formData.append('make', make);
       formData.append('carModel', carModel); 
       formData.append('year', year.toString());
+      formData.append('description', description);
       formData.append('category', category);
+      formData.append('seatNumber', seatNumber.toString());
       formData.append('transmission', transmission);
       formData.append('pricePer12Hours', pricePer12Hours.toString());
-      formData.append('features', features);
+      selectedFeatures.forEach((feat) => {
+        formData.append('features', feat);
+      });
       
       formData.append('location', JSON.stringify({
         city: city,
@@ -195,6 +218,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                 </select>
               </div>
 
+
               <div>
                 <label className="block text-xs font-semibold text-gray-700 mb-2">Transmission</label>
                 <select 
@@ -206,24 +230,109 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   <option value="MANUAL">Manual</option>
                 </select>
               </div>
+
+              {/* Year and Seat Capacity Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          {/* Manufacture Year Selector */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 tracking-wide mb-1 uppercase">
+              Manufacture Year
+            </label>
+            <div className="relative group">
+              <select 
+                required
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 outline-none transition-all text-gray-900 font-medium appearance-none cursor-pointer group-hover:border-gray-300"
+              >
+                {/* Dynamically generates from current year down to 15 years ago */}
+                {Array.from({ length: 15 }, (_, i) => new Date().getFullYear() - i).map((y) => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+              {/* Custom Modern Chevron */}
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400 group-hover:text-gray-600 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
             </div>
           </div>
 
-          {/* Features Input */}
+          {/* Seat Number Selector */}
+          <div>
+            <label className="block text-xs font-bold text-gray-700 tracking-wide mb-1 uppercase">
+              Seat Capacity
+            </label>
+            <div className="relative group">
+              <select 
+                required
+                value={seatNumber}
+                onChange={(e) => setSeatNumber(Number(e.target.value))}
+                className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 outline-none transition-all text-gray-900 font-medium appearance-none cursor-pointer group-hover:border-gray-300"
+              >
+                {[2, 4, 5, 6, 7, 8, 12, 15].map((num) => (
+                  <option key={num} value={num}>
+                    {num} {num === 2 ? 'Seats (Coupe)' : 'Seats'}
+                  </option>
+                ))}
+              </select>
+              {/* Custom Modern Chevron */}
+              <div className="absolute inset-y-0 right-4 flex items-center pointer-events-none text-gray-400 group-hover:text-gray-600 transition-colors">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        
+            </div>
+          </div>
+
+          {/* Features Selection Grid */}
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <label className="block text-xs font-bold text-gray-700 tracking-wide uppercase">
+              Vehicle Features
+            </label>
+            <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              {selectedFeatures.length} Selected
+            </span>
+          </div>
+          
+          <div className="flex flex-wrap gap-2.5">
+            {PREDEFINED_FEATURES.map((feat) => {
+              const isSelected = selectedFeatures.includes(feat);
+              return (
+                <button
+                  key={feat}
+                  type="button"
+                  onClick={() => toggleFeature(feat)}
+                  className={`px-4 py-2.5 rounded-full text-xs font-bold transition-all duration-200 border ${
+                    isSelected 
+                      ? 'bg-gray-900 border-gray-900 text-white shadow-md scale-[1.02]' 
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-400 hover:text-gray-900'
+                  }`}
+                >
+                  {feat}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* About This Car (Description) */}
         <div>
           <label className="block text-xs font-bold text-gray-700 tracking-wide mb-1 uppercase">
-            Vehicle Features
+            About This Vehicle
           </label>
-          <input 
-            type="text" 
-            value={features}
-            onChange={(e) => setFeatures(e.target.value)}
-            placeholder="e.g. Leather Seats, Bluetooth, Chauffeur Included" 
-            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none transition-all placeholder:text-gray-400"
-          />
-          <p className="text-[10px] text-gray-500 mt-1.5 ml-1">
-            Separate multiple features with commas.
-          </p>
+          <textarea 
+            required
+            rows="4"
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            placeholder="Describe the vehicle's condition, specific rules, or unique selling points..." 
+            className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-gray-900/20 focus:border-gray-900 outline-none transition-all placeholder:text-gray-400 resize-none custom-scrollbar"
+          ></textarea>
         </div>
 
           {/* Location */}
