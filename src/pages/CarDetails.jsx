@@ -7,6 +7,9 @@ import {
 } from 'lucide-react';
 import { getCarById } from '../api/car';
 import { useAuth } from '../context/AuthContext';
+import { createCarReservation } from '../api/car';
+
+
 
 export default function CarDetails() {
   const { id } = useParams();
@@ -27,6 +30,10 @@ export default function CarDetails() {
   const [needsChauffeur, setNeedsChauffeur] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
+
+  const [isRedirecting, setIsRedirecting] = useState(false);
+
+  
 
   const generateNext14Days = () => {
   const dates = [];
@@ -89,7 +96,6 @@ export default function CarDetails() {
     // 1. Authentication Gate
     if (!user) {
       setBookingError('Please log in or sign up to reserve this vehicle.');
-      // Optional: You could trigger an Auth Modal here if you have a global state for it
       return;
     }
 
@@ -101,20 +107,41 @@ export default function CarDetails() {
     setBookingLoading(true);
 
     try {
-      // Simulate API call to your booking endpoint
-      // const response = await initiateCarBooking({ carId: car._id, pickupDate, pickupTime, durationSlots, needsChauffeur, total: pricing.grandTotal });
+      const pickupDateTime = new Date(`${pickupDate} ${pickupTime}`);
+
+      // 2. Calculate Dropoff Time
+      const dropoffDateTime = new Date(pickupDateTime);
+      // Assuming your durationSlots represent 12-hour blocks (adjust to 24 if they represent full days)
+      dropoffDateTime.setHours(pickupDateTime.getHours() + (durationSlots * 12)); 
+
+      // 3. Construct the exact payload the backend expects
+      const payload = {
+        carId: car._id || car.id,
+        pickupTime: pickupDateTime.toISOString(), // Standardized for the backend
+        dropoffTime: dropoffDateTime.toISOString(), // Standardized for the backend
+        totalAmount: pricing.grandTotal
+      };
+
+      const response = await createCarReservation(payload);
       
+      // 3. World-class UX: Stop loading spinner, show redirect message
+      setBookingLoading(false);
+      setIsRedirecting(true);
+
+      // 4. Redirect to Paystack (The short timeout makes the UI transition feel intentional and premium)
       setTimeout(() => {
-        setBookingLoading(false);
-        alert(`Reservation initiated for ${car.make} ${car.model}. Proceeding to Paystack...`);
-        // window.location.href = response.checkoutUrl;
-      }, 1500);
+        // Matches the Postman response structure you showed me earlier
+        window.location.href = response.data.checkoutUrl; 
+      }, 800);
 
     } catch (err) {
-      setBookingError(err.response?.data?.message || 'Failed to initiate reservation.');
+  
+      setBookingError(err.response?.data?.message || err.message || 'Failed to initiate reservation.');
       setBookingLoading(false);
+      setIsRedirecting(false);
     }
   };
+
 
   if (loading) {
     return (
@@ -232,7 +259,7 @@ export default function CarDetails() {
               <Users className="w-5 h-5 text-gray-500" />
               <div className="flex flex-col">
                 <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Seats</span>
-                <span className="text-sm font-semibold text-gray-900">{car.seats || 4} Passengers</span>
+                <span className="text-sm font-semibold text-gray-900">{car.seatNumber || 4} Passengers</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
@@ -415,13 +442,18 @@ export default function CarDetails() {
               {/* Dynamic Action Button */}
               <button 
                 type="submit"
-                disabled={bookingLoading}
+                disabled={bookingLoading || isRedirecting}
                 className="w-full py-4 mt-2 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
               >
                 {bookingLoading ? (
                   <>
                     <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                    <span>Processing...</span>
+                    <span>Securing vehicle...</span>
+                  </>
+                ) : isRedirecting ? (
+                  <>
+                    <ShieldCheck className="w-5 h-5 mr-2 animate-pulse" />
+                    <span className="animate-pulse">Redirecting to Paystack...</span>
                   </>
                 ) : !user ? (
                   'Log in to Reserve'

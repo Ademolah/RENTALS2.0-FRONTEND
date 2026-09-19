@@ -27,3 +27,10 @@ export const createCar = async (formData) => {
   });
   return response.data;
 };
+
+// src/api/cars.js
+export const createCarReservation = async (reservationData) => {
+  // Changed from /cars/reservations to /cars/book
+  const response = await apiClient.post('/cars/book', reservationData); 
+  return response.data;
+};

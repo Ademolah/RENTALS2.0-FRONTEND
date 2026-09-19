@@ -12,17 +12,21 @@ export default function CarCard({ car }) {
     <Link to={`/cars/${car._id}`} className="group block flex-col gap-3 rounded-2xl transition-all duration-300">
       
       {/* Image Hero Container */}
-      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl mb-3 bg-gray-100">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-2xl mb-3 bg-gray-100 group">
         <img 
           src={image} 
           alt={`${make} ${model}`}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
-        {car.isAvailable && (
-          <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-gray-900 shadow-sm">
-            Available Now
-          </div>
-        )}
+        
+        {/* Dynamic Status Badge */}
+        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${
+          car.isAvailable 
+            ? "bg-white/90 text-gray-900" 
+            : "bg-gray-900/80 text-white"
+        }`}>
+          {car.isAvailable ? "Available Now" : "Booked"}
+        </div>
       </div>
 
       {/* Content Details */}
