@@ -34,3 +34,15 @@ export const createCarReservation = async (reservationData) => {
   const response = await apiClient.post('/cars/book', reservationData); 
   return response.data;
 };
+
+// src/api/escrow.js (Add the car handover function)
+export const confirmCarHandover = async (reservationId) => {
+  const response = await apiClient.patch(`/cars/reservations/${reservationId}/handover`);
+  return response.data;
+};
+
+export const getMyCarBookings = async () => {
+  // Assuming you create a similar endpoint for cars
+  const response = await apiClient.get('/cars/my-bookings'); 
+  return response.data;
+};

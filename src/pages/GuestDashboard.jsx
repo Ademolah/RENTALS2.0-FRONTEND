@@ -1,328 +1,303 @@
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  MapPin, Calendar, ShieldCheck, CheckCircle2, 
-  Settings, Bell, ChevronRight, LogOut, Clock, 
-  User, CreditCard, Key, ArrowUpRight, Loader2
+  Home, CarFront, Hotel, Crown, ShieldCheck, 
+  MapPin, Calendar, Clock, Loader2, CheckCircle, 
+  ChevronRight, Wallet, LayoutGrid
 } from 'lucide-react';
+import { getMyPropertyBookings } from '../api/reservation';
+import { confirmPropertyCheckIn } from '../api/properties';
+import { confirmCarHandover } from '../api/car';
+import { getMyCarBookings } from '../api/car';
 
-export default function GuestDashboard() {
-  const [activeTab, setActiveTab] = useState('trips');
-  const [isCheckingIn, setIsCheckingIn] = useState(false);
-  const [hasCheckedIn, setHasCheckedIn] = useState(false);
+// --- SUB-COMPONENT: The Unified Booking Card ---
+const BookingCard = ({ booking, onConfirmEscrow }) => {
+  const [isConfirming, setIsConfirming] = useState(false);
 
-  // Mock User Data (Replace with your AuthContext)
-  const user = {
-    firstName: 'Alex',
-    lastName: 'Jonathan',
-    email: 'alex.jonathan@example.com',
-    memberSince: '2026'
-  };
+  // 1. Normalize Data based on Type
+  const isCar = booking.type === 'CAR';
+  const title = isCar 
+    ? `${booking.carId?.make} ${booking.carId?.carModel} ${booking.carId?.year}`
+    : booking.propertyId?.title || 'Luxury Shortlet';
+  
+  const image = isCar 
+    ? booking.carId?.images?.[0] 
+    : booking.propertyId?.images?.[0];
 
-  // Mock Active Trip (Replace with API fetch: /api/reservations/me?status=active)
-  const activeTrip = {
-    id: 'RES-89234',
-    propertyName: 'Minimalist Lagoon Parkview Apartment',
-    location: 'Lekki Phase 1, Lagos',
-    checkIn: '2026-09-15',
-    checkOut: '2026-09-20',
-    totalPaid: 250000,
-    image: 'https://res.cloudinary.com/wcduu38s/image/upload/v1789136264/rentals/properties/vjbpy1b40aesihdh5dng.jpg',
-    hostName: 'Oyinmax Luxury'
-  };
+  const location = isCar 
+    ? `${booking.carId?.location?.city}, ${booking.carId?.location?.state}`
+    : booking.propertyId?.address?.city || 'Location unavailable';
 
-  // Mock Past Trips
-  const pastTrips = [
-    {
-      id: 'RES-77211',
-      propertyName: 'Eko Atlantic Oceanfront Penthouse',
-      dates: 'Aug 10 - Aug 14, 2026',
-      status: 'Completed'
-    }
-  ];
+  const startDate = new Date(isCar ? booking.pickupTime : booking.checkInDate);
+  const endDate = new Date(isCar ? booking.dropoffTime : booking.checkOutDate);
 
-  // The Escrow Trigger
-  const handleCheckIn = async () => {
-    setIsCheckingIn(true);
+  // 2. Escrow State Logic
+  const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
+  const escrowStatus = isCar ? booking.escrowStatus : booking.payoutStatus;
+  const isReleased = isCar ? escrowStatus === 'RELEASED' : escrowStatus === 'RELEASED_TO_LANDLORD';
+
+  const handleConfirm = async () => {
+    setIsConfirming(true);
     try {
-      // API Call to your backend to update reservation status & trigger landlord payout
-      // await releaseEscrowPayment(activeTrip.id);
-      
-      // Simulate network request
-      await new Promise(res => setTimeout(res, 2000));
-      setHasCheckedIn(true);
+      if (isCar) {
+        await confirmCarHandover(booking._id);
+      } else {
+        await confirmPropertyCheckIn(booking._id);
+      }
+      onConfirmEscrow(booking._id, booking.type);
     } catch (error) {
-      console.error("Failed to release escrow:", error);
+      console.error("Escrow confirmation failed:", error);
     } finally {
-      setIsCheckingIn(false);
+      setIsConfirming(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] text-gray-900 font-sans selection:bg-gray-900 selection:text-white">
-      
-      {/* 1. TOP NAVIGATION HUB */}
-      <nav className="bg-white border-b border-gray-200 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Branding / Greeting */}
-            <div className="flex items-center space-x-2">
-              <div className="w-10 h-10 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-lg">
-                {user.firstName[0]}
-              </div>
-              <div>
-                <h1 className="text-xl font-bold tracking-tight text-gray-900 hidden sm:block">
-                  Welcome back, {user.firstName}
-                </h1>
-              </div>
-            </div>
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row group">
+      {/* Image Section */}
+      <div className="relative h-56 md:h-auto md:w-72 bg-gray-100 overflow-hidden shrink-0">
+        <img 
+          src={image || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'} 
+          alt={title}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+        />
+        <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full text-gray-900 shadow-sm">
+          {isCar ? 'Vehicle Rental' : 'Shortlet'}
+        </div>
+        {booking.reservationStatus === 'ACTIVE' && (
+          <div className="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-bold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1">
+            <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
+            <span>Active</span>
+          </div>
+        )}
+      </div>
 
-            {/* Desktop Tabs */}
-            <div className="hidden md:flex space-x-8">
-              {['trips', 'notifications', 'profile'].map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`capitalize font-semibold text-sm transition-all duration-200 border-b-2 py-7 ${
-                    activeTab === tab 
-                      ? 'border-gray-900 text-gray-900' 
-                      : 'border-transparent text-gray-500 hover:text-gray-900'
-                  }`}
+      {/* Details & Escrow Section */}
+      <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-2">
+            <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{title}</h3>
+            <span className="text-lg font-bold text-gray-900">₦{booking.totalAmount.toLocaleString()}</span>
+          </div>
+          
+          <div className="flex items-center text-gray-500 text-sm font-medium space-x-4 mb-6">
+            <div className="flex items-center space-x-1">
+              <MapPin className="w-4 h-4 text-gray-400" />
+              <span>{location}</span>
+            </div>
+            <div className="flex items-center space-x-1">
+              <Calendar className="w-4 h-4 text-gray-400" />
+              <span>
+                {startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - {endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+              </span>
+            </div>
+            {isCar && (
+              <div className="flex items-center space-x-1">
+                <Clock className="w-4 h-4 text-gray-400" />
+                <span>{endDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} Dropoff</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
+        {booking.reservationStatus === 'ACTIVE' && (
+          <div className="mt-4 pt-6 border-t border-gray-100">
+            {hasGuestConfirmed || isReleased ? (
+              <div className="flex items-center space-x-3 bg-green-50/50 text-green-700 px-5 py-4 rounded-2xl border border-green-100">
+                <div className="bg-green-500 rounded-full p-1 shadow-sm">
+                  <CheckCircle className="w-4 h-4 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Checked-in & Secured</div>
+                  <div className="text-xs font-medium text-green-600 mt-0.5">Funds released to host. Enjoy your {isCar ? 'ride' : 'stay'}.</div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+                <div className="flex items-start space-x-3">
+                  <ShieldCheck className="w-5 h-5 text-gray-900 mt-0.5" />
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">Escrow Protected</div>
+                    <div className="text-xs font-medium text-gray-500 mt-0.5">Host is unpaid until you confirm arrival.</div>
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={handleConfirm}
+                  disabled={isConfirming}
+                  className="w-full sm:w-auto px-6 py-3 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
                 >
-                  {tab}
+                  {isConfirming ? (
+                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
+                  ) : (
+                    `Confirm ${isCar ? 'Vehicle Pickup' : 'Check-In'}`
+                  )}
                 </button>
-              ))}
-            </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
 
-            {/* Mobile Tab Icons */}
-            <div className="flex md:hidden space-x-6">
-              <button onClick={() => setActiveTab('trips')} className={activeTab === 'trips' ? 'text-gray-900' : 'text-gray-400'}>
-                <MapPin className="w-6 h-6" />
-              </button>
-              <button onClick={() => setActiveTab('notifications')} className={activeTab === 'notifications' ? 'text-gray-900' : 'text-gray-400'}>
-                <Bell className="w-6 h-6" />
-              </button>
-              <button onClick={() => setActiveTab('profile')} className={activeTab === 'profile' ? 'text-gray-900' : 'text-gray-400'}>
-                <User className="w-6 h-6" />
-              </button>
+
+// --- MAIN DASHBOARD COMPONENT ---
+export default function GuestDashboard() {
+  const [activeTab, setActiveTab] = useState('ALL');
+  const [bookings, setBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [toastMessage, setToastMessage] = useState('');
+
+  const TABS = [
+    { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
+    { id: 'SHORTLET', label: 'Shortlets', icon: Home },
+    { id: 'CAR', label: 'Car Rentals', icon: CarFront },
+    { id: 'HOTEL', label: 'Hotels (Soon)', icon: Hotel, disabled: true },
+    { id: 'VIP', label: 'VIP (Soon)', icon: Crown, disabled: true },
+  ];
+
+  useEffect(() => {
+    const fetchAllBookings = async () => {
+      setLoading(true);
+      try {
+        // Parallel fetching for high performance
+        const [propertyRes, carRes] = await Promise.allSettled([
+          getMyPropertyBookings(),
+          getMyCarBookings()
+        ]);
+
+        let unifiedBookings = [];
+
+        // Normalize Property Data
+        if (propertyRes.status === 'fulfilled' && propertyRes.value.data?.bookings) {
+          const props = propertyRes.value.data.bookings.map(b => ({ ...b, type: 'SHORTLET' }));
+          unifiedBookings = [...unifiedBookings, ...props];
+        }
+
+        // Normalize Car Data
+        if (carRes.status === 'fulfilled' && carRes.value.data?.bookings) {
+          const cars = carRes.value.data.bookings.map(b => ({ ...b, type: 'CAR' }));
+          unifiedBookings = [...unifiedBookings, ...cars];
+        }
+
+        // Sort by most recent
+        unifiedBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setBookings(unifiedBookings);
+
+      } catch (error) {
+        console.error("Failed to load dashboard data", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAllBookings();
+  }, []);
+
+  const handleEscrowSuccess = (reservationId, type) => {
+    // Optimistically update the UI to show the green checkmark
+    setBookings(prev => prev.map(booking => {
+      if (booking._id === reservationId) {
+        if (type === 'CAR') return { ...booking, guestConfirmedPickup: true, escrowStatus: 'RELEASED' };
+        return { ...booking, checkInConfirmedByGuest: true, payoutStatus: 'RELEASED_TO_LANDLORD' };
+      }
+      return booking;
+    }));
+
+    setToastMessage(`${type === 'CAR' ? 'Vehicle pickup' : 'Check-in'} confirmed successfully!`);
+    setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const filteredBookings = bookings.filter(b => activeTab === 'ALL' || b.type === activeTab);
+
+  return (
+    <div className="min-h-screen bg-[#F8F9FA] pb-24">
+      {/* Header */}
+      <div className="bg-white border-b border-gray-200 px-6 py-12 md:px-12 md:py-16">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Your Itinerary</h1>
+            <p className="text-gray-500 font-medium mt-3 text-lg">Manage your luxury bookings and reservations.</p>
+          </div>
+          <div className="bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 flex items-center space-x-4">
+            <Wallet className="w-8 h-8 text-brand-primary" />
+            <div>
+              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">Total Escrow Value</div>
+              <div className="text-xl font-bold text-gray-900">
+                ₦{bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0).toLocaleString()}
+              </div>
             </div>
           </div>
         </div>
-      </nav>
+      </div>
 
-      {/* 2. MAIN DASHBOARD CONTENT */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col lg:flex-row gap-10">
         
-        {/* === TRIPS TAB === */}
-        {activeTab === 'trips' && (
-          <div className="space-y-12 animate-in fade-in duration-500">
-            
-            {/* Active / Upcoming Itinerary */}
-            <section>
-              <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Current Itinerary</h2>
-              
-              {activeTrip ? (
-                <div className="bg-white border border-gray-200 rounded-[2rem] overflow-hidden flex flex-col lg:flex-row transition-all hover:border-gray-300 shadow-sm">
-                  
-                  {/* Left: Property Hero */}
-                  <div className="lg:w-2/5 relative h-64 lg:h-auto">
-                    <img 
-                      src={activeTrip.image} 
-                      alt={activeTrip.propertyName} 
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                    <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest text-gray-900">
-                      {hasCheckedIn ? 'Active Stay' : 'Upcoming Stay'}
-                    </div>
-                  </div>
-
-                  {/* Right: Booking Intelligence */}
-                  <div className="lg:w-3/5 p-6 md:p-10 flex flex-col justify-between">
-                    <div>
-                      <div className="flex justify-between items-start mb-2">
-                        <h3 className="text-2xl md:text-3xl font-bold tracking-tight text-gray-900 leading-tight pr-4">
-                          {activeTrip.propertyName}
-                        </h3>
-                      </div>
-                      <p className="text-gray-500 font-medium flex items-center mt-2">
-                        <MapPin className="w-4 h-4 mr-1.5" />
-                        {activeTrip.location}
-                      </p>
-                    </div>
-
-                    <div className="grid grid-cols-2 gap-8 my-8 py-6 border-y border-gray-100">
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-extrabold text-gray-400 mb-1">Check-in</p>
-                        <p className="font-bold text-gray-900">{new Date(activeTrip.checkIn).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
-                        <p className="text-sm text-gray-500 mt-0.5">3:00 PM</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] uppercase tracking-widest font-extrabold text-gray-400 mb-1">Checkout</p>
-                        <p className="font-bold text-gray-900">{new Date(activeTrip.checkOut).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}</p>
-                        <p className="text-sm text-gray-500 mt-0.5">11:00 AM</p>
-                      </div>
-                    </div>
-
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div className="w-full sm:w-auto">
-                        <p className="text-[10px] uppercase tracking-widest font-extrabold text-gray-400 mb-0.5">Total Secured</p>
-                        <p className="text-xl font-bold text-gray-900 tracking-tight">₦{activeTrip.totalPaid.toLocaleString()}</p>
-                      </div>
-
-                      {/* THE ESCROW TRIGGER BUTTON */}
-                      <div className="w-full sm:w-auto flex-shrink-0">
-                        {hasCheckedIn ? (
-                          <div className="flex items-center justify-center space-x-2 bg-emerald-50 text-emerald-700 px-8 py-4 rounded-xl border border-emerald-100 font-bold w-full">
-                            <CheckCircle2 className="w-5 h-5" />
-                            <span>Checked In Successfully</span>
-                          </div>
-                        ) : (
-                          <button 
-                            onClick={handleCheckIn}
-                            disabled={isCheckingIn}
-                            className="group relative w-full sm:w-auto bg-gray-900 hover:bg-black text-white px-8 py-4 rounded-xl font-bold transition-all active:scale-95 disabled:opacity-70 flex items-center justify-center space-x-2 overflow-hidden"
-                          >
-                            <div className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/10 to-transparent group-hover:animate-[shimmer_1.5s_infinite]"></div>
-                            {isCheckingIn ? (
-                              <>
-                                <Loader2 className="w-5 h-5 animate-spin" />
-                                <span>Verifying...</span>
-                              </>
-                            ) : (
-                              <>
-                                <ShieldCheck className="w-5 h-5" />
-                                <span>Confirm Check-in</span>
-                              </>
-                            )}
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    
-                    {!hasCheckedIn && (
-                      <p className="text-xs text-gray-400 mt-4 text-center sm:text-right font-medium">
-                        Clicking this confirms your arrival and releases the secure escrow payment to the host.
-                      </p>
-                    )}
-                  </div>
-                </div>
-              ) : (
-                <div className="bg-white border border-gray-200 rounded-[2rem] p-12 text-center">
-                  <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Calendar className="w-8 h-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">No upcoming trips</h3>
-                  <p className="text-gray-500 mt-2">When you're ready to plan your next journey, we're here.</p>
-                </div>
-              )}
-            </section>
-
-            {/* Past Trips List */}
-            <section>
-              <h2 className="text-xl font-bold tracking-tight text-gray-900 mb-6">Where you've been</h2>
-              <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden">
-                <ul className="divide-y divide-gray-100">
-                  {pastTrips.map(trip => (
-                    <li key={trip.id} className="p-6 flex items-center justify-between hover:bg-gray-50 transition-colors cursor-pointer group">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
-                          <Clock className="w-5 h-5 text-gray-400" />
-                        </div>
-                        <div>
-                          <p className="font-bold text-gray-900 group-hover:text-brand-primary transition-colors">{trip.propertyName}</p>
-                          <p className="text-sm text-gray-500 font-medium">{trip.dates}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center space-x-4">
-                        <span className="hidden md:inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-600">
-                          {trip.status}
-                        </span>
-                        <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900 transition-colors" />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            </section>
+        {/* Desktop Sidebar / Mobile Top Scroll */}
+        <div className="lg:w-64 shrink-0 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
+          <div className="flex lg:flex-col gap-2 min-w-max lg:min-w-0 sticky top-28">
+            {TABS.map((tab) => {
+              const Icon = tab.icon;
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  disabled={tab.disabled}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left
+                    ${isActive ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
+                    ${tab.disabled ? 'opacity-40 cursor-not-allowed bg-transparent' : ''}
+                  `}
+                >
+                  <Icon className={`w-5 h-5 ${isActive ? 'text-brand-primary' : ''}`} />
+                  <span className="whitespace-nowrap flex-1">{tab.label}</span>
+                  {!tab.disabled && isActive && <ChevronRight className="w-4 h-4 hidden lg:block opacity-50" />}
+                </button>
+              );
+            })}
           </div>
-        )}
+        </div>
 
-        {/* === NOTIFICATIONS TAB === */}
-        {activeTab === 'notifications' && (
-          <div className="max-w-3xl animate-in fade-in duration-500">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Notifications</h2>
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-100">
-              <div className="p-6 hover:bg-gray-50 transition-colors flex gap-4">
-                <div className="mt-1">
-                  <div className="w-2 h-2 bg-brand-primary rounded-full"></div>
-                </div>
-                <div>
-                  <p className="font-bold text-gray-900">Check-in Instructions Available</p>
-                  <p className="text-gray-500 text-sm mt-1 leading-relaxed">Your host for Minimalist Lagoon Parkview Apartment has provided the smart lock codes for your arrival tomorrow.</p>
-                  <p className="text-xs text-gray-400 font-medium mt-2">2 hours ago</p>
-                </div>
-              </div>
-              <div className="p-6 hover:bg-gray-50 transition-colors flex gap-4 opacity-75">
-                <div className="mt-1 w-2 h-2"></div>
-                <div>
-                  <p className="font-bold text-gray-900">Payment Secured</p>
-                  <p className="text-gray-500 text-sm mt-1 leading-relaxed">Your payment of ₦250,000 has been securely locked in escrow for your upcoming stay.</p>
-                  <p className="text-xs text-gray-400 font-medium mt-2">Sep 10, 2026</p>
-                </div>
-              </div>
+        {/* Main Content Area */}
+        <div className="flex-1 space-y-6">
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+              <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
+              <p className="font-medium text-lg">Loading your itinerary...</p>
             </div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
+              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                <Calendar className="w-8 h-8 text-gray-300" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-2">No bookings found</h3>
+              <p className="text-gray-500 font-medium">You don't have any {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} reservations yet.</p>
+            </div>
+          ) : (
+            filteredBookings.map((booking) => (
+              <BookingCard 
+                key={booking._id} 
+                booking={booking} 
+                onConfirmEscrow={handleEscrowSuccess} 
+              />
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* Floating Success Toast */}
+      {toastMessage && (
+        <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
+          <div className="bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl flex items-center space-x-3 border border-gray-700">
+            <div className="bg-green-500 p-1 rounded-full">
+              <CheckCircle className="w-4 h-4 text-white" />
+            </div>
+            <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
           </div>
-        )}
-
-        {/* === PROFILE TAB === */}
-        {activeTab === 'profile' && (
-          <div className="max-w-3xl animate-in fade-in duration-500">
-            <h2 className="text-2xl font-bold tracking-tight text-gray-900 mb-6">Profile & Settings</h2>
-            
-            {/* Profile Header */}
-            <div className="bg-white border border-gray-200 rounded-2xl p-8 mb-8 flex items-center space-x-6">
-              <div className="w-20 h-20 bg-gray-900 rounded-full flex items-center justify-center text-white font-bold text-3xl">
-                {user.firstName[0]}
-              </div>
-              <div>
-                <h3 className="text-2xl font-bold text-gray-900">{user.firstName} {user.lastName}</h3>
-                <p className="text-gray-500 font-medium">{user.email}</p>
-                <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-2">Guest since {user.memberSince}</p>
-              </div>
-            </div>
-
-            {/* Settings List */}
-            <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden divide-y divide-gray-100">
-              <button className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                <div className="flex items-center space-x-4">
-                  <User className="w-5 h-5 text-gray-400 group-hover:text-gray-900" />
-                  <span className="font-bold text-gray-900">Personal Information</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900" />
-              </button>
-              <button className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                <div className="flex items-center space-x-4">
-                  <CreditCard className="w-5 h-5 text-gray-400 group-hover:text-gray-900" />
-                  <span className="font-bold text-gray-900">Payments & Payouts</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900" />
-              </button>
-              <button className="w-full p-6 flex items-center justify-between hover:bg-gray-50 transition-colors group">
-                <div className="flex items-center space-x-4">
-                  <Key className="w-5 h-5 text-gray-400 group-hover:text-gray-900" />
-                  <span className="font-bold text-gray-900">Login & Security</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-gray-300 group-hover:text-gray-900" />
-              </button>
-            </div>
-
-            <button className="mt-8 flex items-center space-x-2 text-red-600 font-bold px-4 py-2 rounded-lg hover:bg-red-50 transition-colors">
-              <LogOut className="w-5 h-5" />
-              <span>Log out</span>
-            </button>
-          </div>
-        )}
-
-      </main>
+        </div>
+      )}
     </div>
   );
 }

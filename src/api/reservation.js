@@ -5,7 +5,7 @@ export const initiateBooking = async (bookingData) => {
   return response.data;
 };
 
-export const getMyBookings = async () => {
+export const getMyPropertyBookings = async () => {
   const response = await apiClient.get('/reservations/my-bookings');
   return response.data;
 };

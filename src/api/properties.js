@@ -28,3 +28,9 @@ export const createProperty = async (formData) => {
   });
   return response.data;
 };
+
+export const confirmPropertyCheckIn = async (reservationId) => {
+  // We use patch because we are updating the boolean status of an existing reservation
+  const response = await apiClient.patch(`/reservations/${reservationId}/confirm-checkin`);
+  return response.data;
+};
