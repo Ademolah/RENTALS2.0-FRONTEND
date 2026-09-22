@@ -46,3 +46,9 @@ export const getMyCarBookings = async () => {
   const response = await apiClient.get('/cars/my-bookings'); 
   return response.data;
 };
+
+export const getLandlordCarBookings = async () => {
+  const response = await apiClient.get('/cars/landlord/bookings');
+  return response.data;
+};
+

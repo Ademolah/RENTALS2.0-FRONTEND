@@ -34,3 +34,10 @@ export const confirmPropertyCheckIn = async (reservationId) => {
   const response = await apiClient.patch(`/reservations/${reservationId}/confirm-checkin`);
   return response.data;
 };
+
+
+export const getLandlordPropertyBookings = async () => {
+  const response = await apiClient.get('/properties/landlord-bookings');
+  return response.data;
+};
+

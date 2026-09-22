@@ -1,338 +1,352 @@
-
-import { useState, useRef, useEffect } from 'react';
-import { useAuth } from '../context/AuthContext';
+import  { useState, useEffect } from 'react';
 import { 
-  Plus,
-  ChevronRight, 
-  CheckCircle, 
-  Clock, 
-  MapPin, 
-  ShieldCheck,
-  TrendingUp,
-  Wallet, ChevronDown, Building, Car, Hotel, Crown
+  Building, Car, Hotel, Crown, Plus, ShieldCheck, 
+  CheckCircle, Clock, MapPin, Calendar, Users, Edit3, Loader2, ArrowRight
 } from 'lucide-react';
 
-
-import AddPropertyModal from '../components/AddPropertyModal';
-import AddCarModal from '../components/AddCarModal';
+import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
+import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 
 export default function LandlordDashboard() {
-  const { user } = useAuth();
-  const [isModalOpen, setIsModalOpen] = useState(false);
-
-  const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
-  const [isCarModalOpen, setIsCarModalOpen] = useState(false);
-  
-  // State for the mock reservations
-  const [reservations, setReservations] = useState([
-    {
-      id: 'RES-8921',
-      guestName: 'Chidi Okonkwo',
-      guestAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-      propertyTitle: 'Minimalist Luxury Suite',
-      location: 'Ikoyi, Lagos',
-      checkInDate: 'Sep 10, 2026',
-      checkOutDate: 'Sep 14, 2026',
-      totalAmount: 1050000,
-      status: 'ARRIVING_TODAY', // Options: ARRIVING_TODAY, CHECKED_IN, COMPLETED
-      escrowStatus: 'SECURED'
-    },
-    {
-      id: 'RES-4410',
-      guestName: 'Amina Bello',
-      guestAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-      propertyTitle: 'Waterfront Penthouse',
-      location: 'Victoria Island, Lagos',
-      checkInDate: 'Sep 12, 2026',
-      checkOutDate: 'Sep 15, 2026',
-      totalAmount: 850000,
-      status: 'UPCOMING',
-      escrowStatus: 'SECURED'
-    }
-  ]);
-
-  // Dropdown state and click-outside handler
+  const [activeTab, setActiveTab] = useState('ACTION_FEED');
   const [isListMenuOpen, setIsListMenuOpen] = useState(false);
-  const dropdownRef = useRef(null);
+  const [bookings, setBookings] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [processingId, setProcessingId] = useState(null);
 
+  // 1. REAL DATA FETCHING & NORMALIZATION
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
-        setIsListMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    fetchPortfolioData();
   }, []);
 
-  // Handler to trigger the critical Escrow Check-In confirmation
-  const handleConfirmCheckIn = (id) => {
-    setReservations(prev => prev.map(res => 
-      res.id === id ? { ...res, status: 'CHECKED_IN' } : res
-    ));
-    // Note: Later, this will trigger the Paystack Escrow Release API call.
+  const fetchPortfolioData = async () => {
+    setIsLoading(true);
+    try {
+      const [propResponse, carResponse] = await Promise.all([
+        getLandlordPropertyBookings(), 
+        getLandlordCarBookings()
+      ]);
+
+      // SURGICAL FIX: Robust extraction mapping exactly to your console log structure
+      const propData = propResponse?.data?.bookings || [];
+      const carData = carResponse?.data?.bookings || [];
+
+
+
+      // Normalize Property Bookings
+      const normalizedProps = propData.map(b => {
+        
+        // SURGICAL FIX: Safely parse the address object into a string
+        const addr = b.propertyId?.address;
+        const locationString = addr 
+          ? (typeof addr === 'object' 
+              ? `${addr.city || ''}, ${addr.state || ''}`.replace(/(^,\s*)|(,\s*$)/g, '') // Strips trailing commas
+              : addr) 
+          : 'Location hidden';
+
+        return {
+          _id: b._id,
+          type: 'SHORTLET',
+          reservationStatus: b.reservationStatus,
+          escrowStatus: b.escrowStatus,
+          checkInConfirmedByGuest: b.checkInConfirmedByGuest,
+          checkInConfirmedByHost: b.checkInConfirmedByHost,
+          payoutAmount: b.totalAmount, 
+          dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
+          guest: { 
+            firstName: b.userId?.firstName || 'Guest', 
+            lastName: b.userId?.lastName || '', 
+            phone: b.userId?.phoneNumber || 'N/A' 
+          },
+          asset: { 
+            title: b.propertyId?.title || 'Property', 
+            location: locationString || 'Location hidden', // Using the parsed string here
+            image: b.propertyId?.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'
+          },
+          createdAt: new Date(b.createdAt)
+        };
+      });
+
+      // Normalize Car Bookings
+      const normalizedCars = carData.map(b => ({
+        _id: b._id,
+        type: 'CAR',
+        reservationStatus: b.reservationStatus,
+        escrowStatus: b.escrowStatus,
+        guestConfirmedPickup: b.guestConfirmedPickup,
+        ownerConfirmedHandover: b.ownerConfirmedHandover,
+        payoutAmount: b.totalAmount, 
+        dates: `${new Date(b.pickupTime).toLocaleDateString()} - ${new Date(b.dropoffTime).toLocaleDateString()}`,
+        guest: { 
+          firstName: b.userId?.firstName || 'Guest', 
+          lastName: b.userId?.lastName || '', 
+          phone: b.userId?.phoneNumber || 'N/A' 
+        },
+        asset: { 
+          title: b.carId ? `${b.carId.make} ${b.carId.carModel} ${b.carId.year}` : 'Vehicle', 
+          location: b.carId?.location?.city ? `${b.carId.location.city}, ${b.carId.location.state}` : 'Platform Pickup',
+          image: b.carId?.images?.[0] || 'https://via.placeholder.com/400x300?text=No+Image'
+        },
+        createdAt: new Date(b.createdAt)
+      }));
+
+      // Merge and sort by newest first
+      const combined = [...normalizedProps, ...normalizedCars].sort((a, b) => b.createdAt - a.createdAt);
+      setBookings(combined);
+
+    } catch (error) {
+      console.error("Failed to load portfolio data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 2. REAL ESCROW CONFIRMATION
+  const handleEscrowConfirm = async (id, type) => {
+    setProcessingId(id);
+    try {
+      if (type === 'CAR') {
+        await confirmCarHandover(id);
+      } else {
+        await confirmPropertyCheckIn(id);
+      }
+      
+      setBookings(prev => prev.map(booking => {
+        if (booking._id === id) {
+          if (type === 'CAR') return { ...booking, ownerConfirmedHandover: true };
+          return { ...booking, checkInConfirmedByHost: true };
+        }
+        return booking;
+      }));
+    } catch (error) {
+      // Adjusted to handle both axios standard errors and custom thrown errors
+      const msg = error?.response?.data?.message || error.message || 'Failed to confirm handover.';
+      alert(msg);
+    } finally {
+      setProcessingId(null);
+    }
   };
 
   return (
-    <div className="min-h-screen bg-white pb-20">
-      
-      {/* 
-        HERO SECTION 
-        Clean, high-contrast typography with the sleek listing button.
-      */}
-      <div className="border-b border-gray-200">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12 md:py-16">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-            
-            <div className="max-w-2xl">
-              <h1 className="text-4xl md:text-5xl font-semibold text-gray-900 tracking-tight leading-tight">
-                Welcome back, {user?.firstName || 'Host'}.
-              </h1>
-              <p className="text-lg text-gray-500 mt-2 font-medium">
-                You have <span className="text-gray-900 font-semibold">1 guest arriving today</span>. Let's prepare for their stay.
-              </p>
+    <main className="min-h-screen bg-white pb-24">
+      {/* ARCHITECTURAL HEADER */}
+      <div className="border-b border-gray-200 sticky top-0 z-40 bg-white/90 backdrop-blur-md">
+        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+            <div>
+              <div className="flex items-center space-x-3 mb-2">
+                <div className="h-[1px] w-8 bg-brand-primary"></div>
+                <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-[0.2em]">
+                  Host Portal
+                </span>
+              </div>
+              <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter">Portfolio</h1>
             </div>
-
-            {/* SLEEK, SHINING LISTING DROPDOWN */}
-<div className="relative shrink-0" ref={dropdownRef}>
-  <button 
-    onClick={() => setIsListMenuOpen(!isListMenuOpen)}
-    className={`rounded-full bg-gray-900 px-6 py-3.5 transition-all duration-200 hover:bg-black hover:shadow-lg active:scale-[0.98] flex items-center space-x-2 text-white ${
-      isListMenuOpen ? 'ring-2 ring-gray-900 ring-offset-2' : ''
-    }`}
-  >
-    <div className="flex items-center justify-center space-x-2">
-      <Plus className="w-4 h-4 stroke-[2.5]" />
-      <span className="font-semibold text-sm tracking-wide">Create Listing</span>
-      <ChevronDown className={`w-4 h-4 transition-transform duration-200 ${isListMenuOpen ? 'rotate-180' : ''}`} />
-    </div>
-  </button>
-
-  {/* PREMIUM DROPDOWN MENU */}
-  {isListMenuOpen && (
-    <div className="absolute right-0 mt-3 w-64 bg-white rounded-[1.5rem] shadow-[0_15px_50px_rgba(0,0,0,0.12)] border border-gray-100 p-2 z-50 animate-in fade-in slide-in-from-top-2 origin-top-right">
-      
-      {/* PROPERTY LISTING */}
-      <button 
-        onClick={() => { setIsModalOpen(true); setIsListMenuOpen(false); }}
-        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
-      >
-        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
-          <Building className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-bold">Property Listing</div>
-          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Apartments & Shortlets</div>
-        </div>
-      </button>
-
-      {/* HOTEL LISTING */}
-      <button 
-        onClick={() => { /* Handle Hotel Modal */ setIsListMenuOpen(false); }}
-        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
-      >
-        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
-          <Hotel className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-bold">Hotel Listing</div>
-          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Rooms & Suites</div>
-        </div>
-      </button>
-
-      {/* CAR LISTING (Wired to AddCarModal) */}
-      <button 
-        onClick={() => { setIsCarModalOpen(true); setIsListMenuOpen(false); }}
-        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
-      >
-        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
-          <Car className="w-4 h-4 text-gray-500 group-hover:text-brand-primary" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-bold">Car Listing</div>
-          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Rentals & Chauffeurs</div>
-        </div>
-      </button>
-
-      <div className="h-[1px] w-full bg-gray-100 my-1"></div>
-
-      {/* VIP RESERVATION */}
-      <button 
-        onClick={() => { /* Handle VIP Modal */ setIsListMenuOpen(false); }}
-        className="w-full flex items-center space-x-3 px-4 py-3.5 rounded-xl hover:bg-brand-primary/5 text-gray-700 hover:text-brand-primary transition-all group"
-      >
-        <div className="bg-gray-50 p-2 rounded-lg group-hover:bg-brand-primary/10 transition-colors">
-          <Crown className="w-4 h-4 text-brand-primary/70 group-hover:text-brand-primary" />
-        </div>
-        <div className="text-left">
-          <div className="text-sm font-bold text-gray-900 group-hover:text-brand-primary">VIP Reservation</div>
-          <div className="text-[10px] text-gray-400 font-medium mt-0.5">Exclusive Experiences</div>
-        </div>
-      </button>
-
-    </div>
-  )}
-</div>
             
+            {/* PRISTINE DROPDOWN BUTTON */}
+            <div className="relative w-full md:w-auto">
+              <button 
+                onClick={() => setIsListMenuOpen(!isListMenuOpen)}
+                className="w-full md:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group"
+              >
+                <span>Add Asset</span>
+                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+              </button>
+
+              {isListMenuOpen && (
+                <div className="absolute right-0 mt-2 w-full md:w-72 bg-white border border-gray-900 shadow-2xl z-50">
+                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+                    <Building className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                    <div className="text-left">
+                      <div className="text-sm font-bold text-gray-900">Property</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Apartment • Shortlet</div>
+                    </div>
+                  </button>
+                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+                    <Car className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                    <div className="text-left">
+                      <div className="text-sm font-bold text-gray-900">Vehicle</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
+                    </div>
+                  </button>
+                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
+                    <Crown className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                    <div className="text-left">
+                      <div className="text-sm font-bold text-gray-900">VIP Experience</div>
+                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Exclusive Reservation</div>
+                    </div>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        
-        {/* 
-          OVERVIEW METRICS 
-          No blobs. Just crisp borders, subtle background hues, and mature typography. 
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
-          
-          <div className="border border-gray-200 rounded-2xl p-6 transition-colors hover:border-gray-300">
-            <div className="flex items-center space-x-2 text-gray-500 mb-4">
-              <Wallet className="w-4 h-4" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider">Escrow Balance</h3>
-            </div>
-            <div className="text-3xl font-semibold text-gray-900 tracking-tight">₦1,900,000</div>
-            <div className="mt-2 flex items-center text-sm font-medium text-emerald-600">
-              <ShieldCheck className="w-4 h-4 mr-1" />
-              Fully secured by Paystack
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-2xl p-6 transition-colors hover:border-gray-300">
-            <div className="flex items-center space-x-2 text-gray-500 mb-4">
-              <TrendingUp className="w-4 h-4" />
-              <h3 className="text-sm font-semibold uppercase tracking-wider">Expected Payouts</h3>
-            </div>
-            <div className="text-3xl font-semibold text-gray-900 tracking-tight">₦850,000</div>
-            <div className="mt-2 text-sm font-medium text-gray-500">
-              Clearing within 48 hours
-            </div>
-          </div>
-
-          <div className="border border-gray-200 rounded-2xl p-6 transition-colors hover:border-gray-300 bg-gray-50/50">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-sm font-semibold uppercase tracking-wider text-gray-500">Occupancy Rate</h3>
-              <span className="bg-white border border-gray-200 text-gray-900 text-[10px] font-bold px-2 py-1 rounded-full">SEPT 2026</span>
-            </div>
-            <div className="text-3xl font-semibold text-gray-900 tracking-tight">84%</div>
-            <div className="mt-2 text-sm font-medium text-gray-500">
-              +12% higher than last month
-            </div>
-          </div>
-
-        </div>
-
-        {/* 
-          RESERVATIONS FEED 
-          Action-driven list, replacing the boring SaaS table.
-        */}
-        <div className="mb-8 flex items-center justify-between">
-          <h2 className="text-2xl font-semibold text-gray-900 tracking-tight">Your Reservations</h2>
-          <button className="text-sm font-semibold text-gray-900 underline hover:text-gray-600 transition-colors">
-            View all
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {reservations.map((res) => (
-            <div 
-              key={res.id} 
-              className="group border border-gray-200 rounded-2xl p-5 md:p-6 hover:shadow-lg transition-all duration-300 bg-white flex flex-col lg:flex-row lg:items-center justify-between gap-6"
+      {/* STRICT TAB NAVIGATION */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-12">
+        <div className="flex overflow-x-auto pb-4 scrollbar-hide space-x-10 border-b border-gray-200">
+          {['ACTION_FEED', 'SHORTLETS', 'CARS'].map((tab) => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`pb-2 whitespace-nowrap text-xs font-bold uppercase tracking-[0.15em] transition-colors relative ${
+                activeTab === tab ? 'text-gray-900' : 'text-gray-400 hover:text-gray-600'
+              }`}
             >
-              
-              {/* Guest & Property Info */}
-              <div className="flex items-start space-x-4 flex-1">
-                <img 
-                  src={res.guestAvatar} 
-                  alt={res.guestName}
-                  className="w-12 h-12 rounded-full object-cover border border-gray-100 shrink-0"
-                />
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900">{res.guestName}</h3>
-                  <div className="text-sm text-gray-500 font-medium mt-0.5">{res.propertyTitle}</div>
-                  <div className="flex items-center space-x-1 text-xs text-gray-400 mt-1">
-                    <MapPin className="w-3.5 h-3.5" />
-                    <span>{res.location}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Dates & Payout Info */}
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-12 flex-1 lg:justify-center border-t border-b border-gray-100 lg:border-none py-4 lg:py-0">
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Stay Dates</div>
-                  <div className="text-sm font-semibold text-gray-900 whitespace-nowrap">
-                    {res.checkInDate} <span className="text-gray-300 mx-1">→</span> {res.checkOutDate}
-                  </div>
-                </div>
-                <div>
-                  <div className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-1">Total Payout</div>
-                  <div className="text-sm font-semibold text-gray-900">
-                    ₦{res.totalAmount.toLocaleString()}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status & Actions */}
-              <div className="flex items-center lg:justify-end gap-4 min-w-[200px]">
-                
-                {res.status === 'ARRIVING_TODAY' && (
-                  <div className="w-full">
-                    <div className="flex items-center space-x-1.5 text-amber-600 mb-3">
-                      <Clock className="w-4 h-4" />
-                      <span className="text-xs font-bold uppercase tracking-wider">Arriving Today</span>
-                    </div>
-                    {/* CRITICAL ACTION BUTTON: Triggers Paystack Escrow Release later */}
-                    <button 
-                      onClick={() => handleConfirmCheckIn(res.id)}
-                      className="w-full bg-gray-900 hover:bg-brand-primary text-white font-semibold py-2.5 px-4 rounded-xl text-sm transition-colors flex items-center justify-center space-x-2"
-                    >
-                      <span>Confirm Check-in</span>
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
-
-                {res.status === 'CHECKED_IN' && (
-                  <div className="w-full flex items-center justify-end space-x-2 text-emerald-600 bg-emerald-50 px-4 py-3 rounded-xl border border-emerald-100">
-                    <CheckCircle className="w-5 h-5 shrink-0" />
-                    <span className="text-sm font-semibold">Check-in Confirmed. Payout Processing.</span>
-                  </div>
-                )}
-
-                {res.status === 'UPCOMING' && (
-                  <div className="w-full flex justify-end">
-                    <span className="bg-gray-100 text-gray-600 font-semibold px-4 py-2 rounded-xl text-sm">
-                      Upcoming Arrival
-                    </span>
-                  </div>
-                )}
-
-              </div>
-
-            </div>
+              {tab === 'ACTION_FEED' ? 'Ledger & Actions' : `My ${tab}`}
+              {activeTab === tab && (
+                <div className="absolute bottom-0 left-0 w-full h-[2px] bg-gray-900" />
+              )}
+            </button>
           ))}
         </div>
-
       </div>
 
-      <AddPropertyModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
-        onPropertyAdded={(newProp) => {
-          console.log("New property added successfully:", newProp);
-          // Optional: update local list state or refetch properties
-        }}
-      />
+      {/* CONTENT AREA */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-10">
+        
+        {isLoading ? (
+          <div className="py-20 flex flex-col items-center justify-center">
+            <Loader2 className="w-8 h-8 animate-spin text-gray-300" />
+            <p className="mt-4 text-sm font-bold uppercase tracking-widest text-gray-400">Syncing Ledger...</p>
+          </div>
+        ) : activeTab === 'ACTION_FEED' && bookings.length > 0 ? (
+          <div className="space-y-8">
+            {bookings.map((booking) => {
+              const isCar = booking.type === 'CAR';
+              const isReleased = booking.escrowStatus === 'RELEASED';
+              const hasHostConfirmed = isCar ? booking.ownerConfirmedHandover : booking.checkInConfirmedByHost;
+              const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
+              const isCurrentlyConfirming = processingId === booking._id;
 
-      <AddCarModal 
-        isOpen={isCarModalOpen} 
-        onClose={() => setIsCarModalOpen(false)} 
-        onCarAdded={(newCar) => {
-          console.log("New vehicle added:", newCar);
-        }}
-      />
-    </div>
+              return (
+                <div key={booking._id} className="border border-gray-200 hover:border-gray-900 transition-colors p-6 relative group bg-white flex flex-col lg:flex-row gap-8">
+                  
+                  {/* Category Identifier */}
+                  <div className="absolute top-0 left-0 bg-gray-900 text-white text-[10px] font-bold uppercase tracking-widest px-4 py-1.5 z-10">
+                    {isCar ? 'Vehicle' : 'Property'}
+                  </div>
+
+                  {/* Asset Image */}
+                  <div className="w-full lg:w-64 h-48 lg:h-auto relative overflow-hidden bg-gray-100 shrink-0">
+                    <img 
+                      src={booking.asset.image} 
+                      alt={booking.asset.title} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                  </div>
+
+                  <div className="flex-1 flex flex-col justify-between py-2">
+                    
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                      <div>
+                        <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight">{booking.asset.title}</h3>
+                        <div className="flex items-center text-gray-500 text-sm font-medium">
+                          <MapPin className="w-4 h-4 mr-2" /> {booking.asset.location}
+                        </div>
+                      </div>
+                      
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-3 gap-4 border-b border-gray-100 pb-4">
+                          <div className="col-span-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Guest</div>
+                          <div className="col-span-2 text-sm font-bold text-gray-900">
+                            {booking.guest.firstName} {booking.guest.lastName}
+                            <span className="block text-gray-500 font-medium">{booking.guest.phone}</span>
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="col-span-1 text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dates</div>
+                          <div className="col-span-2 text-sm font-bold text-gray-900">{booking.dates}</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-6 border-t border-gray-100">
+                       <div className="flex items-center space-x-6">
+                         <div>
+                           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Payout</div>
+                           <div className="text-xl font-black text-brand-primary">₦{booking.payoutAmount.toLocaleString()}</div>
+                         </div>
+
+                         {/* Escrow Status Badges */}
+                         {isReleased ? (
+                          <div className="flex items-center space-x-2 text-green-700 bg-green-50 px-3 py-1.5 rounded-full text-xs font-bold">
+                            <CheckCircle className="w-3.5 h-3.5" /> <span>Released</span>
+                          </div>
+                        ) : hasHostConfirmed && !hasGuestConfirmed ? (
+                          <div className="flex items-center space-x-2 text-amber-700 bg-amber-50 px-3 py-1.5 rounded-full text-xs font-bold">
+                            <Clock className="w-3.5 h-3.5" /> <span>Awaiting Guest</span>
+                          </div>
+                        ) : hasGuestConfirmed && !hasHostConfirmed ? (
+                          <div className="flex items-center space-x-2 text-brand-primary bg-brand-primary/10 px-3 py-1.5 rounded-full text-xs font-bold">
+                            <ShieldCheck className="w-3.5 h-3.5" /> <span>Guest Confirmed</span>
+                          </div>
+                        ) : null}
+                       </div>
+
+                       {/* Action Button */}
+                       {!isReleased && (!hasHostConfirmed || (hasGuestConfirmed && !hasHostConfirmed)) && (
+                         <button 
+                            onClick={() => handleEscrowConfirm(booking._id, booking.type)}
+                            disabled={isCurrentlyConfirming}
+                            className={`py-3 px-8 text-xs font-bold uppercase tracking-widest flex items-center justify-center transition-all ${
+                              hasGuestConfirmed 
+                                ? 'bg-brand-primary hover:bg-brand-primary/90 text-white' 
+                                : 'bg-gray-900 hover:bg-black text-white'
+                            }`}
+                          >
+                            {isCurrentlyConfirming ? <Loader2 className="w-4 h-4 animate-spin" /> : `Confirm`}
+                          </button>
+                       )}
+                    </div>
+
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : activeTab === 'SHORTLETS' || activeTab === 'CARS' ? (
+          
+          /* ASSET PORTFOLIO GRID */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* 
+              Extracting unique assets from the bookings ledger for MVP rendering.
+              In production, map over a dedicated state variable like `myShortlets` fetched from /api/v1/properties/landlord/fleet
+            */}
+            {Array.from(new Map(bookings.filter(b => b.type === (activeTab === 'SHORTLETS' ? 'SHORTLET' : 'CAR')).map(item => [item.asset.title, item])).values()).map((booking) => (
+              <div key={booking.asset.title} className="group cursor-pointer">
+                <div className="w-full aspect-[4/3] bg-gray-100 relative overflow-hidden mb-4">
+                   <img 
+                      src={booking.asset.image} 
+                      alt={booking.asset.title} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    />
+                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 text-[10px] font-bold uppercase tracking-widest text-gray-900 shadow-sm">
+                      Listed
+                    </div>
+                </div>
+                <h4 className="text-lg font-black text-gray-900 leading-tight mb-1">{booking.asset.title}</h4>
+                <div className="flex items-center text-gray-500 text-xs font-medium mb-3">
+                  <MapPin className="w-3.5 h-3.5 mr-1" /> {booking.asset.location}
+                </div>
+                <button className="text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b-2 border-gray-900 pb-0.5 hover:text-brand-primary hover:border-brand-primary transition-colors">
+                  Edit Details
+                </button>
+              </div>
+            ))}
+          </div>
+
+        ) : activeTab === 'ACTION_FEED' && bookings.length === 0 ? (
+          <div className="py-32 flex flex-col items-center justify-center text-center border border-dashed border-gray-300">
+            <div className="w-16 h-16 bg-gray-50 flex items-center justify-center mb-6">
+              <ShieldCheck className="w-8 h-8 text-gray-300" />
+            </div>
+            <h3 className="text-2xl font-black text-gray-900 tracking-tight">No Active Ledger Entries</h3>
+            <p className="text-gray-500 mt-3 max-w-md mx-auto">Your portfolio is currently empty. List a new property or vehicle to begin accepting premium reservations.</p>
+          </div>
+        ) : null}
+      </div>
+    </main>
   );
-
 }

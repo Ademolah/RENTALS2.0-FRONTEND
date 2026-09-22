@@ -23,6 +23,8 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
     ? booking.carId?.images?.[0] 
     : booking.propertyId?.images?.[0];
 
+  const hasHostConfirmed = isCar ? booking.ownerConfirmedHandover : booking.checkInConfirmedByHost;
+
   const location = isCar 
     ? `${booking.carId?.location?.city}, ${booking.carId?.location?.state}`
     : booking.propertyId?.address?.city || 'Location unavailable';
@@ -100,32 +102,62 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
         </div>
 
         {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
+        {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
         {booking.reservationStatus === 'ACTIVE' && (
           <div className="mt-4 pt-6 border-t border-gray-100">
-            {hasGuestConfirmed || isReleased ? (
+            {isReleased ? (
+              // STATE 4: FULLY RELEASED (Both clicked)
               <div className="flex items-center space-x-3 bg-green-50/50 text-green-700 px-5 py-4 rounded-2xl border border-green-100">
                 <div className="bg-green-500 rounded-full p-1 shadow-sm">
                   <CheckCircle className="w-4 h-4 text-white" />
                 </div>
                 <div>
-                  <div className="text-sm font-bold">Checked-in & Secured</div>
-                  <div className="text-xs font-medium text-green-600 mt-0.5">Funds released to host. Enjoy your {isCar ? 'ride' : 'stay'}.</div>
+                  <div className="text-sm font-bold">
+                    {isCar ? 'Pickup Confirmed & Active' : 'Checked-in & Secured'}
+                  </div>
+                  <div className="text-xs font-medium text-green-600 mt-0.5">
+                    Funds released to {isCar ? 'owner' : 'host'}. Enjoy your {isCar ? 'ride' : 'stay'}.
+                  </div>
+                </div>
+              </div>
+            ) : hasGuestConfirmed && !hasHostConfirmed ? (
+              // STATE 3: WAITING FOR HOST/OWNER (Guest clicked first)
+              <div className="flex items-center space-x-3 bg-amber-50/50 text-amber-700 px-5 py-4 rounded-2xl border border-amber-100">
+                <div className="bg-amber-500 rounded-full p-1.5 shadow-sm">
+                  <Clock className="w-3.5 h-3.5 text-white" />
+                </div>
+                <div>
+                  <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : 'Host'}</div>
+                  <div className="text-xs font-medium text-amber-600 mt-0.5">
+                    You've confirmed. Escrow will release once they confirm.
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50 p-5 rounded-2xl border border-gray-100">
+              // STATE 1 & 2: GUEST HAS NOT CLICKED YET
+              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border ${
+                hasHostConfirmed ? 'bg-blue-50/50 border-blue-200' : 'bg-gray-50/50 border-gray-100'
+              }`}>
                 <div className="flex items-start space-x-3">
-                  <ShieldCheck className="w-5 h-5 text-gray-900 mt-0.5" />
+                  <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? 'text-blue-600' : 'text-gray-900'}`} />
                   <div>
-                    <div className="text-sm font-bold text-gray-900">Escrow Protected</div>
-                    <div className="text-xs font-medium text-gray-500 mt-0.5">Host is unpaid until you confirm arrival.</div>
+                    <div className={`text-sm font-bold ${hasHostConfirmed ? 'text-blue-900' : 'text-gray-900'}`}>
+                      {hasHostConfirmed ? `${isCar ? 'Owner' : 'Host'} Confirmed Handover` : 'Escrow Protected'}
+                    </div>
+                    <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? 'text-blue-700' : 'text-gray-500'}`}>
+                      {hasHostConfirmed 
+                        ? 'Please confirm on your end to release their payment.' 
+                        : `${isCar ? 'Owner' : 'Host'} is unpaid until you confirm ${isCar ? 'pickup' : 'arrival'}.`}
+                    </div>
                   </div>
                 </div>
                 
                 <button 
                   onClick={handleConfirm}
                   disabled={isConfirming}
-                  className="w-full sm:w-auto px-6 py-3 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+                  className={`w-full sm:w-auto px-6 py-3 text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
+                    hasHostConfirmed ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-brand-primary'
+                  }`}
                 >
                   {isConfirming ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
@@ -197,16 +229,17 @@ export default function GuestDashboard() {
   }, []);
 
   const handleEscrowSuccess = (reservationId, type) => {
-    // Optimistically update the UI to show the green checkmark
     setBookings(prev => prev.map(booking => {
       if (booking._id === reservationId) {
-        if (type === 'CAR') return { ...booking, guestConfirmedPickup: true, escrowStatus: 'RELEASED' };
-        return { ...booking, checkInConfirmedByGuest: true, payoutStatus: 'RELEASED_TO_LANDLORD' };
+        if (type === 'CAR') {
+          return { ...booking, guestConfirmedPickup: true }; // Only update guest side
+        }
+        return { ...booking, checkInConfirmedByGuest: true };
       }
       return booking;
     }));
 
-    setToastMessage(`${type === 'CAR' ? 'Vehicle pickup' : 'Check-in'} confirmed successfully!`);
+    setToastMessage(`${type === 'CAR' ? 'Pickup' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
     setTimeout(() => setToastMessage(''), 4000);
   };
 

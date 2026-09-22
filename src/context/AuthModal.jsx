@@ -8,11 +8,49 @@ export default function AuthModal({ isOpen, onClose }) {
   const [error, setError] = useState('');
   const { login, register } = useAuth();
 
+  // Defaulting to Nigeria (+234) based on your platform's core market
+  const [dialCode, setDialCode] = useState('+234');
+  const [localPhone, setLocalPhone] = useState('');
+
+  // Smart handler for the text input
+  const handleLocalPhoneChange = (e) => {
+    let val = e.target.value.replace(/\D/g, ''); // Strip non-numeric characters
+    
+    // Automatically remove leading zero
+    if (val.startsWith('0')) {
+      val = val.substring(1);
+    }
+    
+    setLocalPhone(val);
+
+    // Create a synthetic event to perfectly match your existing handleChange logic
+    handleChange({
+      target: {
+        name: 'phoneNumber',
+        value: `${dialCode}${val}`
+      }
+    });
+  };
+
+  // Smart handler for the dial code dropdown
+  const handleDialCodeChange = (e) => {
+    const code = e.target.value;
+    setDialCode(code);
+    
+    handleChange({
+      target: {
+        name: 'phoneNumber',
+        value: `${code}${localPhone}`
+      }
+    });
+  };
+
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     firstName: '',
     lastName: '',
+    phoneNumber:'',
     role: 'USER' // Options: 'USER' (Guest), 'LANDLORD'
   });
 
@@ -95,6 +133,40 @@ export default function AuthModal({ isOpen, onClose }) {
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
                   />
+                </div>
+                <div>
+                  {/* Fixed label from 'Last Name' to 'Phone Number' */}
+                  <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+                    Phone Number
+                  </label>
+                  <div className="flex">
+                    {/* Dial Code Dropdown */}
+                    <select
+                      value={dialCode}
+                      onChange={handleDialCodeChange}
+                      className="px-3 py-3 border border-gray-300 rounded-l-xl border-r-0 focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm bg-gray-50 text-gray-700 font-medium cursor-pointer"
+                    >
+                      <option value="+234">🇳🇬 +234</option>
+                      <option value="+1">🇺🇸 +1</option>
+                      <option value="+44">🇬🇧 +44</option>
+                      <option value="+27">🇿🇦 +27</option>
+                      <option value="+254">🇰🇪 +254</option>
+                      <option value="+971">🇦🇪 +971</option>
+                    </select>
+
+                    {/* Phone Digits Input */}
+                    <input
+                      type="tel"
+                      required
+                      value={localPhone}
+                      onChange={handleLocalPhoneChange}
+                      placeholder="803 000 0000"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+                    />
+                  </div>
+                  
+                  {/* Optional: Hidden input to ensure formData.phoneNumber is always submitted if using standard form actions */}
+                  <input type="hidden" name="phoneNumber" value={formData.phoneNumber} />
                 </div>
               </div>
 
