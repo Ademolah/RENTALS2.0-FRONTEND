@@ -49,7 +49,7 @@ export default function CarCard({ car }) {
             ₦{price.toLocaleString()}
           </span>
           <span className="text-[11px] uppercase tracking-wider text-gray-500 font-bold">
-            per 12 hrs
+            per day
           </span>
         </div>
 

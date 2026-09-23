@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route ,useLocation } from 'react-router-dom';
 import './index.css';
 import WelcomeOverlay from './components/WelcomeOverlay';
 import CitySelectorModal from "./components/CitySelectorModal"
@@ -13,12 +13,16 @@ import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CarDetails from './pages/CarDetails';
 
+
 function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
   const [showCityModal, setShowCityModal] = useState(true);
+  
+  // 1. Initialize useLocation to track the current route
+  const location = useLocation();
+  const isHomePage = location.pathname === '/';
 
-  // This function receives the selected city, hides the modal, and triggers the search
   const handleCitySelect = (selectedState) => {
     setSearchFilters({ ...searchFilters, location: selectedState });
     setShowCityModal(false);
@@ -28,28 +32,27 @@ function App() {
     <div className="min-h-screen flex flex-col relative">
       <WelcomeOverlay />
       
-      {/* 
-        Only show this modal if:
-        1. They haven't selected a city yet
-        2. They are on the shortlet tab
-      */}
-      {showCityModal && activeCategory === 'shortlet' && (
+      {/* Restrict City Modal to Home Page & Shortlet Tab */}
+      {showCityModal && activeCategory === 'shortlet' && isHomePage && (
         <CitySelectorModal onSelect={handleCitySelect} />
       )}
       
-      <div className="sticky top-0 z-40 bg-white pb-4 border-b border-gray-100 shadow-sm flex flex-col">
-        {/* Z-50 forces the Navbar and its dropdowns to float above everything else */}
-        <div className="relative z-50">
-          <Navbar 
-            activeCategory={activeCategory} 
-            onCategoryChange={setActiveCategory} 
-          />
-        </div>
+      {/* 
+        2. Consolidated Header Wrapper: 
+        Removed the global pb-4 so dashboards sit perfectly flush against the Navbar 
+      */}
+      <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
+        <Navbar 
+          activeCategory={activeCategory} 
+          onCategoryChange={setActiveCategory} 
+        />
         
-        {/* Z-30 keeps the search bar safely beneath the Navbar's dropdown */}
-        <div className="relative z-30">
-          <AdvancedSearch onSearch={setSearchFilters} />
-        </div>
+        {/* 3. Conditionally render AdvancedSearch AND its padding ONLY on the Home Page */}
+        {isHomePage && (
+          <div className="relative z-30 pb-4">
+            <AdvancedSearch onSearch={setSearchFilters} />
+          </div>
+        )}
       </div>
 
       <div className="flex-grow">
@@ -73,7 +76,8 @@ function App() {
         </Routes>
       </div>
 
-      <Footer />
+      {/* Conditionally hide the Footer on Dashboards if they have their own full-screen layout */}
+      {!location.pathname.startsWith('/dashboard') && <Footer />}
     </div>
   );
 }

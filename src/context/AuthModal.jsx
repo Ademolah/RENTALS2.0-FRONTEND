@@ -109,127 +109,156 @@ export default function AuthModal({ isOpen, onClose }) {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {!isLogin && (
-            <>
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-600 mb-1">First Name</label>
-                  <input
-                    type="text"
-                    name="firstName"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Last Name</label>
-                  <input
-                    type="text"
-                    name="lastName"
-                    required
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
-                  />
-                </div>
-                <div>
-                  {/* Fixed label from 'Last Name' to 'Phone Number' */}
-                  <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
-                    Phone Number
-                  </label>
-                  <div className="flex">
-                    {/* Dial Code Dropdown */}
-                    <select
-                      value={dialCode}
-                      onChange={handleDialCodeChange}
-                      className="px-3 py-3 border border-gray-300 rounded-l-xl border-r-0 focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm bg-gray-50 text-gray-700 font-medium cursor-pointer"
-                    >
-                      <option value="+234">🇳🇬 +234</option>
-                      <option value="+1">🇺🇸 +1</option>
-                      <option value="+44">🇬🇧 +44</option>
-                      <option value="+27">🇿🇦 +27</option>
-                      <option value="+254">🇰🇪 +254</option>
-                      <option value="+971">🇦🇪 +971</option>
-                    </select>
+  {!isLogin && (
+    <>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-bold uppercase text-gray-600 mb-1">First Name</label>
+          <input
+            type="text"
+            name="firstName"
+            required
+            value={formData.firstName}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Last Name</label>
+          <input
+            type="text"
+            name="lastName"
+            required
+            value={formData.lastName}
+            onChange={handleChange}
+            className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+          />
+        </div>
+        
+        {/* ADDED col-span-2 HERE so it breaks out of the 50% width constraint */}
+        <div className="col-span-2">
+          <label className="block text-xs font-bold uppercase text-gray-600 mb-1">
+            Phone Number
+          </label>
+          <div className="flex">
+            {/* Dial Code Dropdown */}
+            <select
+  value={dialCode}
+  onChange={handleDialCodeChange}
+  className="px-3 py-3 border border-gray-300 rounded-l-xl border-r-0 focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm bg-gray-50 text-gray-700 font-medium cursor-pointer"
+>
+  {/* Core Market (Default) */}
+  <option value="+234">🇳🇬 +234 (Nigeria)</option>
 
-                    {/* Phone Digits Input */}
-                    <input
-                      type="tel"
-                      required
-                      value={localPhone}
-                      onChange={handleLocalPhoneChange}
-                      placeholder="803 000 0000"
-                      className="w-full px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
-                    />
-                  </div>
-                  
-                  {/* Optional: Hidden input to ensure formData.phoneNumber is always submitted if using standard form actions */}
-                  <input type="hidden" name="phoneNumber" value={formData.phoneNumber} />
-                </div>
-              </div>
+  {/* Africa */}
+  <option value="+20">🇪🇬 +20 (Egypt)</option>
+  <option value="+233">🇬🇭 +233 (Ghana)</option>
+  <option value="+254">🇰🇪 +254 (Kenya)</option>
+  <option value="+250">🇷🇼 +250 (Rwanda)</option>
+  <option value="+27">🇿🇦 +27 (South Africa)</option>
+  <option value="+255">🇹🇿 +255 (Tanzania)</option>
+  <option value="+256">🇺🇬 +256 (Uganda)</option>
 
-              <div>
-                <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Account Type</label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'USER' })}
-                    className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                      formData.role === 'USER' ? 'bg-white shadow text-brand-dark' : 'text-gray-500'
-                    }`}
-                  >
-                    Guest / Booker
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'LANDLORD' })}
-                    className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                      formData.role === 'LANDLORD' ? 'bg-white shadow text-brand-dark' : 'text-gray-500'
-                    }`}
-                  >
-                    Landlord / Host
-                  </button>
-                </div>
-              </div>
-            </>
-          )}
+  {/* Americas */}
+  <option value="+55">🇧🇷 +55 (Brazil)</option>
+  <option value="+1">🇨🇦 +1 (Canada)</option>
+  <option value="+52">🇲🇽 +52 (Mexico)</option>
+  <option value="+1">🇺🇸 +1 (United States)</option>
 
-          <div>
-            <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Email Address</label>
+  {/* Asia & Middle East */}
+  <option value="+61">🇦🇺 +61 (Australia)</option>
+  <option value="+86">🇨🇳 +86 (China)</option>
+  <option value="+91">🇮🇳 +91 (India)</option>
+  <option value="+81">🇯🇵 +81 (Japan)</option>
+  <option value="+966">🇸🇦 +966 (Saudi Arabia)</option>
+  <option value="+65">🇸🇬 +65 (Singapore)</option>
+  <option value="+971">🇦🇪 +971 (UAE)</option>
+
+  {/* Europe */}
+  <option value="+33">🇫🇷 +33 (France)</option>
+  <option value="+49">🇩🇪 +49 (Germany)</option>
+  <option value="+353">🇮🇪 +353 (Ireland)</option>
+  <option value="+39">🇮🇹 +39 (Italy)</option>
+  <option value="+31">🇳🇱 +31 (Netherlands)</option>
+  <option value="+34">🇪🇸 +34 (Spain)</option>
+  <option value="+44">🇬🇧 +44 (United Kingdom)</option>
+</select>
+
+            {/* Phone Digits Input */}
             <input
-              type="email"
-              name="email"
+              type="tel"
               required
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="name@example.com"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+              value={localPhone}
+              onChange={handleLocalPhoneChange}
+              placeholder="803 000 0000"
+              className="w-full px-4 py-3 border border-gray-300 rounded-r-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
             />
           </div>
+          
+          <input type="hidden" name="phoneNumber" value={formData.phoneNumber} />
+        </div>
+      </div>
 
-          <div>
-            <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
-            <input
-              type="password"
-              name="password"
-              required
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="••••••••"
-              className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
-            />
-          </div>
-
+      <div>
+        <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Account Type</label>
+        <div className="grid grid-cols-2 gap-2 p-1 bg-gray-100 rounded-xl">
           <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3.5 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-bold transition-colors shadow-md flex items-center justify-center mt-2"
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'USER' })}
+            className={`py-2 text-xs font-bold rounded-lg transition-all ${
+              formData.role === 'USER' ? 'bg-white shadow text-brand-dark' : 'text-gray-500'
+            }`}
           >
-            {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLogin ? 'Log In' : 'Create Account')}
+            Guest / Booker
           </button>
-        </form>
+          <button
+            type="button"
+            onClick={() => setFormData({ ...formData, role: 'LANDLORD' })}
+            className={`py-2 text-xs font-bold rounded-lg transition-all ${
+              formData.role === 'LANDLORD' ? 'bg-white shadow text-brand-dark' : 'text-gray-500'
+            }`}
+          >
+            Landlord / Host
+          </button>
+        </div>
+      </div>
+    </>
+  )}
+
+  <div>
+    <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Email Address</label>
+    <input
+      type="email"
+      name="email"
+      required
+      value={formData.email}
+      onChange={handleChange}
+      placeholder="name@example.com"
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+    />
+  </div>
+
+  <div>
+    <label className="block text-xs font-bold uppercase text-gray-600 mb-1">Password</label>
+    <input
+      type="password"
+      name="password"
+      required
+      value={formData.password}
+      onChange={handleChange}
+      placeholder="••••••••"
+      className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-brand-primary focus:border-transparent outline-none text-sm"
+    />
+  </div>
+
+  <button
+    type="submit"
+    disabled={loading}
+    className="w-full py-3.5 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-bold transition-colors shadow-md flex items-center justify-center mt-2"
+  >
+    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLogin ? 'Log In' : 'Create Account')}
+  </button>
+</form>
 
         <div className="mt-6 text-center text-sm text-gray-600">
           {isLogin ? "Don't have an account?" : "Already have an account?"}{' '}
