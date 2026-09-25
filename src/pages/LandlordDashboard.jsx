@@ -1,11 +1,12 @@
 import  { useState, useEffect } from 'react';
 import { 
   Building, Car, Hotel, Crown, Plus, ShieldCheck, 
-  CheckCircle, Clock, MapPin, Calendar, Users, Edit3, Loader2, ArrowRight
+  CheckCircle, Clock, MapPin, Calendar, Users, Edit3, Loader2, ArrowRight, Landmark
 } from 'lucide-react';
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
+import BankSetupModal from '../components/BankSetupModal';
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('ACTION_FEED');
@@ -13,6 +14,8 @@ export default function LandlordDashboard() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+
+  const [isBankModalOpen, setIsBankModalOpen] = useState(false);
 
   // 1. REAL DATA FETCHING & NORMALIZATION
   useEffect(() => {
@@ -131,57 +134,73 @@ export default function LandlordDashboard() {
     <main className="min-h-screen bg-white pb-24">
       {/* ARCHITECTURAL HEADER */}
       <div className="border-b border-gray-200 sticky top-0 z-40 bg-white/90 backdrop-blur-md">
-        <div className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="h-[1px] w-8 bg-brand-primary"></div>
-                <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-[0.2em]">
-                  Host Portal
-                </span>
-              </div>
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter">Portfolio</h1>
-            </div>
-            
-            {/* PRISTINE DROPDOWN BUTTON */}
-            <div className="relative w-full md:w-auto">
-              <button 
-                onClick={() => setIsListMenuOpen(!isListMenuOpen)}
-                className="w-full md:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group"
-              >
-                <span>Add Asset</span>
-                <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
-              </button>
-
-              {isListMenuOpen && (
-                <div className="absolute right-0 mt-2 w-full md:w-72 bg-white border border-gray-900 shadow-2xl z-50">
-                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
-                    <Building className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
-                    <div className="text-left">
-                      <div className="text-sm font-bold text-gray-900">Property</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Apartment • Shortlet</div>
-                    </div>
-                  </button>
-                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
-                    <Car className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
-                    <div className="text-left">
-                      <div className="text-sm font-bold text-gray-900">Vehicle</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
-                    </div>
-                  </button>
-                  <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
-                    <Crown className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
-                    <div className="text-left">
-                      <div className="text-sm font-bold text-gray-900">VIP Experience</div>
-                      <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Exclusive Reservation</div>
-                    </div>
-                  </button>
-                </div>
-              )}
-            </div>
-          </div>
+  <div className="max-w-7xl mx-auto px-6 lg:px-12 py-8">
+    <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-6">
+      
+      {/* TITLE SECTION */}
+      <div>
+        <div className="flex items-center space-x-3 mb-2">
+          <div className="h-[1px] w-8 bg-brand-primary"></div>
+          <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-[0.2em]">
+            Host Portal
+          </span>
         </div>
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter">Portfolio</h1>
       </div>
+      
+      {/* ACTION BUTTONS GROUP */}
+      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
+        
+        {/* PAYOUTS BUTTON */}
+        <button 
+          onClick={() => setIsBankModalOpen(true)}
+          className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-gray-200 hover:border-gray-900 text-gray-900 text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group"
+        >
+          <Landmark className="w-4 h-4 text-gray-400 group-hover:text-gray-900 transition-colors" />
+          <span>Setup Payouts</span>
+        </button>
+
+        {/* PRISTINE DROPDOWN BUTTON */}
+        <div className="relative w-full sm:w-auto">
+          <button 
+            onClick={() => setIsListMenuOpen(!isListMenuOpen)}
+            className="w-full sm:w-auto px-8 py-4 bg-gray-900 hover:bg-black text-white text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group"
+          >
+            <span>Add Asset</span>
+            <Plus className="w-4 h-4 group-hover:rotate-90 transition-transform duration-300" />
+          </button>
+
+          {isListMenuOpen && (
+            <div className="absolute right-0 mt-2 w-full sm:w-72 bg-white border border-gray-900 shadow-2xl z-50">
+              <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+                <Building className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                <div className="text-left">
+                  <div className="text-sm font-bold text-gray-900">Property</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Apartment • Shortlet</div>
+                </div>
+              </button>
+              <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+                <Car className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                <div className="text-left">
+                  <div className="text-sm font-bold text-gray-900">Vehicle</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
+                </div>
+              </button>
+              <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
+                <Crown className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                <div className="text-left">
+                  <div className="text-sm font-bold text-gray-900">VIP Experience</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Exclusive Reservation</div>
+                </div>
+              </button>
+            </div>
+          )}
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* STRICT TAB NAVIGATION */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-12">
@@ -347,6 +366,15 @@ export default function LandlordDashboard() {
           </div>
         ) : null}
       </div>
+
+      <BankSetupModal 
+        isOpen={isBankModalOpen}
+        onClose={() => setIsBankModalOpen(false)}
+        onSuccess={() => {
+          // Optionally trigger a user profile refetch here to show their connected bank
+          console.log("Bank saved successfully!");
+        }}
+      />
     </main>
   );
 }
