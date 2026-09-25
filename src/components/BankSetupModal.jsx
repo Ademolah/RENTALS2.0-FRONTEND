@@ -18,6 +18,8 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const API = import.meta.VITE_API_URL
+
   // Axios config helper
   // SURGICAL FIX: Use 'rentals_token' exactly like we did for the Car upload!
   const config = {
@@ -37,7 +39,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
     setIsLoadingBanks(true);
     try {
       // Adjust URL to match your backend port/route
-      const { data } = await axios.get('http://localhost:8000/api/v1/payouts/banks', config);
+      const { data } = await axios.get(`${API}/payouts/banks`, config);
       setBanks(data.data.banks);
     } catch (err) {
       setError('Failed to load supported banks. Please try again later.');
@@ -62,7 +64,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
     
     try {
       const { data } = await axios.post(
-        'http://localhost:8000/api/v1/payouts/banks/verify', 
+        `${API}/payouts/banks/verify`, 
         { accountNumber, bankCode: selectedBankCode },
         config
       );
@@ -86,7 +88,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
 
     try {
       await axios.post(
-        'http://localhost:8000/api/v1/payouts/banks/save', 
+        `${API}/payouts/banks/save`, 
         { 
           accountNumber, 
           bankCode: selectedBankCode,
