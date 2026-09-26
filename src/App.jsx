@@ -50,7 +50,9 @@ function App() {
         {/* 3. Conditionally render AdvancedSearch AND its padding ONLY on the Home Page */}
         {isHomePage && (
           <div className="relative z-30 pb-4">
-            <AdvancedSearch onSearch={setSearchFilters} />
+            <AdvancedSearch 
+            activeCategory={activeCategory}
+            onSearch={setSearchFilters} />
           </div>
         )}
       </div>
