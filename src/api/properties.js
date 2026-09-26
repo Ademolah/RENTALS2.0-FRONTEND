@@ -17,7 +17,7 @@ export const createProperty = async (formData) => {
 
   // SURGICAL FIX: 
   // 1. Grab the base URL dynamically from your client so it matches your environment.
-  const baseURL = apiClient.defaults.baseURL || 'http://localhost:8000/api/v1';
+  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
   // 2. Use RAW axios to bypass the apiClient's global JSON headers.
   // This allows the browser to perfectly construct the file boundary for Multer!

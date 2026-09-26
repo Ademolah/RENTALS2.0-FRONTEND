@@ -31,8 +31,11 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState({ adults: 1, children: 0 });
-  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
   const searchBarRef = useRef(null);
+
+  // Mobile State Upgrades
+  const [isMobileModalOpen, setIsMobileModalOpen] = useState(false);
+  const [mobileStep, setMobileStep] = useState('location'); // 'service', 'location', 'dates', 'guests'
 
   // Custom Calendar State
   const today = stripTime(new Date());
@@ -43,6 +46,13 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const isCar = normalizedCategory === 'car';
   const isVip = normalizedCategory === 'vip';
   const isStandard = !isCar && !isVip;
+
+  // Initialize correct first step when mobile modal opens
+  useEffect(() => {
+    if (isMobileModalOpen) {
+      setMobileStep(isVip ? 'service' : 'location');
+    }
+  }, [isMobileModalOpen, isVip]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -66,16 +76,29 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     srv.toLowerCase().includes(serviceType.toLowerCase())
   );
 
+  // Desktop Flow Handlers
   const handleLocationSelect = (dest) => {
     setLocation(dest);
     if (isStandard) setActiveMenu('checkIn');
     else if (isCar) setActiveMenu('checkIn');
-    else if (isVip) setActiveMenu(null); // Location is last in VIP
+    else if (isVip) setActiveMenu(null);
   };
 
   const handleServiceSelect = (srv) => {
     setServiceType(srv);
-    setActiveMenu('checkIn'); // Moves to Date
+    setActiveMenu('checkIn'); 
+  };
+
+  // Mobile Flow Handlers (Auto-advances the Accordion)
+  const handleMobileLocationSelect = (dest) => {
+    setLocation(dest);
+    setMobileStep('dates');
+    setActiveMenu('checkIn');
+  };
+
+  const handleMobileServiceSelect = (srv) => {
+    setServiceType(srv);
+    setMobileStep('location');
   };
 
   // --- LUXURY CALENDAR LOGIC ---
@@ -87,8 +110,8 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
       setCheckIn(date.toISOString().split('T')[0]);
       
       if (isVip) {
-        // VIP only needs one date
         setActiveMenu('location');
+        setMobileStep('location'); // Mobile auto-advance
         return;
       }
 
@@ -103,8 +126,12 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         setActiveMenu('checkOut');
       } else {
         setCheckOut(date.toISOString().split('T')[0]);
-        if (isStandard) setActiveMenu('guests');
-        else setActiveMenu(null); // Cars finish at checkout
+        if (isStandard) {
+          setActiveMenu('guests');
+          setMobileStep('guests'); // Mobile auto-advance
+        } else {
+          setActiveMenu(null);
+        }
       }
     }
   };
@@ -215,13 +242,22 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     }
   };
 
+  const clearAll = () => {
+    setLocation('');
+    setCheckIn('');
+    setCheckOut('');
+    setServiceType('');
+    setGuests({ adults: 1, children: 0 });
+    setMobileStep(isVip ? 'service' : 'location');
+  };
+
   const totalGuests = guests.adults + guests.children;
   const activeMenuIsDate = activeMenu === 'checkIn' || activeMenu === 'checkOut';
 
   return (
     <div className="w-full flex justify-center mt-4 md:mt-8 px-4 z-40 relative" ref={searchBarRef}>
       
-      {/* DESKTOP VIEW */}
+      {/* DESKTOP VIEW (Unchanged - Keeps perfect design) */}
       <div className={`hidden md:flex relative items-center max-w-4xl w-full rounded-full transition-all duration-300 ${
         activeMenu ? 'bg-gray-100' : 'bg-white border border-gray-200 shadow-search hover:shadow-lg divide-x divide-gray-200'
       }`}>
@@ -302,9 +338,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           </>
         )}
 
-        {/* --- POPOVERS --- */}
-        
-        {/* Service Type Popover (VIP ONLY) */}
+        {/* Desktop Popovers (Unchanged) */}
         {activeMenu === 'service' && isVip && (
           <div className="absolute top-full left-0 mt-4 bg-white rounded-[2rem] shadow-[0_10px_40px_rgba(0,0,0,0.1)] w-[400px] p-6 z-50 border border-gray-100 animate-in fade-in slide-in-from-top-2">
             <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Select VIP Service</h3>
@@ -347,10 +381,8 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           </div>
         )}
 
-        {/* LUXURY CALENDAR POPOVER */}
         {activeMenuIsDate && (
           <div className={`absolute top-full mt-4 bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] w-max p-8 z-50 border border-gray-100 animate-in fade-in slide-in-from-top-2 ${isVip ? 'left-1/3' : 'left-1/2 -translate-x-1/2'}`}>
-            
             {!isVip && (
               <div className="flex items-center justify-center space-x-8 mb-6 pb-6 border-b border-gray-100">
                 <button onClick={() => setActiveMenu('checkIn')} className={`text-sm font-bold pb-2 border-b-2 transition-colors ${activeMenu === 'checkIn' ? 'border-brand-primary text-gray-900' : 'border-transparent text-gray-400 hover:text-gray-600'}`}>
@@ -361,13 +393,11 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                 </button>
               </div>
             )}
-            
             {isVip && (
               <div className="text-center mb-6 pb-6 border-b border-gray-100 font-bold text-gray-900">
                 Select Service Date
               </div>
             )}
-
             <div className="flex space-x-12">
               {renderMonth(0, false)}
               {renderMonth(1, false)}
@@ -375,7 +405,6 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           </div>
         )}
 
-        {/* Guests Popover (STANDARD ONLY) */}
         {activeMenu === 'guests' && isStandard && (
           <div className="absolute top-full right-0 mt-4 bg-white rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.12)] w-[380px] p-8 z-50 border border-gray-100 animate-in fade-in slide-in-from-top-2">
             <div className="flex items-center justify-between py-5 border-b border-gray-100">
@@ -415,12 +444,12 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
             {isVip ? (serviceType || 'What service?') : (location || 'Where to?')}
           </span>
           <span className="text-xs text-gray-500 flex items-center space-x-1 font-medium">
-            <span>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : (isCar ? 'Pick-up' : 'Anywhere')}</span>
+            <span>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : (isCar ? 'Pick-up dates' : 'Anywhere')}</span>
             
             {!isVip && (
               <>
                 <span className="w-1 h-1 bg-gray-400 rounded-full mx-1"></span>
-                <span>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : (isCar ? 'Drop-off' : (totalGuests > 1 ? `${totalGuests} guests` : 'Add guests'))}</span>
+                <span>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : (isCar ? 'Drop-off dates' : (totalGuests > 1 ? `${totalGuests} guests` : 'Add guests'))}</span>
               </>
             )}
           </span>
@@ -430,90 +459,140 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         </div>
       </div>
 
-      {/* MOBILE MODAL */}
+      {/* SURGICAL UPGRADE: MOBILE BOTTOM SHEET ACCORDION */}
       {isMobileModalOpen && (
-        <div className="fixed inset-0 bg-white z-[100] md:hidden flex flex-col animate-in slide-in-from-bottom-full duration-300">
-          <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-white">
-            <button onClick={() => setIsMobileModalOpen(false)} className="p-2 bg-gray-50 rounded-full border border-gray-200">
-              <X className="w-5 h-5" />
-            </button>
-            <span className="font-bold text-sm tracking-widest uppercase">Search {isCar ? 'Vehicles' : isVip ? 'VIP Services' : 'Rentals'}</span>
-            <button onClick={() => {setLocation(''); setCheckIn(''); setCheckOut(''); setServiceType('');}} className="text-sm font-semibold underline">Clear</button>
-          </div>
+        <div className="fixed inset-0 z-[100] md:hidden flex flex-col justify-end">
           
-          <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-gray-50">
+          {/* Backdrop (Click to close) */}
+          <div 
+            className="absolute inset-0 bg-black/60 transition-opacity animate-in fade-in duration-300" 
+            onClick={() => setIsMobileModalOpen(false)} 
+          />
+          
+          {/* Bottom Sheet Modal */}
+          <div className="relative bg-[#f7f7f7] w-full max-h-[90vh] rounded-t-[2rem] flex flex-col animate-in slide-in-from-bottom-full duration-300 shadow-2xl">
             
-            {/* VIP Mobile Service Search */}
-            {isVip && (
-               <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold mb-4">What service do you need?</h2>
-                <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-gray-900 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all" />
-                <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                  {displayedServices.map(srv => (
-                    <button key={srv} onClick={() => setServiceType(srv)} className="px-4 py-2 border border-gray-200 rounded-full text-sm font-medium hover:border-brand-primary hover:text-brand-primary transition-colors">{srv}</button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Context Aware Location */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-4">
-                {isVip ? 'Where do you need this?' : (activeCityContext ? `Explore ${activeCityContext}` : (isCar ? 'Pick-up Location?' : 'Where to?'))}
-              </h2>
-              <input type="text" placeholder={isCar ? "Search city or airport" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-gray-900 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all" />
-              <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
-                {displayedDestinations.map(dest => (
-                  <button key={dest} onClick={() => setLocation(dest)} className="px-4 py-2 border border-gray-200 rounded-full text-sm font-medium hover:border-brand-primary hover:text-brand-primary transition-colors">{dest}</button>
-                ))}
-              </div>
+            {/* Header */}
+            <div className="p-4 flex items-center justify-between bg-white rounded-t-[2rem]">
+              <button onClick={() => setIsMobileModalOpen(false)} className="p-2 bg-gray-50 rounded-full border border-gray-200 hover:bg-gray-100 transition-colors">
+                <X className="w-5 h-5 text-gray-900" />
+              </button>
+              <span className="font-bold text-sm tracking-widest uppercase text-gray-900">
+                {isCar ? 'Vehicles' : isVip ? 'VIP Services' : 'Rentals'}
+              </span>
+              <button onClick={clearAll} className="text-sm font-bold underline text-gray-900">
+                Clear
+              </button>
             </div>
-
-            {/* Mobile Single-Pane Calendar */}
-            <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-              <h2 className="text-xl font-bold mb-6">{isCar ? 'When do you need the car?' : isVip ? 'When is the service?' : "When's your trip?"}</h2>
+            
+            {/* Accordion Scroll Area */}
+            <div className="flex-1 overflow-y-auto p-5 space-y-4">
               
-              {!isVip && (
-                <div className="flex items-center justify-center space-x-4 mb-6">
-                   <button onClick={() => setActiveMenu('checkIn')} className={`text-sm font-bold pb-1 border-b-2 transition-colors ${!checkIn || activeMenu !== 'checkOut' ? 'border-brand-primary text-gray-900' : 'border-transparent text-gray-400'}`}>{isCar ? 'Pick-up' : 'Check-in'}</button>
-                   <button onClick={() => setActiveMenu('checkOut')} className={`text-sm font-bold pb-1 border-b-2 transition-colors ${activeMenu === 'checkOut' ? 'border-brand-primary text-gray-900' : 'border-transparent text-gray-400'}`}>{isCar ? 'Drop-off' : 'Check-out'}</button>
+              {/* VIP Service Accordion Step */}
+              {isVip && (
+                mobileStep === 'service' ? (
+                  <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                    <h2 className="text-2xl font-extrabold mb-4 tracking-tight">What service?</h2>
+                    <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-gray-900 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all" />
+                    <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                      {displayedServices.map(srv => (
+                        <button key={srv} onClick={() => handleMobileServiceSelect(srv)} className="px-4 py-2 border border-gray-200 rounded-full text-sm font-medium hover:border-brand-primary hover:text-brand-primary transition-colors">{srv}</button>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div onClick={() => setMobileStep('service')} className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
+                    <span className="text-gray-500 font-semibold text-sm">Service</span>
+                    <span className="font-bold text-gray-900 text-sm">{serviceType || 'Select service'}</span>
+                  </div>
+                )
+              )}
+
+              {/* Location Accordion Step */}
+              {mobileStep === 'location' ? (
+                <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                  <h2 className="text-2xl font-extrabold mb-4 tracking-tight">
+                    {isVip ? 'Where do you need this?' : (activeCityContext ? `Explore ${activeCityContext}` : (isCar ? 'Pick-up Location?' : 'Where to?'))}
+                  </h2>
+                  <input type="text" placeholder={isCar ? "Search city or airport" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-xl outline-none font-medium text-gray-900 focus:border-brand-primary focus:ring-1 focus:ring-brand-primary transition-all" />
+                  <div className="mt-4 flex flex-wrap gap-2 max-h-40 overflow-y-auto">
+                    {displayedDestinations.map(dest => (
+                      <button key={dest} onClick={() => handleMobileLocationSelect(dest)} className="px-4 py-2 border border-gray-200 rounded-full text-sm font-medium hover:border-brand-primary hover:text-brand-primary transition-colors">{dest}</button>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div onClick={() => setMobileStep('location')} className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
+                  <span className="text-gray-500 font-semibold text-sm">Where</span>
+                  <span className="font-bold text-gray-900 text-sm truncate ml-4">{location || "I'm flexible"}</span>
                 </div>
               )}
 
-              {renderMonth(0, true)}
+              {/* Dates Accordion Step */}
+              {mobileStep === 'dates' ? (
+                <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                  <h2 className="text-2xl font-extrabold mb-6 tracking-tight">{isCar ? 'When do you need the car?' : isVip ? 'When is the service?' : "When's your trip?"}</h2>
+                  
+                  {!isVip && (
+                    <div className="flex items-center justify-start space-x-6 mb-6 border-b border-gray-100">
+                       <button onClick={() => setActiveMenu('checkIn')} className={`text-sm font-bold pb-2 border-b-2 transition-colors ${!checkIn || activeMenu !== 'checkOut' ? 'border-brand-primary text-gray-900' : 'border-transparent text-gray-400'}`}>{isCar ? 'Pick-up' : 'Check-in'}</button>
+                       <button onClick={() => setActiveMenu('checkOut')} className={`text-sm font-bold pb-2 border-b-2 transition-colors ${activeMenu === 'checkOut' ? 'border-brand-primary text-gray-900' : 'border-transparent text-gray-400'}`}>{isCar ? 'Drop-off' : 'Check-out'}</button>
+                    </div>
+                  )}
+
+                  {renderMonth(0, true)}
+                </div>
+              ) : (
+                <div onClick={() => { setMobileStep('dates'); setActiveMenu('checkIn'); }} className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
+                  <span className="text-gray-500 font-semibold text-sm">When</span>
+                  <span className="font-bold text-gray-900 text-sm truncate ml-4">
+                    {checkIn ? `${new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} ${checkOut ? `- ${new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}` : 'Add dates'}
+                  </span>
+                </div>
+              )}
+
+              {/* Guests Accordion Step (Standard Only) */}
+              {isStandard && (
+                mobileStep === 'guests' ? (
+                  <div className="bg-white p-6 rounded-3xl shadow-lg border border-gray-100 animate-in fade-in zoom-in-95 duration-200">
+                    <h2 className="text-2xl font-extrabold mb-6 tracking-tight">Who's coming?</h2>
+                    <div className="flex items-center justify-between py-3 border-b border-gray-100 mb-2">
+                      <span className="font-bold text-gray-900 text-lg">Adults</span>
+                      <div className="flex items-center space-x-4">
+                        <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30"><Minus className="w-4 h-4" /></button>
+                        <span className="font-bold text-gray-900 w-4 text-center">{guests.adults}</span>
+                        <button onClick={() => updateGuests('adults', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <span className="font-bold text-gray-900 text-lg">Children</span>
+                      <div className="flex items-center space-x-4">
+                        <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 disabled:opacity-30"><Minus className="w-4 h-4" /></button>
+                        <span className="font-bold text-gray-900 w-4 text-center">{guests.children}</span>
+                        <button onClick={() => updateGuests('children', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center text-gray-500"><Plus className="w-4 h-4" /></button>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <div onClick={() => setMobileStep('guests')} className="bg-white px-5 py-4 rounded-2xl shadow-sm border border-gray-100 flex justify-between items-center cursor-pointer hover:border-gray-300 transition-colors">
+                    <span className="text-gray-500 font-semibold text-sm">Who</span>
+                    <span className="font-bold text-gray-900 text-sm truncate ml-4">{totalGuests > 1 ? `${totalGuests} guests` : 'Add guests'}</span>
+                  </div>
+                )
+              )}
+
             </div>
 
-            {/* Mobile Guests (Standard Only) */}
-            {isStandard && (
-              <div className="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
-                <h2 className="text-xl font-bold mb-6">Who's coming?</h2>
-                <div className="flex items-center justify-between py-2 border-b border-gray-100 mb-4">
-                  <span className="font-bold">Adults</span>
-                  <div className="flex items-center space-x-4">
-                    <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"><Minus className="w-3 h-3" /></button>
-                    <span className="font-bold w-4 text-center">{guests.adults}</span>
-                    <button onClick={() => updateGuests('adults', 'add')} className="w-8 h-8 rounded-full border flex items-center justify-center"><Plus className="w-3 h-3" /></button>
-                  </div>
-                </div>
-                <div className="flex items-center justify-between py-2">
-                  <span className="font-bold">Children</span>
-                  <div className="flex items-center space-x-4">
-                    <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-8 h-8 rounded-full border flex items-center justify-center disabled:opacity-30"><Minus className="w-3 h-3" /></button>
-                    <span className="font-bold w-4 text-center">{guests.children}</span>
-                    <button onClick={() => updateGuests('children', 'add')} className="w-8 h-8 rounded-full border flex items-center justify-center"><Plus className="w-3 h-3" /></button>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </div>
-
-          <div className="p-4 bg-white border-t border-gray-100 flex justify-between items-center">
-            <span className="font-semibold underline cursor-pointer" onClick={() => setIsMobileModalOpen(false)}>Skip</span>
-            <button onClick={executeSearch} className="bg-brand-primary hover:opacity-90 transition-opacity text-white font-bold py-3.5 px-8 rounded-xl flex items-center space-x-2">
-              <Search className="w-5 h-5" />
-              <span>Search</span>
-            </button>
+            {/* Footer */}
+            <div className="p-4 bg-white border-t border-gray-200 flex justify-between items-center z-10">
+              <span className="font-bold underline cursor-pointer text-gray-900" onClick={() => setIsMobileModalOpen(false)}>
+                Cancel
+              </span>
+              <button onClick={executeSearch} className="bg-brand-primary hover:bg-brand-hover transition-colors text-white font-extrabold py-4 px-8 rounded-[1rem] flex items-center space-x-2 shadow-lg active:scale-95 duration-200">
+                <Search className="w-5 h-5" />
+                <span>Search</span>
+              </button>
+            </div>
           </div>
         </div>
       )}
