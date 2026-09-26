@@ -13,7 +13,6 @@ import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CarDetails from './pages/CarDetails';
 
-
 function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
@@ -39,7 +38,7 @@ function App() {
       
       {/* 
         2. Consolidated Header Wrapper: 
-        Removed the global pb-4 so dashboards sit perfectly flush against the Navbar 
+        Maintains the sticky property for the whole header block 
       */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
         <Navbar 
@@ -47,9 +46,9 @@ function App() {
           onCategoryChange={setActiveCategory} 
         />
         
-        {/* 3. Conditionally render AdvancedSearch AND its padding ONLY on the Home Page */}
+        {/* 3. SURGICAL FIX: Elevated wrapper to z-[70] so the search bar escapes the Navbar shadow */}
         {isHomePage && (
-          <div className="relative z-30 pb-4">
+          <div className="relative z-[70] pb-4 bg-white">
             <AdvancedSearch 
             activeCategory={activeCategory}
             onSearch={setSearchFilters} />
