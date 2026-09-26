@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Star, Loader2, ShieldCheck, Plus, Minus } from 'lucide-react';
+import { Star, Loader2, ShieldCheck,Clock, Info, Plus, Minus } from 'lucide-react';
 import { initiateBooking } from '../api/reservation';
 import { useAuth } from '../context/AuthContext';
 
@@ -101,7 +101,9 @@ export default function BookingWidget({ property }) {
       )}
 
       {/* Booking Form */}
-      <form onSubmit={handleReservation} className="space-y-4">
+      <form onSubmit={handleReservation} className="space-y-5">
+        
+        {/* Date & Guest Selection */}
         <div className={`border border-gray-300 rounded-2xl overflow-hidden ${isBooked ? 'opacity-50' : ''}`}>
           <div className="flex border-b border-gray-300">
             <div className="flex-1 p-3 border-r border-gray-300 relative">
@@ -154,6 +156,33 @@ export default function BookingWidget({ property }) {
               >
                 <Plus className="w-4 h-4" />
               </button>
+            </div>
+          </div>
+        </div>
+
+        {/* NEW: Trust & Guarantees Section */}
+        <div className="bg-gray-50 rounded-xl p-4 space-y-3.5 border border-gray-100">
+          <div className="flex gap-3">
+            <ShieldCheck className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">100% Secured Payment</h4>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
+            </div>
+          </div>
+          
+          <div className="flex gap-3">
+            <Clock className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Caution Fee Protection</h4>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of checkout, subject to a standard property inspection.</p>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Info className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Cancellations & Refunds</h4>
+              <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Refunds are processed according to our standard platform terms and conditions.</p>
             </div>
           </div>
         </div>

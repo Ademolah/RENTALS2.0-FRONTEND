@@ -7,6 +7,7 @@ import {
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 import BankSetupModal from '../components/BankSetupModal';
+import PayoutActionCard from '../components/PayoutActionCard';
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('ACTION_FEED');
@@ -105,26 +106,56 @@ export default function LandlordDashboard() {
   };
 
   // 2. REAL ESCROW CONFIRMATION
-  const handleEscrowConfirm = async (id, type) => {
+  // 2. REAL ESCROW CONFIRMATION & PAYOUT EXECUTION
+  const handleEscrowConfirm = async (booking) => {
+    const { _id: id, type } = booking;
+    const isCar = type === 'CAR';
+    
+    // Check if the guest already did their part of the handshake
+    const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
+    
     setProcessingId(id);
     try {
-      if (type === 'CAR') {
+      // Step 1: Always confirm the host's side in the database first
+      if (isCar) {
         await confirmCarHandover(id);
       } else {
         await confirmPropertyCheckIn(id);
       }
+
+      // Step 2: The Magic - If guest already confirmed, execute the Paystack payout!
+      let isPayoutReleased = false;
+      if (hasGuestConfirmed) {
+        await executePayout(id);
+        isPayoutReleased = true;
+      }
       
-      setBookings(prev => prev.map(booking => {
-        if (booking._id === id) {
-          if (type === 'CAR') return { ...booking, ownerConfirmedHandover: true };
-          return { ...booking, checkInConfirmedByHost: true };
+      // Step 3: Update the local UI state dynamically
+      setBookings(prev => prev.map(b => {
+        if (b._id === id) {
+          const updated = { ...b };
+          if (isCar) updated.ownerConfirmedHandover = true;
+          else updated.checkInConfirmedByHost = true;
+
+          // If the transfer went through, instantly turn the UI badge green!
+          if (isPayoutReleased) {
+            updated.escrowStatus = 'RELEASED';
+          }
+          return updated;
         }
-        return booking;
+        return b;
       }));
+
+      // Success Feedback
+      if (isPayoutReleased) {
+        alert("Handshake complete! Funds have been released to your bank account.");
+      } else {
+        alert("Handover confirmed. Awaiting guest confirmation to release funds.");
+      }
+
     } catch (error) {
-      // Adjusted to handle both axios standard errors and custom thrown errors
       const msg = error?.response?.data?.message || error.message || 'Failed to confirm handover.';
-      alert(msg);
+      alert(`Action Failed: ${msg}`);
     } finally {
       setProcessingId(null);
     }
@@ -184,6 +215,13 @@ export default function LandlordDashboard() {
                 <div className="text-left">
                   <div className="text-sm font-bold text-gray-900">Vehicle</div>
                   <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
+                </div>
+              </button>
+              <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-100 transition-colors group">
+                <Hotel className="w-5 h-5 text-gray-400 group-hover:text-brand-primary" />
+                <div className="text-left">
+                  <div className="text-sm font-bold text-gray-900">Hotel</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Hotels</div>
                 </div>
               </button>
               <button className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
@@ -307,7 +345,7 @@ export default function LandlordDashboard() {
                        {/* Action Button */}
                        {!isReleased && (!hasHostConfirmed || (hasGuestConfirmed && !hasHostConfirmed)) && (
                          <button 
-                            onClick={() => handleEscrowConfirm(booking._id, booking.type)}
+                            onClick={() => handleEscrowConfirm(booking)}
                             disabled={isCurrentlyConfirming}
                             className={`py-3 px-8 text-xs font-bold uppercase tracking-widest flex items-center justify-center transition-all ${
                               hasGuestConfirmed 
@@ -375,6 +413,10 @@ export default function LandlordDashboard() {
           console.log("Bank saved successfully!");
         }}
       />
+
+      {activeBookings.map(booking => (
+        <PayoutActionCard key={booking._id} booking={booking} />
+      ))}
     </main>
   );
 }

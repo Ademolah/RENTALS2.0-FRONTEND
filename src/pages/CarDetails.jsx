@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
-  MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, 
-  Loader2, ShieldCheck, Calendar as CalendarIcon, Clock, 
+  MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
+  Loader2, ShieldCheck, Calendar as CalendarIcon, 
   CreditCard, CheckCircle2, User, Sparkles
 } from 'lucide-react';
 import { getCarById } from '../api/car';
@@ -322,7 +322,6 @@ export default function CarDetails() {
 
             <form onSubmit={handleReservation} className="space-y-4">
               
-              {/* Timing Grid */}
               {/* Premium Timing Grid */}
               <div className="space-y-8 p-6 border border-gray-200 rounded-3xl bg-white shadow-sm">
                 
@@ -399,10 +398,8 @@ export default function CarDetails() {
                   </div>
                 </div>
 
-              
-                
                 {/* Duration Dropdown */}
-                <div className="p-3 bg-gray-50/50">
+                <div className="p-3 bg-gray-50/50 rounded-xl">
                   <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block mb-1">Rental Duration</label>
                   <select 
                     value={durationSlots}
@@ -439,36 +436,61 @@ export default function CarDetails() {
                 </div>
               </div>
 
+              {/* NEW: Trust & Guarantees Section */}
+              <div className="bg-gray-50 rounded-xl p-4 space-y-3.5 border border-gray-100">
+                <div className="flex gap-3">
+                  <ShieldCheck className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">100% Secured Payment</h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the owner upon successful vehicle pickup.</p>
+                  </div>
+                </div>
+                
+                <div className="flex gap-3">
+                  <Clock className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Caution Fee Protection</h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of vehicle return, subject to a standard vehicle inspection.</p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3">
+                  <Info className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Cancellations & Refunds</h4>
+                    <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Refunds are processed according to our standard platform terms and conditions.</p>
+                  </div>
+                </div>
+              </div>
+
               {/* Dynamic Action Button */}
               <button 
-              type="submit"
-              // Disable button if loading, redirecting, OR if the car is already booked
-              disabled={bookingLoading || isRedirecting || (car && !car.isAvailable)}
-              className={`w-full py-4 mt-2 text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:cursor-not-allowed duration-200 ${
-                car && !car.isAvailable
-                  ? "bg-gray-400 opacity-90" // Muted gray styling when currently booked
-                  : "bg-gray-900 hover:bg-brand-primary active:scale-95 disabled:opacity-70"
-              }`}
-            >
-              {bookingLoading ? (
-                <>
-                  <Loader2 className="w-5 h-5 animate-spin mr-2" />
-                  <span>Securing vehicle...</span>
-                </>
-              ) : isRedirecting ? (
-                <>
-                  <ShieldCheck className="w-5 h-5 mr-2 animate-pulse" />
-                  <span className="animate-pulse">Redirecting to Paystack...</span>
-                </>
-              ) : car && !car.isAvailable ? (
-                // Shows status text when vehicle is already reserved
-                'Currently Booked'
-              ) : !user ? (
-                'Log in to Reserve'
-              ) : (
-                'Reserve Vehicle'
-              )}
-            </button>
+                type="submit"
+                disabled={bookingLoading || isRedirecting || (car && !car.isAvailable)}
+                className={`w-full py-4 mt-2 text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:cursor-not-allowed duration-200 ${
+                  car && !car.isAvailable
+                    ? "bg-gray-400 opacity-90" 
+                    : "bg-gray-900 hover:bg-brand-primary active:scale-95 disabled:opacity-70"
+                }`}
+              >
+                {bookingLoading ? (
+                  <>
+                    <Loader2 className="w-5 h-5 animate-spin mr-2" />
+                    <span>Securing vehicle...</span>
+                  </>
+                ) : isRedirecting ? (
+                  <>
+                    <ShieldCheck className="w-5 h-5 mr-2 animate-pulse" />
+                    <span className="animate-pulse">Redirecting to Paystack...</span>
+                  </>
+                ) : car && !car.isAvailable ? (
+                  'Currently Booked'
+                ) : !user ? (
+                  'Log in to Reserve'
+                ) : (
+                  'Reserve Vehicle'
+                )}
+              </button>
 
             </form>
 

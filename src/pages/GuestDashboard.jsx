@@ -8,6 +8,8 @@ import { getMyPropertyBookings } from '../api/reservation';
 import { confirmPropertyCheckIn } from '../api/properties';
 import { confirmCarHandover } from '../api/car';
 import { getMyCarBookings } from '../api/car';
+import { executePayout } from '../api/payouts';
+
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
 const BookingCard = ({ booking, onConfirmEscrow }) => {
@@ -40,14 +42,35 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
+      // Step 1: Confirm the guest's side in the database
       if (isCar) {
         await confirmCarHandover(booking._id);
       } else {
         await confirmPropertyCheckIn(booking._id);
       }
-      onConfirmEscrow(booking._id, booking.type);
+
+      // Step 2: The Magic - If the Host ALREADY confirmed, execute the payout!
+      let isPayoutReleased = false;
+      if (hasHostConfirmed) {
+        // The host clicked first. You are the second click. Release the funds.
+        await executePayout(booking._id);
+        isPayoutReleased = true;
+      }
+
+      // Step 3: Tell the parent component to update the state
+      // We pass the isPayoutReleased flag so the parent can set the UI to State 4 instantly
+      onConfirmEscrow(booking._id, booking.type, isPayoutReleased);
+
+      // Success Feedback
+      if (isPayoutReleased) {
+        alert("Confirmation complete! The escrow funds have been released to the host.");
+      } else {
+        alert("Confirmed! Waiting for the host to confirm before releasing funds.");
+      }
+
     } catch (error) {
       console.error("Escrow confirmation failed:", error);
+      alert(error?.response?.data?.message || "Confirmation failed. Please try again.");
     } finally {
       setIsConfirming(false);
     }
@@ -101,7 +124,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           </div>
         </div>
 
-        {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
+       
         {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
         {booking.reservationStatus === 'ACTIVE' && (
           <div className="mt-4 pt-6 border-t border-gray-100">
@@ -228,18 +251,39 @@ export default function GuestDashboard() {
     fetchAllBookings();
   }, []);
 
-  const handleEscrowSuccess = (reservationId, type) => {
+  const handleEscrowSuccess = (reservationId, type, isPayoutReleased) => {
     setBookings(prev => prev.map(booking => {
       if (booking._id === reservationId) {
+        const updated = { ...booking };
+        
+        // 1. Update the guest's side of the confirmation
         if (type === 'CAR') {
-          return { ...booking, guestConfirmedPickup: true }; // Only update guest side
+          updated.guestConfirmedPickup = true; 
+        } else {
+          updated.checkInConfirmedByGuest = true;
         }
-        return { ...booking, checkInConfirmedByGuest: true };
+
+        // 2. If the payout was released (host had already clicked), instantly update the UI status
+        if (isPayoutReleased) {
+          if (type === 'CAR') {
+            updated.escrowStatus = 'RELEASED';
+          } else {
+            updated.payoutStatus = 'RELEASED_TO_LANDLORD';
+          }
+        }
+
+        return updated;
       }
       return booking;
     }));
 
-    setToastMessage(`${type === 'CAR' ? 'Pickup' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
+    // 3. Dynamic toast message based on whether the handshake finished
+    if (isPayoutReleased) {
+      setToastMessage(`Confirmation complete! Funds released to ${type === 'CAR' ? 'owner' : 'host'}.`);
+    } else {
+      setToastMessage(`${type === 'CAR' ? 'Pickup' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
+    }
+    
     setTimeout(() => setToastMessage(''), 4000);
   };
 
