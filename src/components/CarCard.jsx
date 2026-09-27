@@ -19,13 +19,10 @@ export default function CarCard({ car }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         
-        {/* Dynamic Status Badge */}
-        <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-xs font-bold shadow-sm backdrop-blur-md ${
-          car.isAvailable 
-            ? "bg-white/90 text-gray-900" 
-            : "bg-gray-900/80 text-white"
-        }`}>
-          {car.isAvailable ? "Available Now" : "Booked"}
+        {/* R Verified Badge */}
+        <div className="absolute top-3 left-3 px-2 py-1 bg-white/95 backdrop-blur-sm shadow-sm rounded-md flex items-center space-x-1">
+          <span className="text-brand-primary font-bold text-sm leading-none">R</span>
+          <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">Verified</span>
         </div>
       </div>
 

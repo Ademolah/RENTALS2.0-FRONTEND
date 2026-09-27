@@ -16,34 +16,19 @@ export default function PropertyCard({ property }) {
         <div className="absolute top-3 w-full px-3 flex justify-between items-start">
           <div className="flex flex-col gap-2">
             {/* 'R' Verified Badge */}
-            {property.isRentalVerified && (
+            {(property.isRentalVerified || true) && (
               <div className="bg-white/95 backdrop-blur-sm shadow-sm px-2 py-1 rounded-md flex items-center space-x-1">
                 <span className="text-brand-primary font-bold text-sm leading-none">R</span>
                 <span className="text-[10px] font-bold text-gray-800 uppercase tracking-wider">Verified</span>
               </div>
             )}
-            
-            {/* Availability Status */}
-            <div className={`px-2 py-1 rounded-md backdrop-blur-sm shadow-sm flex items-center space-x-1.5 ${
-              property.isAvailable ? 'bg-white/95' : 'bg-gray-900/90'
-            }`}>
-              <div className={`w-1.5 h-1.5 rounded-full ${
-                property.isAvailable ? 'bg-[#008A05]' : 'bg-brand-primary'
-              }`}></div>
-              <span className={`text-[10px] font-bold uppercase tracking-wider ${
-                property.isAvailable ? 'text-gray-800' : 'text-white'
-              }`}>
-                {property.isAvailable ? 'Available' : 'Booked'}
-              </span>
-            </div>
           </div>
 
           {/* Favorite Button */}
           <button 
             type="button"
             onClick={(e) => {
-              e.preventDefault(); // Prevent navigating when clicking heart
-              // Toggle wishlist state logic here
+              e.preventDefault(); 
             }}
             className="text-white hover:scale-110 transition-transform drop-shadow-md"
           >

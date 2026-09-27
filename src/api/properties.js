@@ -12,15 +12,17 @@ export const getPropertyById = async (id) => {
   return response.data;
 };
 
+// --- NEW AVAILABILITY CHECK ---
+export const checkPropertyAvailability = async (id, dates) => {
+  const response = await apiClient.post(`/properties/${id}/availability`, dates);
+  return response.data;
+};
+
 export const createProperty = async (formData) => {
   const token = localStorage.getItem('rentals_token');
 
-  // SURGICAL FIX: 
-  // 1. Grab the base URL dynamically from your client so it matches your environment.
   const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 
-  // 2. Use RAW axios to bypass the apiClient's global JSON headers.
-  // This allows the browser to perfectly construct the file boundary for Multer!
   const response = await axios.post(`${baseURL}/properties`, formData, {
     headers: {
       Authorization: `Bearer ${token}`
@@ -30,14 +32,11 @@ export const createProperty = async (formData) => {
 };
 
 export const confirmPropertyCheckIn = async (reservationId) => {
-  // We use patch because we are updating the boolean status of an existing reservation
   const response = await apiClient.patch(`/reservations/${reservationId}/confirm-checkin`);
   return response.data;
 };
-
 
 export const getLandlordPropertyBookings = async () => {
   const response = await apiClient.get('/properties/landlord-bookings');
   return response.data;
 };
-
