@@ -122,152 +122,76 @@ export default function PropertyDetail() {
         <div className="lg:col-span-7 flex flex-col gap-8">
           
           {/* Main Image Gallery */}
-<div className="mb-8">
-  
-  {/* MOBILE VIEW: Full swipeable carousel (Hidden on md and up) */}
-  <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group">
-    
-    <div 
-      ref={mobileScrollRef}
-      className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-    >
-      {property.images.map((img, idx) => (
-        <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-          <img 
-            src={img} 
-            alt={`${property.title} - ${idx + 1}`}
-            className="w-full h-full object-cover"
-          />
-          {/* Subtle counter */}
-          <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
-            {idx + 1} / {property.images.length}
-          </div>
-        </div>
-      ))}
-    </div>
-
-    {/* Mobile Chevrons (Only show if > 1 image) */}
-    {property.images.length > 1 && (
-      <>
-        <button 
-          onClick={() => scrollGallery(mobileScrollRef, 'left')} 
-          className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"
-        >
-          <ChevronLeft className="w-5 h-5" />
-        </button>
-        <button 
-          onClick={() => scrollGallery(mobileScrollRef, 'right')} 
-          className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"
-        >
-          <ChevronRight className="w-5 h-5" />
-        </button>
-      </>
-    )}
-  </div>
-
-  {/* DESKTOP VIEW: Adaptive Premium Grid Layout (Hidden on mobile) */}
-  <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden">
-    
-    {/* CONDITION A: Exactly 1 Image */}
-    {property.images.length === 1 && (
-      <div className="w-full h-full relative">
-        <img 
-          src={property.images[0]} 
-          className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300 rounded-2xl"
-          alt="Main View"
-        />
-      </div>
-    )}
-
-    {/* CONDITION B: Exactly 2 Images (50/50 Split) */}
-    {property.images.length === 2 && (
-      <div className="grid grid-cols-2 gap-2 h-full">
-        <div className="w-full h-full relative">
-          <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 1"/>
-        </div>
-        <div className="w-full h-full relative">
-          <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 2"/>
-        </div>
-      </div>
-    )}
-
-    {/* CONDITION C: 3 or More Images */}
-    {property.images.length >= 3 && (
-      <div className="grid grid-cols-2 gap-2 h-full">
-        
-        {/* Left Side: Main Hero Image */}
-        <div className="w-full h-full relative group">
-          <img 
-            src={property.images[0]} 
-            className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300"
-            alt="Main View"
-          />
-        </div>
-
-        {/* Right Side: Split Stack */}
-        <div className="grid grid-rows-2 gap-2 h-full">
-          
-          {/* Top Right */}
-          <div className="w-full h-full relative group">
-            <img 
-              src={property.images[1]} 
-              className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300"
-              alt="Interior 1"
-            />
-          </div>
-          
-          {/* Bottom Right: Scrollable Strip for remaining images */}
-          <div className="w-full h-full relative group">
+          <div className="mb-8">
             
-            {/* SURGICAL FIX: Added absolute inset-0 to prevent flexbox height collapse */}
-            <div 
-              ref={desktopScrollRef}
-              className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]"
-            >
-              {property.images.slice(2).map((img, idx) => (
-                <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-                  <img 
-                    src={img} 
-                    className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300"
-                    alt={`Interior ${idx + 2}`}
-                  />
-                  {/* Total counter overlay (Only show if > 3 images total) */}
-                  {property.images.length > 3 && (
-                    <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full pointer-events-none shadow-lg">
-                      {idx + 1} / {property.images.length - 2}
+            {/* MOBILE VIEW: Full swipeable carousel (Hidden on md and up) */}
+            <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group">
+              <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {property.images.map((img, idx) => (
+                  <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                    <img src={img} alt={`${property.title} - ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                      {idx + 1} / {property.images.length}
                     </div>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
+
+              {property.images.length > 1 && (
+                <>
+                  <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
+                  <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronRight className="w-5 h-5" /></button>
+                </>
+              )}
             </div>
 
-            {/* Desktop Chevrons (Only appear on hover if there are > 3 total images) */}
-            {property.images.length > 3 && (
-              <>
-                <button 
-                  onClick={() => scrollGallery(desktopScrollRef, 'left')} 
-                  className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"
-                >
-                  <ChevronLeft className="w-5 h-5" />
-                </button>
-                <button 
-                  onClick={() => scrollGallery(desktopScrollRef, 'right')} 
-                  className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"
-                >
-                  <ChevronRight className="w-5 h-5" />
-                </button>
-              </>
-            )}
+            {/* DESKTOP VIEW: Adaptive Premium Grid Layout (Hidden on mobile) */}
+            <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden">
+              {property.images.length === 1 && (
+                <div className="w-full h-full relative">
+                  <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300 rounded-2xl" alt="Main View" />
+                </div>
+              )}
+              {property.images.length === 2 && (
+                <div className="grid grid-cols-2 gap-2 h-full">
+                  <div className="w-full h-full relative"><img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 1"/></div>
+                  <div className="w-full h-full relative"><img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 2"/></div>
+                </div>
+              )}
+              {property.images.length >= 3 && (
+                <div className="grid grid-cols-2 gap-2 h-full">
+                  <div className="w-full h-full relative group">
+                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300" alt="Main View" />
+                  </div>
+                  <div className="grid grid-rows-2 gap-2 h-full">
+                    <div className="w-full h-full relative group">
+                      <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
+                    </div>
+                    <div className="w-full h-full relative group">
+                      <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {property.images.slice(2).map((img, idx) => (
+                          <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                            <img src={img} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300" alt={`Interior ${idx + 2}`} />
+                            {property.images.length > 3 && (
+                              <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full pointer-events-none shadow-lg">
+                                {idx + 1} / {property.images.length - 2}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {property.images.length > 3 && (
+                        <>
+                          <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
+                          <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-        </div>
-      </div>
-    )}
-  </div>
-    
-
-        
-            
-</div>
 
           {/* Property Details */}
           <div className="border-b border-gray-200 pb-8">
@@ -291,19 +215,25 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          {/* Mobile Booking Widget */}
-          <BookingWidget property={property} />
+          {/* Mobile Booking Widget - Hidden on Desktop */}
+          <div className="lg:hidden block">
+            <BookingWidget property={property} />
+          </div>
+
+          {/* Interactive Map Section - Moved to Bottom Left */}
+          <div className="pt-4 pb-8">
+            <h3 className="text-xl font-bold text-brand-dark mb-6">Where you'll be</h3>
+            <div className="w-full h-[400px] rounded-2xl overflow-hidden shadow-card">
+              <InteractiveMap />
+            </div>
+          </div>
 
         </div>
 
-        {/* RIGHT COLUMN: Sticky Map & Booking Widget */}
-        <div className="lg:col-span-5 h-[600px] lg:h-[calc(100vh-8rem)] lg:sticky lg:top-28 flex flex-col gap-6">
-          <div className="hidden lg:block w-full max-w-md ml-auto">
+        {/* RIGHT COLUMN: Sticky Booking Widget Only */}
+        <div className="hidden lg:block lg:col-span-5 relative">
+          <div className="sticky top-28 w-full max-w-md ml-auto">
             <BookingWidget property={property} />
-          </div>
-          
-          <div className="flex-1 w-full rounded-2xl overflow-hidden shadow-card">
-            <InteractiveMap />
           </div>
         </div>
 

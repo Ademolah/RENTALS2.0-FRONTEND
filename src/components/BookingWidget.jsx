@@ -4,6 +4,7 @@ import { initiateBooking } from '../api/reservation';
 import { checkPropertyAvailability } from '../api/properties';
 import { useAuth } from '../context/AuthContext';
 
+
 export default function BookingWidget({ property }) {
   const { user } = useAuth();
   const [checkIn, setCheckIn] = useState('');
@@ -224,7 +225,7 @@ export default function BookingWidget({ property }) {
           </div>
         )}
 
-        {/* Action Buttons */}
+        
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-2">
           
