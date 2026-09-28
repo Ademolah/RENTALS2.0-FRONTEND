@@ -19,6 +19,14 @@
   --shadow-navbar: 0 1px 12px rgba(0, 0, 0, 0.08);
   --shadow-card: 0 6px 16px rgba(0, 0, 0, 0.05);
   --shadow-search: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+  /* SURGICAL FIX: Custom Animation for the Hotel Header */
+  --animate-gradient: gradient 4s linear infinite;
+  
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
 }
 
 

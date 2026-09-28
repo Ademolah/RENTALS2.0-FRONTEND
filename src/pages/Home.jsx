@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import PropertyCard from '../components/PropertyCard';
-import CarCard from '../components/CarCard'; // Import the Car Card
+import CarCard from '../components/CarCard'; 
+import HotelListingView from '../components/HotelCard'; // SURGICAL FIX: Import the new Hotel view
 import { getProperties } from '../api/properties';
-import { getCars } from '../api/car'; // Import the Car API
+import { getCars } from '../api/car'; 
 import { Loader2, Search } from 'lucide-react';
 
 export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }) {
-  // Renamed state to 'listings' to semantically accommodate both properties and cars
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isSearchCleared, setIsSearchCleared] = useState(false);
@@ -19,20 +19,22 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
 
   useEffect(() => {
     async function fetchListings() {
+      // If we are on the hotel tab, we can skip fetching standard listings for now 
+      // since HotelListingView currently uses its own MOCK_HOTELS for the UI build out.
+      // We will wire this up to real data in the next step.
+      if (activeCategory.toLowerCase() === 'hotel') {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
       try {
         let responseData;
         const normalizedCategory = activeCategory.toLowerCase();
         
-        // 1. Dual-Engine Fetch: Route to the correct backend API
-        // 1. Dual-Engine Fetch: Route to the correct backend API
         if (normalizedCategory === 'car') {
-          // Fetch ALL cars. Do not filter by category='car' because car categories 
-          // are things like 'SUV' or 'Sedan' in the DB.
           responseData = await getCars(); 
-        
         } else {
-          // Handles shortlet, hotel, and vip reservations
           responseData = await getProperties({ category: activeCategory });
         }
         
@@ -40,17 +42,10 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
           ? responseData 
           : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
 
-          console.log("[DEBUG FRONTEND 2]: Extracted Results array. Length:", results.length, "Booked inside?", results.some(r => r.isAvailable === false));
-
-        // 2. SURGICAL FIX: Apply Smart Client-Side Filtering
         if (!isSearchCleared && Object.keys(searchFilters).length > 0) {
-          
-          // A: Location Matching (Highly Forgiving - works for both Properties and Cars)
           if (searchFilters.location) {
             const searchStr = searchFilters.location.toLowerCase();
-            
             results = results.filter(item => {
-              // Cars use item.location, Properties use item.address
               const city = (item.address?.city || item.location?.city || '').toLowerCase();
               const state = (item.address?.state || item.location?.state || '').toLowerCase();
               const street = (item.address?.street || '').toLowerCase();
@@ -61,7 +56,6 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
             });
           }
 
-          // B: Guest Capacity Logic (Only apply if we are looking at properties)
           if (normalizedCategory !== 'car') {
             const requestedGuests = (searchFilters.adults || 0) + (searchFilters.children || 0);
             if (requestedGuests > 0) {
@@ -84,7 +78,11 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      {loading ? (
+      
+      {/* SURGICAL FIX: Intercept the render if category is Hotel */}
+      {activeCategory.toLowerCase() === 'hotel' ? (
+        <HotelListingView />
+      ) : loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-2" />
           <p className="text-sm font-medium">Finding available listings...</p>
@@ -108,7 +106,6 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
         </div>
       ) : (
         <>
-          {/* DYNAMIC CATEGORY HEADERS */}
           {activeCategory.toLowerCase() === 'car' && (
             <div className="mb-10 text-center animate-in fade-in slide-in-from-bottom-4 duration-700">
               <h2 className="text-3xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-blue-600 mb-4 tracking-tight">
@@ -120,10 +117,8 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
             </div>
           )}
 
-          {/* LISTINGS GRID */}
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
             {listings.map((item) => (
-              // Dynamically render CarCard vs PropertyCard based on active category
               activeCategory.toLowerCase() === 'car' ? (
                 <CarCard key={item._id} car={item} />
               ) : (
@@ -133,7 +128,7 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
                     id: item._id,
                     title: item.title,
                     location: `${item.address?.city}, ${item.address?.state}`,
-                    price: Number(item.pricePerNight || item.price || 0), // SURGICAL FIX
+                    price: Number(item.pricePerNight || item.price || 0), 
                     rating: item.rating || "5.0", 
                     dates: "Available Now",
                     isRentalVerified: item.isVerified ?? true, 
