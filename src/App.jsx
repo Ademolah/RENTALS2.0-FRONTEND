@@ -7,6 +7,7 @@ import Navbar from './components/Navbar';
 import AdvancedSearch from './components/AdvancedSearch';
 import Home from './pages/Home';
 import PropertyDetail from './pages/PropertyDetail';
+import HotelDetails from './pages/HotelDetails';
 import Footer from './components/Footer';
 import LandlordDashboard from './pages/LandlordDashboard';
 import GuestDashboard from './pages/GuestDashboard';
@@ -46,7 +47,7 @@ function App() {
           onCategoryChange={setActiveCategory} 
         />
         
-        {/* 3. SURGICAL FIX: Elevated wrapper to z-[70] so the search bar escapes the Navbar shadow */}
+        {/* 3. Elevated wrapper to z-[70] so the search bar escapes the Navbar shadow */}
         {isHomePage && (
           <div className="relative z-[70] pb-4 bg-white">
             <AdvancedSearch 
@@ -69,6 +70,9 @@ function App() {
           />
           <Route path="/property/:id" element={<PropertyDetail />} />
           <Route path="/cars/:id" element={<CarDetails />} />
+          
+          {/* <-- 2. ADD THE HOTEL ROUTE HERE --> */}
+          <Route path="/hotel/:id" element={<HotelDetails />} />
           
           {/* Role-Based Dashboard Placeholders */}
           <Route path="/dashboard/guest" element={<GuestDashboard />} />

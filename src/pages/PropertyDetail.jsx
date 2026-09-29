@@ -28,15 +28,16 @@ export default function PropertyDetail() {
         setLoading(true);
         const response = await getPropertyById(id);
         
-        // Safely extract the property from your backend's JSON structure
         const dbProp = response?.data?.property || response?.property || response;
         
-        // 3. Map Mongoose fields to your UI's expected format
-        // Inside PropertyDetail.jsx useEffect...
         setProperty({
           id: dbProp._id,
           title: dbProp.title,
           location: `${dbProp.address?.street}, ${dbProp.address?.city}`,
+          
+          // SURGICAL FIX: Map the full address object so the InteractiveMap can read the coordinates!
+          address: dbProp.address,
+          
           price: dbProp.pricePerNight,
           description: dbProp.description,
           maxGuests: dbProp.maxGuests,
@@ -46,14 +47,12 @@ export default function PropertyDetail() {
             ? dbProp.images 
             : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"],
           isRentalVerified: dbProp.isVerified ?? true,
-          
-          // SURGICAL FIX: Map the availability fields so the widget knows!
           isAvailable: dbProp.isAvailable,
           nextAvailableDate: dbProp.nextAvailableDate
         });
       } catch (error) {
         console.error("Failed to load property:", error);
-        } finally {
+      } finally {
         setLoading(false);
       }
     }
@@ -224,7 +223,12 @@ export default function PropertyDetail() {
           <div className="pt-4 pb-8">
             <h3 className="text-xl font-bold text-brand-dark mb-6">Where you'll be</h3>
             <div className="w-full h-[400px] rounded-2xl overflow-hidden shadow-card">
-              <InteractiveMap />
+              {/* SURGICAL FIX: Pass the necessary data! */}
+              <InteractiveMap 
+                address={property.address} 
+                type="SHORTLET"
+                price={property.pricePerNight}
+              />
             </div>
           </div>
 
