@@ -70,3 +70,21 @@ export const checkHotelRoomAvailability = async (hotelId, roomTypeId, dates) => 
   const response = await apiClient.get(`/hotels/${hotelId}/rooms/${roomTypeId}/availability?${params}`);
   return response.data;
 };
+
+export const getLandlordHotelBookings = async () => {
+  const token = localStorage.getItem('rentals_token');
+  // Updated to point to the hotel routes
+  const response = await apiClient.get('/hotels/landlord/bookings', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
+export const confirmHotelCheckIn = async (reservationId) => {
+  const token = localStorage.getItem('rentals_token');
+  // Updated to point to the hotel routes
+  const response = await apiClient.post(`/hotels/bookings/${reservationId}/confirm-checkin`, {}, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

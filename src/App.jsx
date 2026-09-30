@@ -38,18 +38,30 @@ function App() {
       )}
       
       {/* 
-        2. Consolidated Header Wrapper: 
-        Maintains the sticky property for the whole header block 
+        1. Header Wrapper: Reverted to z-50. 
+        This ensures WelcomeOverlay can naturally cover the header again.
       */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
-        <Navbar 
-          activeCategory={activeCategory} 
-          onCategoryChange={setActiveCategory} 
-        />
         
-        {/* 3. Elevated wrapper to z-[70] so the search bar escapes the Navbar shadow */}
+        {/* 
+          2. Navbar Wrapper: 
+          Mobile: z-40 (Yields to the mobile search modal).
+          Desktop (md:): z-[99] (Highest priority so Auth dropdown crushes the red search button).
+        */}
+        <div className="relative z-40 md:z-[99]">
+          <Navbar 
+            activeCategory={activeCategory} 
+            onCategoryChange={setActiveCategory} 
+          />
+        </div>
+        
+        {/* 
+          3. AdvancedSearch Wrapper: 
+          Mobile: z-[60] (Escapes the Navbar to cover the screen).
+          Desktop (md:): z-30 (Stays quietly underneath the dropdown).
+        */}
         {isHomePage && (
-          <div className="relative z-[70] pb-4 bg-white">
+          <div className="relative z-[60] md:z-30 pb-4 bg-white">
             <AdvancedSearch 
             activeCategory={activeCategory}
             onSearch={setSearchFilters} />
@@ -71,10 +83,8 @@ function App() {
           <Route path="/property/:id" element={<PropertyDetail />} />
           <Route path="/cars/:id" element={<CarDetails />} />
           
-          {/* <-- 2. ADD THE HOTEL ROUTE HERE --> */}
           <Route path="/hotel/:id" element={<HotelDetails />} />
           
-          {/* Role-Based Dashboard Placeholders */}
           <Route path="/dashboard/guest" element={<GuestDashboard />} />
           <Route path="/dashboard/landlord" element={<LandlordDashboard />} />
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
