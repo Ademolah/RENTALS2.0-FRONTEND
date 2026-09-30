@@ -1,12 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   MapPin, Star, Coffee, Wifi, Sparkles, ChevronRight, Clock, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Loader2 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { getHotels } from '../api/hotel'; // Adjust this path if your api folder is located elsewhere
+import { getHotels } from '../api/hotel'; 
 
-// --- DYNAMIC ICON ENGINE ---
 const getAmenityIcon = (amenity) => {
   if (!amenity) return CheckCircle2;
   const name = amenity.toLowerCase();
@@ -17,38 +16,34 @@ const getAmenityIcon = (amenity) => {
   if (name.includes('bar') || name.includes('lounge')) return Wine;
   if (name.includes('park') || name.includes('valet') || name.includes('garage')) return Car;
   if (name.includes('spa') || name.includes('massage')) return Sparkles;
-  if (name.includes('breakfast')) return Coffee;
+  if (name.includes('gym') || name.includes('fitness')) return Users;
   return CheckCircle2; 
 };
 
-// --- 1. THE INDIVIDUAL PREMIUM HOTEL CARD ---
-// --- 1. THE INDIVIDUAL PREMIUM HOTEL CARD ---
 const PremiumHotelCard = ({ hotel }) => {
-  const coverImage = hotel.images && hotel.images.length > 0 ? hotel.images[0] : '/placeholder.jpg';
+  const coverImage = hotel.images && hotel.images.length > 0 ? hotel.images[0] : 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80';
   const locationString = hotel.address ? `${hotel.address.city}, ${hotel.address.state}` : 'Location unavailable';
   const displayAmenities = hotel.amenities ? hotel.amenities.slice(0, 3) : [];
   
   const rating = hotel.rating || 9.0;
   const ratingText = hotel.ratingText || 'Superb';
-  const reviewsCount = hotel.reviewsCount || 0;
+  const reviewsCount = hotel.reviewsCount || Math.floor(Math.random() * (300 - 50) + 50);
 
-  // --- MOCK URGENCY GENERATOR ---
-  // We use the hotel's unique ID to deterministically pick a message so it doesn't flicker on re-renders!
   const mockUrgencies = [
     "Only 2 rooms left on our site",
     "Booked 4 times in the last 24 hours",
     "High demand - 6 looking right now",
     "Last booked 1 hour ago",
-    null // Sometimes having no urgency badge makes it feel more natural
+    null 
   ];
   const charCode = hotel._id ? hotel._id.charCodeAt(hotel._id.length - 1) : 0;
   const displayUrgency = hotel.urgency || mockUrgencies[charCode % mockUrgencies.length];
 
   return (
-    <Link to={`/hotel/${hotel._id}`} className="group block">
+    <Link to={`/hotel/${hotel._id}`} className="group block h-full">
       <div className="bg-white border border-gray-200 hover:border-gray-900 transition-colors duration-300 overflow-hidden relative flex flex-col h-full rounded-2xl shadow-sm hover:shadow-xl">
         
-        <div className="relative aspect-[4/3] overflow-hidden">
+        <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
           <img 
             src={coverImage} 
             alt={hotel.title} 
@@ -127,23 +122,15 @@ const PremiumHotelCard = ({ hotel }) => {
   );
 };
 
-// --- 2. THE MAIN SECTION LAYOUT (Header, Tabs, Grid) ---
 export default function HotelListingView() {
   const [activeState, setActiveState] = useState('Lagos');
   const [msgIndex, setMsgIndex] = useState(0);
-  
-  // New State for API Data
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const messages = [
-    "Find your next stay",
-    "Experience true luxury",
-    "Unwind in premium suites"
-  ];
+  const messages = ["Find your next stay", "Experience true luxury", "Unwind in premium suites"];
 
-  // Rotate messages
   useEffect(() => {
     const timer = setInterval(() => {
       setMsgIndex((prev) => (prev + 1) % messages.length);
@@ -151,16 +138,13 @@ export default function HotelListingView() {
     return () => clearInterval(timer);
   }, [messages.length]);
 
-  // Fetch Hotels from Backend
-  // Fetch Hotels from Backend
   useEffect(() => {
     const fetchHotels = async () => {
       try {
         setLoading(true);
         const response = await getHotels();
-        
-        const fetchedHotels = response?.data?.hotels || response?.data?.properties || [];
-        setHotels(fetchedHotels);
+        const fetchedHotels = response?.data?.hotels || response?.data?.properties || response?.data || [];
+        setHotels(Array.isArray(fetchedHotels) ? fetchedHotels : []);
         setError(null);
       } catch (err) {
         console.error("Failed to fetch hotels:", err);
@@ -169,19 +153,13 @@ export default function HotelListingView() {
         setLoading(false);
       }
     };
-
     fetchHotels();
   }, []);
 
-  // Filter based on hotel.address.state
-  const filteredHotels = hotels.filter(hotel => 
-    hotel.address?.state === activeState
-  );
+  const filteredHotels = hotels.filter(hotel => hotel.address?.state === activeState);
 
   return (
     <div className="w-full animate-in fade-in duration-700">
-      
-      {/* 1. PREMIUM HEADER BANNER */}
       <div className="relative w-full rounded-[2rem] md:rounded-[2.5rem] overflow-hidden mb-12 shadow-2xl h-36 sm:h-48 md:h-64 flex items-center justify-center">
         <div className="absolute inset-0 bg-[#0A0A0A]">
           <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
@@ -191,17 +169,11 @@ export default function HotelListingView() {
           <div className="relative h-12 sm:h-16 md:h-24 w-full flex items-center justify-center">
             {messages.map((msg, i) => {
               let positionClass = "opacity-0 translate-x-12"; 
-              if (i === msgIndex) {
-                positionClass = "opacity-100 translate-x-0"; 
-              } else if (i === (msgIndex - 1 + messages.length) % messages.length) {
-                positionClass = "opacity-0 -translate-x-12"; 
-              }
+              if (i === msgIndex) positionClass = "opacity-100 translate-x-0"; 
+              else if (i === (msgIndex - 1 + messages.length) % messages.length) positionClass = "opacity-0 -translate-x-12"; 
               
               return (
-                <h1
-                  key={msg}
-                  className={`absolute w-full text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#F25F5C] via-[#FF9B71] to-[#F25F5C] bg-[length:200%_auto] animate-[gradient_4s_linear_infinite] transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${positionClass}`}
-                >
+                <h1 key={msg} className={`absolute w-full text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#F25F5C] via-[#FF9B71] to-[#F25F5C] bg-[length:200%_auto] animate-[gradient_4s_linear_infinite] transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${positionClass}`}>
                   {msg}
                 </h1>
               );
@@ -210,44 +182,32 @@ export default function HotelListingView() {
         </div>
       </div>
 
-      {/* 2. THE STATE TOGGLE */}
       <div className="flex flex-col items-center mb-10">
         <div className="inline-flex bg-gray-100/80 p-1.5 rounded-full border border-gray-200 backdrop-blur-sm">
           {['Lagos', 'Abuja'].map((stateName) => (
             <button
               key={stateName}
               onClick={() => setActiveState(stateName)}
-              className={`relative px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 ${
-                activeState === stateName 
-                  ? 'text-white' 
-                  : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50'
-              }`}
+              className={`relative px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 ${activeState === stateName ? 'text-white' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50'}`}
             >
-              {activeState === stateName && (
-                <div className="absolute inset-0 bg-gray-900 rounded-full shadow-md" />
-              )}
+              {activeState === stateName && <div className="absolute inset-0 bg-gray-900 rounded-full shadow-md" />}
               <span className="relative z-10">{stateName}</span>
             </button>
           ))}
         </div>
       </div>
 
-      {/* 3. DYNAMIC CONTENT AREA */}
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
           <p className="text-gray-500 font-medium tracking-wide">Loading exclusive hotels...</p>
         </div>
       ) : error ? (
-        <div className="text-center py-20 text-red-500 font-medium">
-          {error}
-        </div>
+        <div className="text-center py-20 text-red-500 font-medium">{error}</div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 lg:gap-8">
           {filteredHotels.length > 0 ? (
-            filteredHotels.map((hotel) => (
-              <PremiumHotelCard key={hotel._id} hotel={hotel} />
-            ))
+            filteredHotels.map((hotel) => <PremiumHotelCard key={hotel._id} hotel={hotel} />)
           ) : (
             <div className="col-span-full py-20 text-center flex flex-col items-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
