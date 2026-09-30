@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
-  CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2
+  CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2, ArrowRight
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BookModal from '../components/BookModal';
@@ -39,7 +39,6 @@ export default function HotelDetails() {
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Fetch real hotel data
   useEffect(() => {
     const fetchHotel = async () => {
       try {
@@ -84,6 +83,22 @@ export default function HotelDetails() {
     }
   };
 
+  const calculateNights = () => {
+    if (!checkInDate || !checkOutDate) return 1;
+    const start = new Date(checkInDate);
+    const end = new Date(checkOutDate);
+    const diffTime = Math.abs(end - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+    return diffDays > 0 ? diffDays : 1;
+  };
+
+  // Helper for Premium Date Formatting
+  const formatDisplayDate = (dateString) => {
+    if (!dateString) return "Select Date";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
@@ -104,17 +119,6 @@ export default function HotelDetails() {
   }
 
   const activeRoomData = hotel.roomTypes?.find(r => r._id === selectedRoom);
-
-  // Dynamic Price Calculation
-  const calculateNights = () => {
-    if (!checkInDate || !checkOutDate) return 1;
-    const start = new Date(checkInDate);
-    const end = new Date(checkOutDate);
-    const diffTime = Math.abs(end - start);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-    return diffDays > 0 ? diffDays : 1;
-  };
-
   const nights = calculateNights();
   const basePricePerNight = activeRoomData?.pricePerNight || hotel.startingPrice || 0;
   const totalPrice = basePricePerNight * nights;
@@ -200,43 +204,82 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
-            {/* UNIVERSAL PREMIUM DATE PICKER (Visible on all screens) */}
-            <div id="dates-section" className="bg-white border border-gray-200 rounded-2xl p-6 md:p-8 shadow-sm relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gray-50 rounded-bl-full -z-10"></div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
-                <CalendarDays className="w-6 h-6 mr-3 text-brand-primary" />
-                Select Trip Dates
-              </h2>
+            {/* SURGICAL UPDATE: WORLD-CLASS COLORFUL DATE PICKER UI */}
+            <div id="dates-section" className="bg-gradient-to-br from-blue-900 to-brand-primary rounded-[2rem] p-1 shadow-2xl relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
               
-              <div className="flex flex-col md:flex-row gap-4">
-                <div className="relative w-full border border-gray-300 rounded-xl p-4 transition-colors focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary group cursor-text">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 group-focus-within:text-brand-primary">Check-in</label>
-                  <input 
-                    type="date" 
-                    value={checkInDate}
-                    onChange={(e) => setCheckInDate(e.target.value)}
-                    min={new Date().toISOString().split('T')[0]}
-                    className="w-full text-lg font-bold text-gray-900 bg-transparent outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
-                  />
-                </div>
+              <div className="bg-white rounded-[1.8rem] p-6 md:p-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-6 flex items-center">
+                  <CalendarDays className="w-7 h-7 mr-3 text-blue-600" />
+                  When will you be staying?
+                </h2>
                 
-                <div className="relative w-full border border-gray-300 rounded-xl p-4 transition-colors focus-within:border-brand-primary focus-within:ring-1 focus-within:ring-brand-primary group cursor-text">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1 group-focus-within:text-brand-primary">Check-out</label>
-                  <input 
-                    type="date" 
-                    value={checkOutDate}
-                    onChange={(e) => setCheckOutDate(e.target.value)}
-                    min={checkInDate || new Date().toISOString().split('T')[0]}
-                    className="w-full text-lg font-bold text-gray-900 bg-transparent outline-none focus:ring-0 [&::-webkit-calendar-picker-indicator]:cursor-pointer [&::-webkit-calendar-picker-indicator]:opacity-50 hover:[&::-webkit-calendar-picker-indicator]:opacity-100"
-                  />
+                <div className="flex flex-col md:flex-row items-center gap-4 bg-gray-50 p-2 md:p-3 rounded-3xl border border-gray-100 shadow-inner">
+                  
+                  {/* CHECK IN BLOCK */}
+                  <div className="relative w-full md:w-1/2 bg-white rounded-2xl p-4 shadow-sm border-2 border-transparent focus-within:border-blue-500 hover:shadow-md transition-all group overflow-hidden">
+                    <div className="flex justify-between items-center relative z-10 pointer-events-none">
+                      <div>
+                        <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">Check-in</p>
+                        <p className={`text-xl md:text-2xl font-black tracking-tight ${checkInDate ? 'text-gray-900' : 'text-gray-300'}`}>
+                          {formatDisplayDate(checkInDate)}
+                        </p>
+                      </div>
+                      <div className={`p-3 rounded-full transition-colors ${checkInDate ? 'bg-blue-100 text-blue-600' : 'bg-gray-50 text-gray-300'}`}>
+                        <CalendarDays className="w-5 h-5" />
+                      </div>
+                    </div>
+                    {/* Native invisible input overlaid on top */}
+                    <input 
+                      type="date" 
+                      value={checkInDate}
+                      onChange={(e) => setCheckInDate(e.target.value)}
+                      min={new Date().toISOString().split('T')[0]}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    />
+                  </div>
+
+                  {/* SEPARATOR (Desktop only) */}
+                  <div className="hidden md:flex items-center justify-center px-2">
+                    <ArrowRight className="w-6 h-6 text-gray-300" />
+                  </div>
+
+                  {/* CHECK OUT BLOCK */}
+                  <div className="relative w-full md:w-1/2 bg-white rounded-2xl p-4 shadow-sm border-2 border-transparent focus-within:border-brand-primary hover:shadow-md transition-all group overflow-hidden">
+                    <div className="flex justify-between items-center relative z-10 pointer-events-none">
+                      <div>
+                        <p className="text-[10px] font-bold text-brand-primary uppercase tracking-widest mb-1">Check-out</p>
+                        <p className={`text-xl md:text-2xl font-black tracking-tight ${checkOutDate ? 'text-gray-900' : 'text-gray-300'}`}>
+                          {formatDisplayDate(checkOutDate)}
+                        </p>
+                      </div>
+                      <div className={`p-3 rounded-full transition-colors ${checkOutDate ? 'bg-orange-100 text-brand-primary' : 'bg-gray-50 text-gray-300'}`}>
+                        <CalendarDays className="w-5 h-5" />
+                      </div>
+                    </div>
+                    {/* Native invisible input overlaid on top */}
+                    <input 
+                      type="date" 
+                      value={checkOutDate}
+                      onChange={(e) => setCheckOutDate(e.target.value)}
+                      min={checkInDate || new Date().toISOString().split('T')[0]}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                    />
+                  </div>
+
                 </div>
+
+                {/* SUCCESS MESSAGE */}
+                <div className={`mt-6 overflow-hidden transition-all duration-500 ease-in-out ${checkInDate && checkOutDate ? 'max-h-20 opacity-100' : 'max-h-0 opacity-0'}`}>
+                  <div className="flex items-center text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-blue-800 p-4 rounded-xl shadow-lg">
+                    <div className="bg-white/20 p-1.5 rounded-full mr-3">
+                      <CheckCircle2 className="w-5 h-5 text-white" />
+                    </div>
+                    Perfect! You're booking a {nights}-night stay.
+                  </div>
+                </div>
+
               </div>
-              {checkInDate && checkOutDate && (
-                <div className="mt-4 flex items-center text-sm font-medium text-green-700 bg-green-50 p-3 rounded-lg border border-green-100">
-                  <CheckCircle2 className="w-4 h-4 mr-2" />
-                  Your dates are available! {nights} {nights === 1 ? 'night' : 'nights'} selected.
-                </div>
-              )}
             </div>
 
             <hr className="border-gray-200" />
@@ -372,6 +415,18 @@ export default function HotelDetails() {
       <style>{`
         .hide-scrollbar::-webkit-scrollbar { display: none; }
         .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        input[type="date"]::-webkit-calendar-picker-indicator {
+          background: transparent;
+          bottom: 0;
+          color: transparent;
+          cursor: pointer;
+          height: auto;
+          left: 0;
+          position: absolute;
+          right: 0;
+          top: 0;
+          width: auto;
+        }
       `}</style>
 
       {hotel && activeRoomData && (
