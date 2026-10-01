@@ -14,6 +14,7 @@ import AddCarModal from '../components/AddCarModal';
 import CreateHotelModal from '../components/CreateHotelModal';
 import EditCarModal from '../components/EditCarModal';
 import EditPropertyModal from '../components/EditPropertyModal';
+import EditHotelModal from '../components/EditHotelModal';
 
 
 export default function LandlordDashboard() {
@@ -30,6 +31,7 @@ export default function LandlordDashboard() {
   const [isHotelModalOpen, setIsHotelModalOpen] = useState(false);
   const [editingCarId, setEditingCarId] = useState(null);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
+  const [editingHotelId, setEditingHotelId] = useState(null);
 
   useEffect(() => {
     fetchPortfolioData();
@@ -256,8 +258,8 @@ export default function LandlordDashboard() {
 
   const handleManageAsset = (booking) => {
     if (booking.type === 'CAR') setEditingCarId(booking.assetId);
-    else if (booking.type === 'HOTEL') alert('Hotel edit module coming soon.');
     else if (booking.type === 'SHORTLET') setEditingPropertyId(booking.assetId);
+    else if (booking.type === 'HOTEL') setEditingHotelId(booking.assetId);
   };
 
   return (
@@ -561,6 +563,13 @@ export default function LandlordDashboard() {
         isOpen={!!editingPropertyId}
         propertyId={editingPropertyId}
         onClose={() => setEditingPropertyId(null)}
+        onSuccess={() => fetchPortfolioData()}
+      />
+
+      <EditHotelModal 
+        isOpen={!!editingHotelId}
+        hotelId={editingHotelId}
+        onClose={() => setEditingHotelId(null)}
         onSuccess={() => fetchPortfolioData()}
       />
     </main>
