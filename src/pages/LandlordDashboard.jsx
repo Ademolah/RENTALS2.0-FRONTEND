@@ -6,7 +6,6 @@ import {
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
-// Import the new hotel endpoints you will be building next
 import { getLandlordHotelBookings, confirmHotelCheckIn } from '../api/hotel'; 
 
 import BankSetupModal from '../components/BankSetupModal';
@@ -34,8 +33,6 @@ export default function LandlordDashboard() {
   const fetchPortfolioData = async () => {
     setIsLoading(true);
     try {
-      // Execute all fetches concurrently. 
-      // Added a catch to the hotel fetch so the dashboard doesn't break while you build the backend endpoint.
       const [propResponse, carResponse, hotelResponse] = await Promise.all([
         getLandlordPropertyBookings().catch(() => ({ data: { bookings: [] } })), 
         getLandlordCarBookings().catch(() => ({ data: { bookings: [] } })),
@@ -133,11 +130,10 @@ export default function LandlordDashboard() {
         createdAt: new Date(b.createdAt)
       }));
 
-      // Merge and sort by newest first
       // Merge all arrays
       const allCombined = [...normalizedProps, ...normalizedHotels, ...normalizedCars];
       
-      // Deduplicate safely using a Map (keeps only unique _id values)
+      // Deduplicate safely using a Map
       const uniqueBookings = Array.from(new Map(allCombined.map(item => [item._id, item])).values());
       
       // Sort by newest first
@@ -206,9 +202,8 @@ export default function LandlordDashboard() {
     else if (type === 'VIP') alert("VIP Experience module coming soon.");
   };
 
-  // Helper to determine accurate button text based on the asset
   const getButtonText = (type, isProcessing) => {
-    if (isProcessing) return <Loader2 className="w-4 h-4 animate-spin" />;
+    if (isProcessing) return <Loader2 className="w-4 h-4 animate-spin mx-auto" />;
     if (type === 'SHORTLET') return 'Confirm Checkin';
     if (type === 'CAR') return 'Confirm Pickup';
     if (type === 'HOTEL') return 'Guest Checked In';
@@ -364,24 +359,25 @@ export default function LandlordDashboard() {
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between pt-5 border-t border-gray-100">
-                       <div className="flex items-center space-x-6">
+                    {/* SURGICAL FIX: Mobile Responsive Action Area */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-5 border-t border-gray-100 gap-4">
+                       <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                          <div>
                            <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Payout Amount</div>
                            <div className="text-2xl font-black text-gray-900 tracking-tight">₦{booking.payoutAmount.toLocaleString()}</div>
                          </div>
 
                          {isReleased ? (
-                          <div className="flex items-center space-x-2 text-green-700 bg-green-50 border border-green-200 px-4 py-2 rounded-xl text-xs font-bold">
-                            <CheckCircle className="w-4 h-4" /> <span>Funds Released</span>
+                          <div className="flex items-center space-x-2 text-green-700 bg-green-50 border border-green-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold">
+                            <CheckCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Funds Released</span>
                           </div>
                         ) : hasHostConfirmed && !hasGuestConfirmed ? (
-                          <div className="flex items-center space-x-2 text-amber-700 bg-amber-50 border border-amber-200 px-4 py-2 rounded-xl text-xs font-bold">
-                            <Clock className="w-4 h-4" /> <span>Awaiting Guest</span>
+                          <div className="flex items-center space-x-2 text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold">
+                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Awaiting Guest</span>
                           </div>
                         ) : hasGuestConfirmed && !hasHostConfirmed ? (
-                          <div className="flex items-center space-x-2 text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-4 py-2 rounded-xl text-xs font-bold">
-                            <ShieldCheck className="w-4 h-4" /> <span>Guest Confirmed</span>
+                          <div className="flex items-center space-x-2 text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold">
+                            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Guest Confirmed</span>
                           </div>
                         ) : null}
                        </div>
@@ -390,7 +386,7 @@ export default function LandlordDashboard() {
                          <button 
                             onClick={() => handleEscrowConfirm(booking)}
                             disabled={isCurrentlyConfirming}
-                            className={`py-3.5 px-8 text-xs font-bold uppercase tracking-widest flex items-center justify-center transition-all rounded-xl shadow-md active:scale-95 ${
+                            className={`w-full sm:w-auto py-3.5 px-4 sm:px-8 text-xs font-bold uppercase tracking-widest flex items-center justify-center transition-all rounded-xl shadow-md active:scale-95 ${
                               hasGuestConfirmed 
                                 ? 'bg-brand-primary hover:bg-brand-primary/90 text-white' 
                                 : 'bg-gray-900 hover:bg-black text-white'
