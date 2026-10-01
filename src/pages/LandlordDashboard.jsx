@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Building, Car, Hotel, Crown, Plus, ShieldCheck, 
-  CheckCircle, Clock, MapPin, Loader2, Landmark
+  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp
 } from 'lucide-react';
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
@@ -12,6 +12,8 @@ import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddCarModal from '../components/AddCarModal';
 import CreateHotelModal from '../components/CreateHotelModal';
+import EditCarModal from '../components/EditCarModal';
+import EditPropertyModal from '../components/EditPropertyModal';
 
 
 export default function LandlordDashboard() {
@@ -26,6 +28,8 @@ export default function LandlordDashboard() {
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [isCarModalOpen, setIsCarModalOpen] = useState(false);
   const [isHotelModalOpen, setIsHotelModalOpen] = useState(false);
+  const [editingCarId, setEditingCarId] = useState(null);
+  const [editingPropertyId, setEditingPropertyId] = useState(null);
 
   useEffect(() => {
     fetchPortfolioData();
@@ -60,6 +64,7 @@ export default function LandlordDashboard() {
 
         return {
           _id: b._id,
+          assetId: b.propertyId?._id,
           type: 'SHORTLET',
           reservationStatus: b.reservationStatus,
           escrowStatus: b.escrowStatus,
@@ -116,6 +121,7 @@ export default function LandlordDashboard() {
       // Normalize Car Bookings
       const normalizedCars = carData.map(b => ({
         _id: b._id,
+        assetId: b.carId?._id,
         type: 'CAR',
         reservationStatus: b.reservationStatus,
         escrowStatus: b.escrowStatus,
@@ -147,6 +153,7 @@ export default function LandlordDashboard() {
 
         return {
           _id: h._id,
+          assetId: h._id,
           type: 'HOTEL',
           isRawAsset: true, // Tag to prevent it from showing as an empty booking
           payoutAmount: 0, 
@@ -243,6 +250,16 @@ export default function LandlordDashboard() {
 
   const ledgerEntries = bookings.filter(b => !b.isRawAsset);
 
+  // EARNINGS KPI CALCULATIONS
+  const totalClearedEarnings = ledgerEntries.reduce((sum, b) => b.escrowStatus === 'RELEASED' ? sum + b.payoutAmount : sum, 0);
+  const pendingEscrow = ledgerEntries.reduce((sum, b) => b.escrowStatus !== 'RELEASED' ? sum + b.payoutAmount : sum, 0);
+
+  const handleManageAsset = (booking) => {
+    if (booking.type === 'CAR') setEditingCarId(booking.assetId);
+    else if (booking.type === 'HOTEL') alert('Hotel edit module coming soon.');
+    else if (booking.type === 'SHORTLET') setEditingPropertyId(booking.assetId);
+  };
+
   return (
     <main className="min-h-screen bg-gray-50/50 pb-24">
       {/* ARCHITECTURAL HEADER */}
@@ -316,6 +333,30 @@ export default function LandlordDashboard() {
         </div>
       </div>
 
+      {/* FINANCIAL OVERVIEW KPI ROW */}
+      <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-8 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 flex items-center shadow-sm">
+            <div className="w-12 h-12 bg-green-50 rounded-full flex items-center justify-center mr-4">
+              <Wallet className="w-6 h-6 text-green-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Cleared Earnings</p>
+              <h3 className="text-2xl font-black text-gray-900 tracking-tight">₦{totalClearedEarnings.toLocaleString()}</h3>
+            </div>
+          </div>
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 flex items-center shadow-sm">
+            <div className="w-12 h-12 bg-amber-50 rounded-full flex items-center justify-center mr-4">
+              <TrendingUp className="w-6 h-6 text-amber-600" />
+            </div>
+            <div>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending in Escrow</p>
+              <h3 className="text-2xl font-black text-gray-900 tracking-tight">₦{pendingEscrow.toLocaleString()}</h3>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* STRICT TAB NAVIGATION WITH NEW HOTEL TAB */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-12">
         <div className="flex overflow-x-auto pb-4 scrollbar-hide space-x-8 border-b border-gray-200">
@@ -336,7 +377,7 @@ export default function LandlordDashboard() {
         </div>
       </div>
 
-      {/* CONTENT AREA */}
+    
       {/* CONTENT AREA */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-10">
         {isLoading ? (
@@ -462,7 +503,10 @@ export default function LandlordDashboard() {
                   <div className="flex items-center text-gray-500 text-xs font-medium mb-4">
                     <MapPin className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> <span className="truncate">{booking.asset.location}</span>
                   </div>
-                  <button className="text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b-2 border-gray-900 pb-0.5 hover:text-brand-primary hover:border-brand-primary transition-colors w-full text-left">
+                  <button 
+                    onClick={() => handleManageAsset(booking)}
+                    className="text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b-2 border-gray-900 pb-0.5 hover:text-brand-primary hover:border-brand-primary transition-colors w-full text-left"
+                  >
                     Manage Asset &rarr;
                   </button>
                 </div>
@@ -503,6 +547,20 @@ export default function LandlordDashboard() {
       <CreateHotelModal 
         isOpen={isHotelModalOpen}
         onClose={() => setIsHotelModalOpen(false)}
+        onSuccess={() => fetchPortfolioData()}
+      />
+
+      <EditCarModal 
+        isOpen={!!editingCarId}
+        carId={editingCarId}
+        onClose={() => setEditingCarId(null)}
+        onSuccess={() => fetchPortfolioData()}
+      />
+
+      <EditPropertyModal 
+        isOpen={!!editingPropertyId}
+        propertyId={editingPropertyId}
+        onClose={() => setEditingPropertyId(null)}
         onSuccess={() => fetchPortfolioData()}
       />
     </main>

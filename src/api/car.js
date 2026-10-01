@@ -21,7 +21,7 @@ export const checkCarAvailability = async (id, dates) => {
 export const createCar = async (formData) => {
   const token = localStorage.getItem('rentals_token');
 
-  const baseURL = import.meta.env.VITE_API_URL|| 'http://localhost:8000/api/v1';
+  const baseURL = import.meta.env.VITE_API_URL
 
   const response = await axios.post(`${baseURL}/cars`, formData, {
     headers: {
@@ -48,5 +48,15 @@ export const getMyCarBookings = async () => {
 
 export const getLandlordCarBookings = async () => {
   const response = await apiClient.get('/cars/landlord/bookings');
+  return response.data;
+};
+
+export const updateCar = async (id, updateData) => {
+  const token = localStorage.getItem('rentals_token');
+  const baseURL = import.meta.env.VITE_API_URL;
+  
+  const response = await axios.patch(`${baseURL}/cars/${id}`, updateData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
   return response.data;
 };

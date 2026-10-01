@@ -12,6 +12,16 @@ export const getPropertyById = async (id) => {
   return response.data;
 };
 
+export const updateProperty = async (id, updateData) => {
+  const token = localStorage.getItem('rentals_token');
+  const baseURL = import.meta.env.VITE_API_URL;
+  
+  const response = await axios.patch(`${baseURL}/properties/${id}`, updateData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
 // --- NEW AVAILABILITY CHECK ---
 export const checkPropertyAvailability = async (id, dates) => {
   const response = await apiClient.post(`/properties/${id}/availability`, dates);
@@ -21,7 +31,7 @@ export const checkPropertyAvailability = async (id, dates) => {
 export const createProperty = async (formData) => {
   const token = localStorage.getItem('rentals_token');
 
-  const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+  const baseURL = import.meta.env.VITE_API_URL 
 
   const response = await axios.post(`${baseURL}/properties`, formData, {
     headers: {
