@@ -6,12 +6,13 @@ import {
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
-import { getLandlordHotelBookings, confirmHotelCheckIn } from '../api/hotel'; 
+import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel'; 
 
 import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddCarModal from '../components/AddCarModal';
 import CreateHotelModal from '../components/CreateHotelModal';
+
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('ACTION_FEED');
@@ -33,15 +34,20 @@ export default function LandlordDashboard() {
   const fetchPortfolioData = async () => {
     setIsLoading(true);
     try {
-      const [propResponse, carResponse, hotelResponse] = await Promise.all([
+      // 1. ADDED rawHotelsResponse to destructuring
+      const [propResponse, carResponse, hotelResponse, rawHotelsResponse] = await Promise.all([
         getLandlordPropertyBookings().catch(() => ({ data: { bookings: [] } })), 
         getLandlordCarBookings().catch(() => ({ data: { bookings: [] } })),
-        getLandlordHotelBookings().catch(() => ({ data: { bookings: [] } })) 
+        getLandlordHotelBookings().catch(() => ({ data: { bookings: [] } })),
+        getLandlordHotels().catch(() => ({ data: { hotels: [] } }))
       ]);
 
       const propData = propResponse?.data?.bookings || [];
       const carData = carResponse?.data?.bookings || [];
       const hotelData = hotelResponse?.data?.bookings || [];
+      
+      // 2. EXTRACT raw hotels
+      const rawHotels = rawHotelsResponse?.data?.hotels || [];
 
       // Normalize Property (Shortlet) Bookings
       const normalizedProps = propData.map(b => {
@@ -130,8 +136,33 @@ export default function LandlordDashboard() {
         createdAt: new Date(b.createdAt)
       }));
 
-      // Merge all arrays
-      const allCombined = [...normalizedProps, ...normalizedHotels, ...normalizedCars];
+      // 3. NORMALIZE RAW HOTELS
+      const normalizedRawHotels = rawHotels.map(h => {
+        const addr = h.address;
+        const locationString = addr 
+          ? (typeof addr === 'object' 
+              ? `${addr.city || ''}, ${addr.state || ''}`.replace(/(^,\s*)|(,\s*$)/g, '')
+              : addr) 
+          : 'Location hidden';
+
+        return {
+          _id: h._id,
+          type: 'HOTEL',
+          isRawAsset: true, // Tag to prevent it from showing as an empty booking
+          payoutAmount: 0, 
+          dates: 'No active bookings',
+          guest: { firstName: 'No', lastName: 'Guest Yet', phone: 'N/A' }, // Safe fallback
+          asset: { 
+            title: h.title || 'Hotel', 
+            location: locationString,
+            image: h.images?.[0] || 'https://images.unsplash.com/photo-1551882547-ff40eb0d1556?auto=format&fit=crop&w=800&q=80'
+          },
+          createdAt: new Date(h.createdAt || Date.now())
+        };
+      });
+
+      // 4. MERGE EVERYTHING (including normalizedRawHotels)
+      const allCombined = [...normalizedProps, ...normalizedHotels, ...normalizedCars, ...normalizedRawHotels];
       
       // Deduplicate safely using a Map
       const uniqueBookings = Array.from(new Map(allCombined.map(item => [item._id, item])).values());
@@ -209,6 +240,8 @@ export default function LandlordDashboard() {
     if (type === 'HOTEL') return 'Guest Checked In';
     return 'Confirm';
   };
+
+  const ledgerEntries = bookings.filter(b => !b.isRawAsset);
 
   return (
     <main className="min-h-screen bg-gray-50/50 pb-24">
@@ -304,15 +337,16 @@ export default function LandlordDashboard() {
       </div>
 
       {/* CONTENT AREA */}
+      {/* CONTENT AREA */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-10">
         {isLoading ? (
           <div className="py-32 flex flex-col items-center justify-center">
             <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
             <p className="mt-6 text-sm font-bold uppercase tracking-widest text-gray-400">Syncing Ledger...</p>
           </div>
-        ) : activeTab === 'ACTION_FEED' && bookings.length > 0 ? (
+        ) : activeTab === 'ACTION_FEED' && ledgerEntries.length > 0 ? (
           <div className="space-y-6">
-            {bookings.map((booking) => {
+            {ledgerEntries.map((booking) => {
               const isCar = booking.type === 'CAR';
               const isHotel = booking.type === 'HOTEL';
               const isReleased = booking.escrowStatus === 'RELEASED';
@@ -436,7 +470,7 @@ export default function LandlordDashboard() {
             ))}
           </div>
 
-        ) : activeTab === 'ACTION_FEED' && bookings.length === 0 ? (
+        ) : activeTab === 'ACTION_FEED' && ledgerEntries.length === 0 ? (
           <div className="py-32 flex flex-col items-center justify-center text-center bg-white border-2 border-dashed border-gray-200 rounded-3xl">
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
               <ShieldCheck className="w-10 h-10 text-gray-300" />

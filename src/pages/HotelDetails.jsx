@@ -2,23 +2,31 @@ import React, { useState, useEffect, useRef } from 'react';
 import { 
   MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
-  CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2, ArrowRight
+  CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2, ArrowRight,
+  Dumbbell, Sparkles // Added the missing modal icons here
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 
+// SURGICAL FIX: Perfectly synced to match CreateHotelModal.jsx PRESET_AMENITIES
 const getAmenityIcon = (amenity) => {
   if (!amenity) return CheckCircle2;
   const name = amenity.toLowerCase();
+  
   if (name.includes('wifi') || name.includes('internet')) return Wifi;
   if (name.includes('pool') || name.includes('swim')) return Droplets;
-  if (name.includes('bed') || name.includes('room') || name.includes('suite')) return Bed;
-  if (name.includes('food') || name.includes('restaurant') || name.includes('dining')) return Utensils;
+  if (name.includes('restaurant') || name.includes('dining') || name.includes('food')) return Utensils;
+  if (name.includes('fitness') || name.includes('gym')) return Dumbbell;
   if (name.includes('bar') || name.includes('lounge')) return Wine;
-  if (name.includes('park') || name.includes('valet') || name.includes('garage')) return Car;
-  if (name.includes('gym') || name.includes('fitness')) return Users;
+  if (name.includes('spa') || name.includes('wellness')) return Sparkles;
+  if (name.includes('valet') || name.includes('park')) return Car;
+  if (name.includes('room service')) return Coffee;
+  
+  // Fallbacks for room-specific amenities
+  if (name.includes('bed') || name.includes('room') || name.includes('suite')) return Bed;
+  
   return CheckCircle2; 
 };
 
@@ -92,7 +100,6 @@ export default function HotelDetails() {
     return diffDays > 0 ? diffDays : 1;
   };
 
-  // Helper for Premium Date Formatting
   const formatDisplayDate = (dateString) => {
     if (!dateString) return "Select Date";
     const date = new Date(dateString);
@@ -191,8 +198,8 @@ export default function HotelDetails() {
                     const Icon = getAmenityIcon(amenity);
                     return (
                       <div key={idx} className="flex items-center text-gray-700 font-medium">
-                        <div className="p-2 bg-gray-100 rounded-lg mr-3">
-                          <Icon className="w-5 h-5 text-gray-900" />
+                        <div className="p-2 bg-brand-primary/10 rounded-lg mr-3">
+                          <Icon className="w-5 h-5 text-brand-primary" />
                         </div>
                         {amenity}
                       </div>
@@ -204,7 +211,6 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
-            {/* SURGICAL UPDATE: WORLD-CLASS COLORFUL DATE PICKER UI */}
             <div id="dates-section" className="bg-gradient-to-br from-blue-900 to-brand-primary rounded-[2rem] p-1 shadow-2xl relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -z-10 transform translate-x-1/2 -translate-y-1/2"></div>
               

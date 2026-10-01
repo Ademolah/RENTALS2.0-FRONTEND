@@ -3,8 +3,9 @@ import {
   X, MapPin, CheckCircle2, Building, BedDouble, 
   Wifi, Droplets, Wine, Car, Coffee, Utensils, 
   Sparkles, Dumbbell, Plus, Trash2, Image as ImageIcon,
-  ChevronRight, ChevronLeft
+  ChevronRight, ChevronLeft, AlertCircle
 } from 'lucide-react';
+import { createHotel } from '../api/hotel';
 
 const PRESET_AMENITIES = [
   { name: 'Free Wifi', icon: Wifi },
@@ -35,12 +36,19 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
     title: '',
     description: '',
     hasBreakfast: false,
-    category: 'HOTEL', // Hardcoded for this specific modal
+    category: 'HOTEL',
     address: { street: '', city: '', state: '', country: 'Nigeria' },
     amenities: [],
-    images: [], // In a real app, these would be File objects to upload to Cloudinary
-    roomTypes: [ { ...INITIAL_ROOM_STATE } ] // Start with 1 empty room
+    images: [], 
+    roomTypes: [ { ...INITIAL_ROOM_STATE } ] 
   });
+
+  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+
+  const showToast = (message, type = 'error') => {
+    setToast({ visible: true, message, type });
+    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 4000);
+  };
 
   if (!isOpen) return null;
 
@@ -65,6 +73,24 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
           : [...prev.amenities, amenityName]
       };
     });
+  };
+
+  // --- IMAGE UPLOAD HANDLERS ---
+  const handleImageUpload = (e) => {
+    const files = Array.from(e.target.files);
+    if (!files.length) return;
+    
+    setFormData(prev => ({
+      ...prev,
+      images: [...prev.images, ...files]
+    }));
+  };
+
+  const removeImage = (indexToRemove) => {
+    setFormData(prev => ({
+      ...prev,
+      images: prev.images.filter((_, index) => index !== indexToRemove)
+    }));
   };
 
   // --- ROOM TYPE MANAGEMENT ---
@@ -92,35 +118,47 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
     setFormData(prev => ({ ...prev, roomTypes: updatedRooms }));
   };
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // NOTE: In production, you would upload images to Cloudinary here first, 
-      // then swap the File objects for the secure_url strings before sending to backend.
+      const submitData = new FormData();
+      submitData.append('title', formData.title);
+      submitData.append('description', formData.description);
+      submitData.append('hasBreakfast', formData.hasBreakfast);
+      submitData.append('category', 'HOTEL');
       
-      const token = localStorage.getItem('rentals_token');
-      const response = await fetch('http://localhost:8000/api/v1/properties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(formData)
-      });
+      submitData.append('street', formData.address.street);
+      submitData.append('city', formData.address.city);
+      submitData.append('state', formData.address.state);
+      submitData.append('country', formData.address.country);
 
-      const data = await response.json();
+      formData.amenities.forEach(amenity => submitData.append('amenities', amenity));
+      submitData.append('roomTypes', JSON.stringify(formData.roomTypes));
+
+      // Calculate starting price dynamically from the lowest room price (fallback to 0)
+      const lowestPrice = formData.roomTypes.length > 0 
+        ? Math.min(...formData.roomTypes.map(r => Number(r.pricePerNight) || 0))
+        : 0;
+      submitData.append('startingPrice', lowestPrice);
+
+      if (formData.images && formData.images.length > 0) {
+        formData.images.forEach(file => submitData.append('images', file));
+      }
+
+      const data = await createHotel(submitData);
       
-      if (data.status === 'success') {
+      showToast("Hotel profile published successfully!", "success");
+      
+      setTimeout(() => {
         onSuccess && onSuccess(data.data);
         onClose();
-        // Reset form
         setStep(1);
-      } else {
-        alert(data.message || "Failed to create hotel");
-      }
+      }, 2000);
+
     } catch (error) {
-      console.error(error);
-      alert("Network error occurred.");
+      console.error("Hotel Creation Error:", error);
+      const errorMsg = error.response?.data?.message || "Failed to publish hotel profile. Please check your connection.";
+      showToast(errorMsg, "error");
     } finally {
       setIsSubmitting(false);
     }
@@ -181,13 +219,15 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
             placeholder="City"
             className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all"
           />
-          <input 
-            type="text" 
+          <select 
             value={formData.address.state}
             onChange={(e) => handleAddressChange('state', e.target.value)}
-            placeholder="State"
-            className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all"
-          />
+            className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all cursor-pointer"
+          >
+            <option value="" disabled>Select State</option>
+            <option value="Lagos">Lagos</option>
+            <option value="Abuja">Abuja</option>
+          </select>
         </div>
       </div>
     </div>
@@ -205,12 +245,18 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
               <button
                 key={amenity.name}
                 onClick={() => toggleAmenity(amenity.name)}
-                className={`flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all ${
+                className={`relative flex flex-col items-center justify-center p-4 rounded-xl border-2 transition-all overflow-hidden ${
                   isSelected 
-                    ? 'border-brand-primary bg-brand-primary/5 text-brand-primary' 
+                    ? 'border-brand-primary bg-brand-primary/5 text-brand-primary shadow-[inset_0_0_0_1px_rgba(var(--brand-primary),0.2)]' 
                     : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300 hover:bg-gray-50'
                 }`}
               >
+                {/* Crystal clear visual indicator for selected state */}
+                {isSelected && (
+                  <div className="absolute top-2 right-2 bg-brand-primary text-white rounded-full p-0.5">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                  </div>
+                )}
                 <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-brand-primary' : 'text-gray-400'}`} />
                 <span className="text-[10px] font-bold uppercase tracking-wider text-center">{amenity.name}</span>
               </button>
@@ -221,14 +267,46 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
 
       <div>
         <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Property Images</label>
-        <div className="border-2 border-dashed border-gray-300 rounded-2xl p-10 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">
+        
+        {/* Wired up native file input wrapped in a styled label */}
+        <label htmlFor="hotel-images" className="border-2 border-dashed border-gray-300 rounded-2xl p-10 flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer group">
           <div className="bg-white p-4 rounded-full shadow-sm mb-4 group-hover:scale-110 transition-transform">
-            <ImageIcon className="w-8 h-8 text-gray-400" />
+            <ImageIcon className="w-8 h-8 text-gray-400 group-hover:text-brand-primary transition-colors" />
           </div>
           <p className="text-sm font-bold text-gray-900 mb-1">Click to upload photos</p>
-          <p className="text-xs text-gray-500">PNG, JPG up to 5MB</p>
-          {/* Note: Connect an actual <input type="file" multiple /> here for production */}
-        </div>
+          <p className="text-xs text-gray-500">Select multiple PNG or JPGs</p>
+          
+          <input 
+            id="hotel-images"
+            type="file" 
+            multiple 
+            accept="image/png, image/jpeg, image/jpg, image/webp"
+            className="hidden" 
+            onChange={handleImageUpload}
+          />
+        </label>
+
+        {/* Dynamic Image Preview Grid */}
+        {formData.images.length > 0 && (
+          <div className="mt-4 grid grid-cols-3 sm:grid-cols-4 gap-4 animate-in fade-in duration-300">
+            {formData.images.map((file, idx) => (
+              <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200 shadow-sm">
+                <img 
+                  src={URL.createObjectURL(file)} 
+                  alt={`Preview ${idx + 1}`} 
+                  className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500"
+                />
+                <button 
+                  type="button"
+                  onClick={() => removeImage(idx)}
+                  className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:scale-110 shadow-sm"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -391,6 +469,22 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
               {!isSubmitting && <CheckCircle2 className="w-4 h-4 ml-2" />}
             </button>
           )}
+        </div>
+
+        {/* MAJESTIC TOAST NOTIFICATION */}
+        <div className={`absolute top-6 left-1/2 -translate-x-1/2 z-[300] transition-all duration-500 ease-out ${toast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
+          <div className={`flex items-center space-x-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md ${
+            toast.type === 'success' 
+              ? 'bg-green-900/95 border-green-700/50 text-white shadow-green-900/20' 
+              : 'bg-red-900/95 border-red-700/50 text-white shadow-red-900/20'
+          }`}>
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
+            ) : (
+              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            )}
+            <span className="font-bold text-sm tracking-wide">{toast.message}</span>
+          </div>
         </div>
 
       </div>

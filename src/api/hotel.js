@@ -88,3 +88,11 @@ export const confirmHotelCheckIn = async (reservationId) => {
   });
   return response.data;
 };
+
+export const getLandlordHotels = async () => {
+  const token = localStorage.getItem('rentals_token');
+  const response = await apiClient.get('/hotels/landlord/portfolio', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

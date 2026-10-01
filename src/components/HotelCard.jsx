@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
   MapPin, Star, Coffee, Wifi, Sparkles, ChevronRight, Clock, 
-  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Loader2 
+  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Loader2 , Users
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHotels } from '../api/hotel'; 
