@@ -18,7 +18,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const API = import.meta.VITE_API_URL
+  const API = import.meta.env.VITE_API_URL;
 
   // Axios config helper
   // SURGICAL FIX: Use 'rentals_token' exactly like we did for the Car upload!
@@ -43,6 +43,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
       setBanks(data.data.banks);
     } catch (err) {
       setError('Failed to load supported banks. Please try again later.');
+      console.error(err);
     } finally {
       setIsLoadingBanks(false);
     }
