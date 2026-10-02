@@ -6,12 +6,17 @@ import {
   Sparkles, LogIn
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import AuthModal from '../context/AuthModal'; 
+// Ensure this path points to your actual AuthModal location
+import AuthModal from './AuthModal'
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
-  const [isAuthOpen, setIsAuthOpen] = useState(false);
+  // 1. DELETE LOCAL MODAL STATE
+  // const [isAuthOpen, setIsAuthOpen] = useState(false); 
+  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const { user, logout, redirectUserByRole } = useAuth();
+  
+  // 2. IMPORT GLOBAL MODAL STATE FROM CONTEXT
+  const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
 
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
@@ -31,7 +36,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
 
   return (
     <>
-      {/* TOP NAVBAR - Updated to sticky and z-50 */}
+      {/* TOP NAVBAR */}
       <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-navbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
@@ -69,8 +74,9 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             </div>
 
             <div className="flex items-center space-x-2 md:space-x-4">
+              {/* 3. UPDATE CTA BUTTON TO USE GLOBAL STATE */}
               <button 
-                onClick={() => user ? redirectUserByRole('LANDLORD') : setIsAuthOpen(true)}
+                onClick={() => user ? redirectUserByRole('LANDLORD') : setShowAuthModal(true)}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
               >
                 {getCtaText()}
@@ -87,7 +93,6 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   </div>
                 </button>
 
-                {/* Dropdown Menu - Elevated to z-[60] */}
                 {isMenuOpen && (
                   <div className="absolute right-0 mt-3 w-72 bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100 p-2 z-[60] animate-in fade-in slide-in-from-top-2 origin-top-right duration-200">
                     {user ? (
@@ -162,8 +167,9 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                           <p className="text-[10px] font-medium text-gray-500 mt-1 mb-4 leading-relaxed">
                             Log in to manage reservations, view saved properties, and unlock VIP rentals.
                           </p>
+                          {/* 4. UPDATE DROPDOWN SIGN IN TO USE GLOBAL STATE */}
                           <button
-                            onClick={() => { setIsMenuOpen(false); setIsAuthOpen(true); }}
+                            onClick={() => { setIsMenuOpen(false); setShowAuthModal(true); }}
                             className="w-full py-3 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-2"
                           >
                             <LogIn className="w-4 h-4" />
@@ -181,7 +187,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
         </div>
       </nav>
 
-      {/* MOBILE BOTTOM NAVIGATION BAR - Elevated to z-[60] */}
+      {/* MOBILE BOTTOM NAVIGATION BAR */}
       <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[60]">
         <div className="flex justify-around items-center h-16 pb-safe">
           {categories.map((cat) => {
@@ -203,7 +209,8 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
         </div>
       </div>
 
-      <AuthModal isOpen={isAuthOpen} onClose={() => setIsAuthOpen(false)} />
+      {/* 5. PASS THE GLOBAL CONTEXT TO THE MODAL COMPONENT */}
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
   );
 }

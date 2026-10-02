@@ -14,16 +14,23 @@ import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CarDetails from './pages/CarDetails';
 
+// 1. Define the tracker completely outside the component memory
+let hasSeenCityModalThisSession = false;
+
 function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
-  const [showCityModal, setShowCityModal] = useState(true);
   
-  // 1. Initialize useLocation to track the current route
+  // 2. Initialize the state using the tracker's inverse value
+  const [showCityModal, setShowCityModal] = useState(!hasSeenCityModalThisSession);
+  
+  // Initialize useLocation to track the current route
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
   const handleCitySelect = (selectedState) => {
+    // 3. Update the tracker so it remembers the selection globally
+    hasSeenCityModalThisSession = true;
     setSearchFilters({ ...searchFilters, location: selectedState });
     setShowCityModal(false);
   };
@@ -38,13 +45,13 @@ function App() {
       )}
       
       {/* 
-        1. Header Wrapper: Reverted to z-50. 
+        Header Wrapper: Reverted to z-50. 
         This ensures WelcomeOverlay can naturally cover the header again.
       */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
         
         {/* 
-          2. Navbar Wrapper: 
+          Navbar Wrapper: 
           Mobile: z-40 (Yields to the mobile search modal).
           Desktop (md:): z-[99] (Highest priority so Auth dropdown crushes the red search button).
         */}
@@ -56,7 +63,7 @@ function App() {
         </div>
         
         {/* 
-          3. AdvancedSearch Wrapper: 
+          AdvancedSearch Wrapper: 
           Mobile: z-[60] (Escapes the Navbar to cover the screen).
           Desktop (md:): z-30 (Stays quietly underneath the dropdown).
         */}

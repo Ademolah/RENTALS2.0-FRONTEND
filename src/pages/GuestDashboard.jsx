@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { 
   Home, CarFront, Hotel, Crown, ShieldCheck, 
   MapPin, Calendar, Clock, Loader2, CheckCircle, 
-  ChevronRight, Wallet, LayoutGrid, AlertCircle
+  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star
 } from 'lucide-react';
 
-// Original imports exactly as you have them
 import { getMyPropertyBookings } from '../api/reservation';
 import { confirmPropertyCheckIn } from '../api/properties';
 import { getMyCarBookings, confirmCarHandover } from '../api/car';
-
-// New imports for the Hotel integration
 import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
 import { executePayout } from '../api/payouts';
+
+// --- NEW IMPORTS FOR FAVORITES ---
+import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
 const BookingCard = ({ booking, onConfirmEscrow }) => {
   const [isConfirming, setIsConfirming] = useState(false);
-
   const [localToast, setLocalToast] = useState({ visible: false, message: '', type: 'success' });
 
   const showLocalToast = (message, type = 'success') => {
@@ -25,7 +25,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
     setTimeout(() => setLocalToast({ visible: false, message: '', type: 'success' }), 4000);
   };
 
-  // 1. Normalize Data based on Type
   const isCar = booking.type === 'CAR';
   const isHotel = booking.type === 'HOTEL';
 
@@ -37,7 +36,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
     ? booking.carId?.images?.[0] 
     : booking.propertyId?.images?.[0];
 
-  // Align with backend schemas (cars use ownerConfirmedHandover, properties/hotels use checkInConfirmedByHost or checkInConfirmedByLandlord)
   const hasHostConfirmed = isCar 
     ? booking.ownerConfirmedHandover 
     : (booking.checkInConfirmedByHost || booking.checkInConfirmedByLandlord);
@@ -49,7 +47,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
   const startDate = new Date(isCar ? booking.pickupTime : booking.checkInDate);
   const endDate = new Date(isCar ? booking.dropoffTime : booking.checkOutDate);
 
-  // 2. Escrow State Logic
   const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
   const escrowStatus = isCar ? booking.escrowStatus : booking.payoutStatus;
   const isReleased = isCar ? escrowStatus === 'RELEASED' : escrowStatus === 'RELEASED_TO_LANDLORD';
@@ -57,7 +54,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
-      // Step 1: Confirm the guest's side in the database dynamically
       if (isCar) {
         await confirmCarHandover(booking._id);
       } else if (isHotel) {
@@ -66,23 +62,19 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
         await confirmPropertyCheckIn(booking._id);
       }
 
-      // Step 2: If the Host ALREADY confirmed, execute the payout!
       let isPayoutReleased = false;
       if (hasHostConfirmed) {
         await executePayout(booking._id);
         isPayoutReleased = true;
       }
 
-      // Step 3: Tell the parent component to update the state
       onConfirmEscrow(booking._id, booking.type, isPayoutReleased);
 
-      // Success Feedback
       if (isPayoutReleased) {
         showLocalToast("Confirmation complete! Funds released to host.", "success");
       } else {
         showLocalToast("Confirmed! Waiting for host to confirm.", "success");
       }
-
     } catch (error) {
       console.error("Escrow confirmation failed:", error);
       showLocalToast(error?.response?.data?.message || "Confirmation failed. Please try again.", "error");
@@ -139,7 +131,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           </div>
         </div>
 
-        {/* ESCROW TRUST CENTER */}
         {booking.reservationStatus === 'ACTIVE' && (
           <div className="mt-4 pt-6 border-t border-gray-100">
             {isReleased ? (
@@ -204,20 +195,96 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           </div>
         )}
 
-        {/* LOCAL ELEGANT TOAST */}
-      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ease-out ${localToast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'}`}>
-        <div className={`px-4 py-2.5 rounded-xl shadow-lg flex items-center space-x-2 border font-bold text-xs tracking-wide whitespace-nowrap ${
-          localToast.type === 'success' 
-            ? 'bg-green-50 text-green-700 border-green-200' 
-            : 'bg-red-50 text-red-700 border-red-200'
-        }`}>
-          {localToast.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
-          <span>{localToast.message}</span>
+        <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ease-out ${localToast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'}`}>
+          <div className={`px-4 py-2.5 rounded-xl shadow-lg flex items-center space-x-2 border font-bold text-xs tracking-wide whitespace-nowrap ${
+            localToast.type === 'success' 
+              ? 'bg-green-50 text-green-700 border-green-200' 
+              : 'bg-red-50 text-red-700 border-red-200'
+          }`}>
+            {localToast.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+            <span>{localToast.message}</span>
+          </div>
         </div>
       </div>
-      
-      </div>
     </div>
+  );
+};
+
+
+// --- SUB-COMPONENT: Favorite Property Card ---
+const FavoriteCard = ({ property, onRemove }) => {
+  const [isRemoving, setIsRemoving] = useState(false);
+
+  const handleHeartClick = async (e) => {
+    e.preventDefault(); 
+    setIsRemoving(true);
+    try {
+      await toggleFavoriteApi(property._id || property.id);
+      onRemove(property._id || property.id);
+    } catch (error) {
+      console.error("Failed to remove favorite", error);
+      setIsRemoving(false); 
+    }
+  };
+
+  const isAvailable = property.isAvailable ?? true;
+  const nextDate = property.nextAvailableDate 
+    ? new Date(property.nextAvailableDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+    : 'Unknown';
+
+  return (
+    <Link to={`/property/${property._id || property.id}`} className="group cursor-pointer flex flex-col gap-3 bg-white p-3 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all">
+      <div className="relative aspect-[4/3] overflow-hidden rounded-xl bg-gray-200">
+        <img 
+          src={property.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'} 
+          alt={property.title} 
+          className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 ${isRemoving ? 'opacity-50 blur-sm' : ''}`}
+        />
+        
+        {/* Smart Availability Badge */}
+        <div className="absolute top-3 left-3">
+          {isAvailable ? (
+            <div className="bg-green-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+              Available
+            </div>
+          ) : (
+            <div className="bg-gray-900/90 backdrop-blur-sm text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
+              Booked until {nextDate}
+            </div>
+          )}
+        </div>
+
+        {/* Favorite Toggle Button */}
+        <button 
+          onClick={handleHeartClick}
+          disabled={isRemoving}
+          className="absolute top-3 right-3 text-white hover:scale-110 transition-transform drop-shadow-md z-10 bg-black/20 p-1.5 rounded-full backdrop-blur-sm"
+        >
+          {isRemoving ? (
+            <Loader2 className="w-5 h-5 text-white animate-spin" />
+          ) : (
+            <Heart className="w-5 h-5 fill-brand-primary stroke-brand-primary" />
+          )}
+        </button>
+      </div>
+
+      <div className="flex flex-col text-gray-900 px-1 pb-1">
+        <div className="flex justify-between items-start">
+          <h3 className="font-bold text-sm leading-tight truncate pr-4 text-gray-900">
+            {property.address?.city || 'Location unavailable'}
+          </h3>
+          <div className="flex items-center space-x-1 shrink-0">
+            <Star className="w-3.5 h-3.5 fill-gray-900 text-gray-900" />
+            <span className="text-xs font-medium">5.0</span>
+          </div>
+        </div>
+        <p className="text-gray-500 text-xs truncate mt-0.5">{property.title}</p>
+        <div className="mt-2 flex items-baseline space-x-1 border-t border-gray-50 pt-2">
+          <span className="font-extrabold text-sm">₦{(property.pricePerNight || 0).toLocaleString()}</span>
+          <span className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">/ night</span>
+        </div>
+      </div>
+    </Link>
   );
 };
 
@@ -226,62 +293,62 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
 export default function GuestDashboard() {
   const [activeTab, setActiveTab] = useState('ALL');
   const [bookings, setBookings] = useState([]);
+  const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
 
-  // ALL TABS ACTIVE EXEPT VIP
   const TABS = [
     { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
     { id: 'SHORTLET', label: 'Shortlets', icon: Home },
     { id: 'CAR', label: 'Car Rentals', icon: CarFront },
-    { id: 'HOTEL', label: 'Hotels', icon: Hotel }, // Fully enabled!
+    { id: 'HOTEL', label: 'Hotels', icon: Hotel },
+    { id: 'FAVORITES', label: 'Saved Stays', icon: Heart }, // NEW TAB
     { id: 'VIP', label: 'VIP (Soon)', icon: Crown, disabled: true },
   ];
 
   useEffect(() => {
-    const fetchAllBookings = async () => {
+    const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch all 3 endpoints in parallel safely
-        const [propertyRes, carRes, hotelRes] = await Promise.allSettled([
+        // Fetch all 4 endpoints in parallel securely
+        const [propertyRes, carRes, hotelRes, favRes] = await Promise.allSettled([
           getMyPropertyBookings(),
           getMyCarBookings(),
-          getMyHotelBookings()
+          getMyHotelBookings(),
+          getMyFavoritesApi() // Fetching the favorites
         ]);
 
         let unifiedBookings = [];
 
-        // 1. Process Main Reservations (Dynamically categorizing Shortlets vs Hotels)
         if (propertyRes.status === 'fulfilled' && propertyRes.value.data?.bookings) {
           const reservations = propertyRes.value.data.bookings.map(b => {
-            // Check the backend category to assign the correct type!
             let trueType = 'SHORTLET';
             if (b.propertyId?.category === 'HOTEL' || b.type === 'HOTEL') {
               trueType = 'HOTEL';
             } else if (b.carId || b.type === 'CAR') {
-              trueType = 'CAR'; // Just in case cars leak into this endpoint too
+              trueType = 'CAR';
             }
             return { ...b, type: trueType };
           });
           unifiedBookings = [...unifiedBookings, ...reservations];
         }
 
-        // 2. Process Dedicated Car Endpoint (If backend doesn't crash)
         if (carRes.status === 'fulfilled' && carRes.value.data?.bookings) {
           const cars = carRes.value.data.bookings.map(b => ({ ...b, type: 'CAR' }));
           unifiedBookings = [...unifiedBookings, ...cars];
         }
 
-        // 3. Process Dedicated Hotel Endpoint
         if (hotelRes.status === 'fulfilled' && hotelRes.value.data?.bookings) {
           const hotels = hotelRes.value.data.bookings.map(b => ({ ...b, type: 'HOTEL' }));
           unifiedBookings = [...unifiedBookings, ...hotels];
         }
 
-        // 4. Safely deduplicate in case multiple endpoints returned the exact same booking!
-        const uniqueBookings = Array.from(new Map(unifiedBookings.map(item => [item._id, item])).values());
+        if (favRes.status === 'fulfilled') {
+          const favs = favRes.value.data?.favorites || favRes.value.favorites || [];
+          setFavorites(favs);
+        }
 
-        // Sort by newest first
+        const uniqueBookings = Array.from(new Map(unifiedBookings.map(item => [item._id, item])).values());
         uniqueBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
         setBookings(uniqueBookings);
 
@@ -292,20 +359,18 @@ export default function GuestDashboard() {
       }
     };
 
-    fetchAllBookings();
+    fetchDashboardData();
   }, []);
 
   const handleEscrowSuccess = (reservationId, type, isPayoutReleased) => {
     setBookings(prev => prev.map(booking => {
       if (booking._id === reservationId) {
         const updated = { ...booking };
-        
         if (type === 'CAR') {
           updated.guestConfirmedPickup = true; 
         } else {
           updated.checkInConfirmedByGuest = true;
         }
-
         if (isPayoutReleased) {
           if (type === 'CAR') {
             updated.escrowStatus = 'RELEASED';
@@ -313,7 +378,6 @@ export default function GuestDashboard() {
             updated.payoutStatus = 'RELEASED_TO_LANDLORD';
           }
         }
-
         return updated;
       }
       return booking;
@@ -324,8 +388,14 @@ export default function GuestDashboard() {
     } else {
       setToastMessage(`${type === 'CAR' ? 'Pickup' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
     }
-    
     setTimeout(() => setToastMessage(''), 4000);
+  };
+
+  const handleRemoveFavorite = (propertyId) => {
+    // Remove visually from the grid instantly without refetching
+    setFavorites(prev => prev.filter(p => (p._id || p.id) !== propertyId));
+    setToastMessage("Property removed from Saved Stays.");
+    setTimeout(() => setToastMessage(''), 2500);
   };
 
   const filteredBookings = bookings.filter(b => activeTab === 'ALL' || b.type === activeTab);
@@ -353,7 +423,7 @@ export default function GuestDashboard() {
 
       <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col lg:flex-row gap-10">
         
-        {/* Desktop Sidebar / Mobile Top Scroll */}
+        {/* Sidebar Tabs */}
         <div className="lg:w-64 shrink-0 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
           <div className="flex lg:flex-col gap-2 min-w-max lg:min-w-0 sticky top-28">
             {TABS.map((tab) => {
@@ -383,24 +453,48 @@ export default function GuestDashboard() {
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
-              <p className="font-medium text-lg">Loading your itinerary...</p>
+              <p className="font-medium text-lg">Loading your dashboard...</p>
             </div>
-          ) : filteredBookings.length === 0 ? (
-            <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
-              <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                <Calendar className="w-8 h-8 text-gray-300" />
+          ) : activeTab === 'FAVORITES' ? (
+            // --- FAVORITES RENDER BLOCK ---
+            favorites.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Heart className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No saved stays yet</h3>
+                <p className="text-gray-500 font-medium">Properties you favorite will appear here for easy booking.</p>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-2">No bookings found</h3>
-              <p className="text-gray-500 font-medium">You don't have any {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} reservations yet.</p>
-            </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
+                {favorites.map((fav) => (
+                  <FavoriteCard 
+                    key={fav._id || fav.id} 
+                    property={fav} 
+                    onRemove={handleRemoveFavorite} 
+                  />
+                ))}
+              </div>
+            )
           ) : (
-            filteredBookings.map((booking) => (
-              <BookingCard 
-                key={booking._id} 
-                booking={booking} 
-                onConfirmEscrow={handleEscrowSuccess} 
-              />
-            ))
+            // --- STANDARD BOOKINGS RENDER BLOCK ---
+            filteredBookings.length === 0 ? (
+              <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
+                <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
+                  <Calendar className="w-8 h-8 text-gray-300" />
+                </div>
+                <h3 className="text-2xl font-bold text-gray-900 mb-2">No bookings found</h3>
+                <p className="text-gray-500 font-medium">You don't have any {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} reservations yet.</p>
+              </div>
+            ) : (
+              filteredBookings.map((booking) => (
+                <BookingCard 
+                  key={booking._id} 
+                  booking={booking} 
+                  onConfirmEscrow={handleEscrowSuccess} 
+                />
+              ))
+            )
           )}
         </div>
       </div>

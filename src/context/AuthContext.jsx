@@ -7,6 +7,10 @@ const AuthContext = createContext(null);
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  
+  // NEW: Global state for the Auth Modal
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -26,15 +30,10 @@ export function AuthProvider({ children }) {
 
   // Helper function to cleanly extract token and user from various response structures
   const extractAuthData = (apiResponse) => {
-  // Since response.data was already extracted by auth.js, apiResponse is the raw root object
-  const token = apiResponse?.token;
-  
-  // Directly grab user from the root level or nested inside the wrapper object
-  const user = apiResponse?.user || apiResponse?.data?.user;
-
-  return { token, user };
-};
-
+    const token = apiResponse?.token;
+    const user = apiResponse?.user || apiResponse?.data?.user;
+    return { token, user };
+  };
 
   const login = async (credentials) => {
     const rawResponse = await loginApi(credentials);
@@ -47,7 +46,9 @@ export function AuthProvider({ children }) {
     localStorage.setItem('rentals_token', token);
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
-
+    
+    // Close modal on success
+    setShowAuthModal(false);
     redirectUserByRole(userPayload.role);
     return rawResponse;
   };
@@ -64,6 +65,8 @@ export function AuthProvider({ children }) {
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
 
+    // Close modal on success
+    setShowAuthModal(false);
     redirectUserByRole(userPayload.role);
     return rawResponse;
   };
@@ -92,7 +95,16 @@ export function AuthProvider({ children }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, redirectUserByRole }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      loading, 
+      login, 
+      register, 
+      logout, 
+      redirectUserByRole,
+      showAuthModal,      // EXPOSED TO APP
+      setShowAuthModal    // EXPOSED TO APP
+    }}>
       {children}
     </AuthContext.Provider>
   );
