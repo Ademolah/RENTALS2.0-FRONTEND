@@ -2,33 +2,48 @@ import React, { useState, useEffect } from 'react';
 import { 
   Home, CarFront, Hotel, Crown, ShieldCheck, 
   MapPin, Calendar, Clock, Loader2, CheckCircle, 
-  ChevronRight, Wallet, LayoutGrid
+  ChevronRight, Wallet, LayoutGrid, AlertCircle
 } from 'lucide-react';
+
+// Original imports exactly as you have them
 import { getMyPropertyBookings } from '../api/reservation';
 import { confirmPropertyCheckIn } from '../api/properties';
-import { confirmCarHandover } from '../api/car';
-import { getMyCarBookings } from '../api/car';
-import { executePayout } from '../api/payouts';
+import { getMyCarBookings, confirmCarHandover } from '../api/car';
 
+// New imports for the Hotel integration
+import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
+import { executePayout } from '../api/payouts';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
 const BookingCard = ({ booking, onConfirmEscrow }) => {
   const [isConfirming, setIsConfirming] = useState(false);
 
+  const [localToast, setLocalToast] = useState({ visible: false, message: '', type: 'success' });
+
+  const showLocalToast = (message, type = 'success') => {
+    setLocalToast({ visible: true, message, type });
+    setTimeout(() => setLocalToast({ visible: false, message: '', type: 'success' }), 4000);
+  };
+
   // 1. Normalize Data based on Type
   const isCar = booking.type === 'CAR';
+  const isHotel = booking.type === 'HOTEL';
+
   const title = isCar 
     ? `${booking.carId?.make} ${booking.carId?.carModel} ${booking.carId?.year}`
-    : booking.propertyId?.title || 'Luxury Shortlet';
+    : booking.propertyId?.title || (isHotel ? 'Luxury Hotel' : 'Luxury Shortlet');
   
   const image = isCar 
     ? booking.carId?.images?.[0] 
     : booking.propertyId?.images?.[0];
 
-  const hasHostConfirmed = isCar ? booking.ownerConfirmedHandover : booking.checkInConfirmedByHost;
+  // Align with backend schemas (cars use ownerConfirmedHandover, properties/hotels use checkInConfirmedByHost or checkInConfirmedByLandlord)
+  const hasHostConfirmed = isCar 
+    ? booking.ownerConfirmedHandover 
+    : (booking.checkInConfirmedByHost || booking.checkInConfirmedByLandlord);
 
   const location = isCar 
-    ? `${booking.carId?.location?.city}, ${booking.carId?.location?.state}`
+    ? `${booking.carId?.location?.city || ''}, ${booking.carId?.location?.state || ''}`.replace(/(^,\s*)|(,\s*$)/g, '')
     : booking.propertyId?.address?.city || 'Location unavailable';
 
   const startDate = new Date(isCar ? booking.pickupTime : booking.checkInDate);
@@ -42,35 +57,35 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
-      // Step 1: Confirm the guest's side in the database
+      // Step 1: Confirm the guest's side in the database dynamically
       if (isCar) {
         await confirmCarHandover(booking._id);
+      } else if (isHotel) {
+        await confirmHotelGuestCheckIn(booking._id);
       } else {
         await confirmPropertyCheckIn(booking._id);
       }
 
-      // Step 2: The Magic - If the Host ALREADY confirmed, execute the payout!
+      // Step 2: If the Host ALREADY confirmed, execute the payout!
       let isPayoutReleased = false;
       if (hasHostConfirmed) {
-        // The host clicked first. You are the second click. Release the funds.
         await executePayout(booking._id);
         isPayoutReleased = true;
       }
 
       // Step 3: Tell the parent component to update the state
-      // We pass the isPayoutReleased flag so the parent can set the UI to State 4 instantly
       onConfirmEscrow(booking._id, booking.type, isPayoutReleased);
 
       // Success Feedback
       if (isPayoutReleased) {
-        alert("Confirmation complete! The escrow funds have been released to the host.");
+        showLocalToast("Confirmation complete! Funds released to host.", "success");
       } else {
-        alert("Confirmed! Waiting for the host to confirm before releasing funds.");
+        showLocalToast("Confirmed! Waiting for host to confirm.", "success");
       }
 
     } catch (error) {
       console.error("Escrow confirmation failed:", error);
-      alert(error?.response?.data?.message || "Confirmation failed. Please try again.");
+      showLocalToast(error?.response?.data?.message || "Confirmation failed. Please try again.", "error");
     } finally {
       setIsConfirming(false);
     }
@@ -86,7 +101,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full text-gray-900 shadow-sm">
-          {isCar ? 'Vehicle Rental' : 'Shortlet'}
+          {isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}
         </div>
         {booking.reservationStatus === 'ACTIVE' && (
           <div className="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-bold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1">
@@ -101,7 +116,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
         <div>
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{title}</h3>
-            <span className="text-lg font-bold text-gray-900">₦{booking.totalAmount.toLocaleString()}</span>
+            <span className="text-lg font-bold text-gray-900">₦{(booking.totalAmount || 0).toLocaleString()}</span>
           </div>
           
           <div className="flex items-center text-gray-500 text-sm font-medium space-x-4 mb-6">
@@ -124,12 +139,10 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           </div>
         </div>
 
-       
-        {/* ESCROW TRUST CENTER (Only show for ACTIVE bookings) */}
+        {/* ESCROW TRUST CENTER */}
         {booking.reservationStatus === 'ACTIVE' && (
           <div className="mt-4 pt-6 border-t border-gray-100">
             {isReleased ? (
-              // STATE 4: FULLY RELEASED (Both clicked)
               <div className="flex items-center space-x-3 bg-green-50/50 text-green-700 px-5 py-4 rounded-2xl border border-green-100">
                 <div className="bg-green-500 rounded-full p-1 shadow-sm">
                   <CheckCircle className="w-4 h-4 text-white" />
@@ -144,7 +157,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
                 </div>
               </div>
             ) : hasGuestConfirmed && !hasHostConfirmed ? (
-              // STATE 3: WAITING FOR HOST/OWNER (Guest clicked first)
               <div className="flex items-center space-x-3 bg-amber-50/50 text-amber-700 px-5 py-4 rounded-2xl border border-amber-100">
                 <div className="bg-amber-500 rounded-full p-1.5 shadow-sm">
                   <Clock className="w-3.5 h-3.5 text-white" />
@@ -157,7 +169,6 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
                 </div>
               </div>
             ) : (
-              // STATE 1 & 2: GUEST HAS NOT CLICKED YET
               <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border ${
                 hasHostConfirmed ? 'bg-blue-50/50 border-blue-200' : 'bg-gray-50/50 border-gray-100'
               }`}>
@@ -192,6 +203,19 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
             )}
           </div>
         )}
+
+        {/* LOCAL ELEGANT TOAST */}
+      <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ease-out ${localToast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'}`}>
+        <div className={`px-4 py-2.5 rounded-xl shadow-lg flex items-center space-x-2 border font-bold text-xs tracking-wide whitespace-nowrap ${
+          localToast.type === 'success' 
+            ? 'bg-green-50 text-green-700 border-green-200' 
+            : 'bg-red-50 text-red-700 border-red-200'
+        }`}>
+          {localToast.type === 'success' ? <CheckCircle className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+          <span>{localToast.message}</span>
+        </div>
+      </div>
+      
       </div>
     </div>
   );
@@ -205,11 +229,12 @@ export default function GuestDashboard() {
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
 
+  // ALL TABS ACTIVE EXEPT VIP
   const TABS = [
     { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
     { id: 'SHORTLET', label: 'Shortlets', icon: Home },
     { id: 'CAR', label: 'Car Rentals', icon: CarFront },
-    { id: 'HOTEL', label: 'Hotels (Soon)', icon: Hotel, disabled: true },
+    { id: 'HOTEL', label: 'Hotels', icon: Hotel }, // Fully enabled!
     { id: 'VIP', label: 'VIP (Soon)', icon: Crown, disabled: true },
   ];
 
@@ -217,29 +242,48 @@ export default function GuestDashboard() {
     const fetchAllBookings = async () => {
       setLoading(true);
       try {
-        // Parallel fetching for high performance
-        const [propertyRes, carRes] = await Promise.allSettled([
+        // Fetch all 3 endpoints in parallel safely
+        const [propertyRes, carRes, hotelRes] = await Promise.allSettled([
           getMyPropertyBookings(),
-          getMyCarBookings()
+          getMyCarBookings(),
+          getMyHotelBookings()
         ]);
 
         let unifiedBookings = [];
 
-        // Normalize Property Data
+        // 1. Process Main Reservations (Dynamically categorizing Shortlets vs Hotels)
         if (propertyRes.status === 'fulfilled' && propertyRes.value.data?.bookings) {
-          const props = propertyRes.value.data.bookings.map(b => ({ ...b, type: 'SHORTLET' }));
-          unifiedBookings = [...unifiedBookings, ...props];
+          const reservations = propertyRes.value.data.bookings.map(b => {
+            // Check the backend category to assign the correct type!
+            let trueType = 'SHORTLET';
+            if (b.propertyId?.category === 'HOTEL' || b.type === 'HOTEL') {
+              trueType = 'HOTEL';
+            } else if (b.carId || b.type === 'CAR') {
+              trueType = 'CAR'; // Just in case cars leak into this endpoint too
+            }
+            return { ...b, type: trueType };
+          });
+          unifiedBookings = [...unifiedBookings, ...reservations];
         }
 
-        // Normalize Car Data
+        // 2. Process Dedicated Car Endpoint (If backend doesn't crash)
         if (carRes.status === 'fulfilled' && carRes.value.data?.bookings) {
           const cars = carRes.value.data.bookings.map(b => ({ ...b, type: 'CAR' }));
           unifiedBookings = [...unifiedBookings, ...cars];
         }
 
-        // Sort by most recent
-        unifiedBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-        setBookings(unifiedBookings);
+        // 3. Process Dedicated Hotel Endpoint
+        if (hotelRes.status === 'fulfilled' && hotelRes.value.data?.bookings) {
+          const hotels = hotelRes.value.data.bookings.map(b => ({ ...b, type: 'HOTEL' }));
+          unifiedBookings = [...unifiedBookings, ...hotels];
+        }
+
+        // 4. Safely deduplicate in case multiple endpoints returned the exact same booking!
+        const uniqueBookings = Array.from(new Map(unifiedBookings.map(item => [item._id, item])).values());
+
+        // Sort by newest first
+        uniqueBookings.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        setBookings(uniqueBookings);
 
       } catch (error) {
         console.error("Failed to load dashboard data", error);
@@ -256,14 +300,12 @@ export default function GuestDashboard() {
       if (booking._id === reservationId) {
         const updated = { ...booking };
         
-        // 1. Update the guest's side of the confirmation
         if (type === 'CAR') {
           updated.guestConfirmedPickup = true; 
         } else {
           updated.checkInConfirmedByGuest = true;
         }
 
-        // 2. If the payout was released (host had already clicked), instantly update the UI status
         if (isPayoutReleased) {
           if (type === 'CAR') {
             updated.escrowStatus = 'RELEASED';
@@ -277,7 +319,6 @@ export default function GuestDashboard() {
       return booking;
     }));
 
-    // 3. Dynamic toast message based on whether the handshake finished
     if (isPayoutReleased) {
       setToastMessage(`Confirmation complete! Funds released to ${type === 'CAR' ? 'owner' : 'host'}.`);
     } else {
