@@ -155,7 +155,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
                 <div>
                   <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : 'Host'}</div>
                   <div className="text-xs font-medium text-amber-600 mt-0.5">
-                    You've confirmed. Escrow will release once they confirm.
+                    You've confirmed. Payment will release once they confirm.
                   </div>
                 </div>
               </div>

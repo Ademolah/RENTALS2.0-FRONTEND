@@ -44,6 +44,10 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [pricePerNight, setPricePerNight] = useState(150000);
   const [maxGuests, setMaxGuests] = useState(2);
   
+  // NEW STATES: Bedrooms & Bathrooms
+  const [bedrooms, setBedrooms] = useState(1);
+  const [bathrooms, setBathrooms] = useState(1);
+  
   // Address State
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
@@ -53,7 +57,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
-  // 1. Define the Location Taxonomy
+  // Location Taxonomy
   const LOCATION_DATA = {
     "Lagos": [
       "Ikoyi", "Banana Island", "Victoria Island", "Lekki Phase 1", 
@@ -67,10 +71,9 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
     ].sort()
   };
 
-  // 2. Add this handler to reset the city if the landlord changes the state midway
   const handleStateChange = (e) => {
     setStateName(e.target.value);
-    setCity(''); // Instantly clears the city so they don't submit "Lagos" with "Maitama"
+    setCity(''); 
   };
 
   useEffect(() => {
@@ -155,6 +158,10 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       formData.append('pricePerNight', pricePerNight);
       formData.append('maxGuests', maxGuests);
       
+      // APPEND NEW FIELDS
+      formData.append('bedrooms', bedrooms);
+      formData.append('bathrooms', bathrooms);
+      
       formData.append('address', JSON.stringify({
         street,
         city,
@@ -194,6 +201,8 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
     setCategory('APARTMENT');
     setPricePerNight(150000);
     setMaxGuests(2);
+    setBedrooms(1);
+    setBathrooms(1);
     setStreet('');
     setCity('');
     setStateName('');
@@ -260,6 +269,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     />
                   </div>
 
+                  {/* UPDATED GRID WITH BEDROOMS & BATHROOMS */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Category</label>
@@ -282,6 +292,24 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       <input 
                         type="number" required min="1" max="20"
                         value={maxGuests} onChange={(e) => setMaxGuests(e.target.value)}
+                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Bedrooms</label>
+                      <input 
+                        type="number" required min="1" max="20"
+                        value={bedrooms} onChange={(e) => setBedrooms(Number(e.target.value))}
+                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Bathrooms</label>
+                      <input 
+                        type="number" required min="1" max="20"
+                        value={bathrooms} onChange={(e) => setBathrooms(Number(e.target.value))}
                         className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
                       />
                     </div>
@@ -308,7 +336,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     />
                   </div>
 
-                  {/* STATE MOVED TO FIRST POSITION */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">State</label>
                     <select 
@@ -324,21 +351,18 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     </select>
                   </div>
 
-                  {/* DYNAMIC CITY DROPDOWN */}
                   <div>
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">City / Neighborhood</label>
                     <select 
                       required
                       value={city} 
                       onChange={(e) => setCity(e.target.value)}
-                      disabled={!stateName} // Locked until a state is chosen
+                      disabled={!stateName} 
                       className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="" disabled>
                         {stateName ? 'Select City' : 'Select State First'}
                       </option>
-                      
-                      {/* Only renders the cities belonging to the chosen state */}
                       {stateName && LOCATION_DATA[stateName].map(loc => (
                         <option key={loc} value={loc}>{loc}</option>
                       ))}
@@ -352,7 +376,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
 
               <section>
                 <div className="flex items-center space-x-2 mb-6">
-                  <Sparkles className="w-5 h-5 text-gray-400" />
+                  
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight">Premium Amenities</h3>
                 </div>
                 
@@ -388,7 +412,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                 
                 <div className="mb-6 p-5 rounded-2xl bg-gray-900 text-white shadow-md border border-gray-800">
                   <div className="flex items-center space-x-2 text-amber-400 font-bold text-[10px] tracking-widest uppercase mb-2">
-                    <Sparkles className="w-4 h-4" />
+                    
                     <span>Rentals Quality Standard</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed font-medium">

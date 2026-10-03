@@ -106,13 +106,11 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                             {user.firstName} {user.lastName}
                           </p>
                           <div className="mt-3 inline-flex items-center space-x-1.5 px-2.5 py-1 bg-white/10 backdrop-blur-md rounded-md border border-white/10">
-                            {user.role === 'LANDLORD' || user.role === 'ADMIN' ? (
+                            {(user.role === 'LANDLORD' || user.role === 'ADMIN') && (
                               <Crown className="w-3 h-3 text-amber-400" />
-                            ) : (
-                              <Sparkles className="w-3 h-3 text-brand-primary" />
                             )}
                             <span className="text-[9px] font-bold text-gray-100 uppercase tracking-widest">
-                              {user.role}
+                              {user.role === 'USER' ? 'Guest' : 'Host'}
                             </span>
                           </div>
                         </div>

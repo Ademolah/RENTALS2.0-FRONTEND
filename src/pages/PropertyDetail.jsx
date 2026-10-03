@@ -11,8 +11,6 @@ export default function PropertyDetail() {
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
-  
-  // New State for Similar Properties
   const [similarProperties, setSimilarProperties] = useState([]);
 
   const mobileScrollRef = useRef(null);
@@ -25,9 +23,7 @@ export default function PropertyDetail() {
     }
   };
 
-  // 1. MAIN FETCH EFFECT
   useEffect(() => {
-    // WORLD CLASS UX: Always snap to the top when navigating to a new property ID
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
     async function fetchDetails() {
@@ -38,12 +34,15 @@ export default function PropertyDetail() {
         
         setProperty({
           id: dbProp._id,
+          propertyId: dbProp.propertyId, // Extracted real ID
           title: dbProp.title,
           location: `${dbProp.address?.street}, ${dbProp.address?.city}`,
           address: dbProp.address,
           price: dbProp.pricePerNight,
           description: dbProp.description,
           maxGuests: dbProp.maxGuests,
+          bedrooms: dbProp.bedrooms,     // Extracted real bedrooms
+          bathrooms: dbProp.bathrooms,   // Extracted real bathrooms
           category: dbProp.category,
           amenities: dbProp.amenities || [],
           images: dbProp.images?.length > 0 
@@ -62,7 +61,6 @@ export default function PropertyDetail() {
     if (id) fetchDetails();
   }, [id]);
 
-  
   useEffect(() => {
     async function fetchSimilar() {
       if (!property?.address?.city) return;
@@ -70,11 +68,10 @@ export default function PropertyDetail() {
         const res = await getProperties(); 
         const allProps = res?.data?.properties || res?.properties || res?.data || [];
         
-        // Filter: Same city, NOT the current property, and NOT a hotel!
         const similar = allProps.filter(p => 
           p._id !== property.id && 
           p.address?.city === property.address?.city &&
-          p.category !== 'HOTEL' // <-- The surgical fix to block hotels
+          p.category !== 'HOTEL' 
         ).slice(0, 4); 
         
         setSimilarProperties(similar);
@@ -106,13 +103,11 @@ export default function PropertyDetail() {
   return (
     <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
       
-      {/* Back to listings button */}
       <button onClick={() => navigate(-1)} className="inline-flex items-center space-x-2 text-sm font-bold text-gray-500 hover:text-gray-900 mb-6 transition-all group w-fit">
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
         <span>Back to listings</span>
       </button>
 
-      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
           <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
@@ -139,13 +134,10 @@ export default function PropertyDetail() {
         </div>
       </div>
 
-      {/* The Split Screen Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
         
-        {/* LEFT COLUMN: Scrollable Content */}
         <div className="lg:col-span-7 flex flex-col gap-8">
           
-          {/* Main Image Gallery */}
           <div className="mb-4">
             
             {/* MOBILE VIEW */}
@@ -217,17 +209,24 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          {/* Property Details */}
           <div className="border-b border-gray-200 pb-8">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Entire apartment hosted by Rentals</h2>
-            <div className="flex space-x-4 text-gray-600 font-medium mb-6">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Entire property hosted by Rentals</h2>
+            
+            {/* Dynamic Real Data Render */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6">
               <span>{property.maxGuests || 2} guests</span>
-              <span>·</span>
-              <span>1 bedroom</span>
-              <span>·</span>
-              <span>1 bed</span>
-              <span>·</span>
-              <span>1 bath</span>
+              {property.bedrooms && (
+                <>
+                  <span>·</span>
+                  <span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span>
+                </>
+              )}
+              {property.bathrooms && (
+                <>
+                  <span>·</span>
+                  <span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span>
+                </>
+              )}
             </div>
             
             <div className="flex items-start space-x-4 bg-gray-50 p-5 rounded-2xl border border-gray-100">
@@ -238,38 +237,43 @@ export default function PropertyDetail() {
               </div>
             </div>
 
-             
-          {property.description && (
-            <div className="border-b border-gray-200 pb-8">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">About this space</h3>
-              <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                {property.description}
-              </p>
-            </div>
-          )}
+            {property.description && (
+              <div className="mt-8">
+                <h3 className="text-xl font-bold text-gray-900 mb-4">About this space</h3>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+                  {property.description}
+                </p>
+                
+                {/* Clean Property ID display appended dynamically */}
+                {property.propertyId && (
+                  <div className="mt-6 flex items-center space-x-2">
+                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-100 px-3 py-1.5 rounded-md shadow-sm border border-gray-200">
+                      Property ID: {property.propertyId}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
             
           </div>
 
-          {/* Mobile Booking Widget - Hidden on Desktop */}
           <div className="lg:hidden block">
             <BookingWidget property={property} />
           </div>
 
-          {/* Interactive Map Section */}
           <div className="pt-4 pb-8">
             <h3 className="text-xl font-bold text-gray-900 mb-6">Where you'll be</h3>
             <div className="w-full h-[400px] rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
               <InteractiveMap 
                 address={property.address} 
                 type="SHORTLET"
-                price={property.pricePerNight}
+                price={property.price || 0}
               />
             </div>
           </div>
 
         </div>
 
-        {/* RIGHT COLUMN: Sticky Booking Widget Only */}
         <div className="hidden lg:block lg:col-span-5 relative">
           <div className="sticky top-28 w-full max-w-md ml-auto">
             <BookingWidget property={property} />
@@ -278,7 +282,6 @@ export default function PropertyDetail() {
 
       </div>
 
-      {/* --- SIMILAR PROPERTIES SECTION --- */}
       {similarProperties.length > 0 && (
         <div className="mt-12 pt-16 border-t border-gray-100">
           <div className="flex justify-between items-end mb-8">
