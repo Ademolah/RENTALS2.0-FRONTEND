@@ -395,7 +395,6 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                 
                 <div className="mb-6 p-5 rounded-2xl bg-gray-900 text-white shadow-md border border-gray-800">
                   <div className="flex items-center space-x-2 text-amber-400 font-bold text-[10px] tracking-widest uppercase mb-2">
-                    <Sparkles className="w-4 h-4" />
                     <span>Rentals Quality Standard</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed font-medium">
@@ -458,7 +457,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
 
                   <input 
                     type="range" 
-                    min="50000" max="5000000" step="50000"
+                    min="20000" max="5000000" step="20000"
                     value={depositAmount}
                     onChange={(e) => setDepositAmount(Number(e.target.value))}
                     className="w-full h-2.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/10"
