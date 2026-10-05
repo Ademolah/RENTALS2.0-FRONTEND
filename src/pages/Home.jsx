@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import PropertyCard from '../components/PropertyCard';
 import CarCard from '../components/CarCard'; 
-import HotelListingView from '../components/HotelCard'; // SURGICAL FIX: Import the new Hotel view
+import HotelListingView from '../components/HotelCard'; 
+import VipListingView from '../components/VipListingView'; // SURGICAL FIX: Import VIP View
 import { getProperties } from '../api/properties';
 import { getCars } from '../api/car'; 
 import { Loader2, Search } from 'lucide-react';
@@ -19,10 +20,9 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
 
   useEffect(() => {
     async function fetchListings() {
-      // If we are on the hotel tab, we can skip fetching standard listings for now 
-      // since HotelListingView currently uses its own MOCK_HOTELS for the UI build out.
-      // We will wire this up to real data in the next step.
-      if (activeCategory.toLowerCase() === 'hotel') {
+      // SURGICAL FIX: Bypass standard fetch for both Hotel and VIP since they manage their own views
+      const normalizedCategory = activeCategory.toLowerCase();
+      if (normalizedCategory === 'hotel' || normalizedCategory === 'vip reservation' || normalizedCategory === 'vip') {
         setLoading(false);
         return;
       }
@@ -30,7 +30,6 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
       setLoading(true);
       try {
         let responseData;
-        const normalizedCategory = activeCategory.toLowerCase();
         
         if (normalizedCategory === 'car') {
           responseData = await getCars(); 
@@ -76,12 +75,18 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
     fetchListings();
   }, [activeCategory, JSON.stringify(searchFilters), isSearchCleared]);
 
+  // Normalization for the render check
+  const isHotel = activeCategory.toLowerCase() === 'hotel';
+  const isVip = activeCategory.toLowerCase() === 'vip' || activeCategory.toLowerCase() === 'vip reservation';
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
-      {/* SURGICAL FIX: Intercept the render if category is Hotel */}
-      {activeCategory.toLowerCase() === 'hotel' ? (
+      {/* SURGICAL FIX: Intercept the render based on active category[cite: 8] */}
+      {isHotel ? (
         <HotelListingView />
+      ) : isVip ? (
+        <VipListingView defaultLocation={searchFilters.location}/>
       ) : loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-2" />
