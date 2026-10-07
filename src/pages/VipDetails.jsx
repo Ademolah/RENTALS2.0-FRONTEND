@@ -59,7 +59,8 @@ export default function VipDetails() {
         establishmentId: id,
         reservationDate,
         guestCount,
-        arrivalTime
+        arrivalTime,
+        callbackUrl: `${window.location.origin}/vip-success`
       });
       const { checkoutUrl } = response.data?.data || response.data;
       if (checkoutUrl) {

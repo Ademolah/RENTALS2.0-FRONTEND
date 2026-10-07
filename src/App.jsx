@@ -14,6 +14,7 @@ import GuestDashboard from './pages/GuestDashboard';
 import AdminDashboard from './pages/AdminDashboard';
 import CarDetails from './pages/CarDetails';
 import VipDetails from './pages/VipDetails';
+import VipSuccess from './pages/VipSuccess';
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -93,6 +94,7 @@ function App() {
           
           <Route path="/hotel/:id" element={<HotelDetails />} />
           <Route path="/vip/:id" element={<VipDetails />} />
+          <Route path="/vip-success" element={<VipSuccess />} />
           
           <Route path="/dashboard/guest" element={<GuestDashboard />} />
           <Route path="/dashboard/landlord" element={<LandlordDashboard />} />

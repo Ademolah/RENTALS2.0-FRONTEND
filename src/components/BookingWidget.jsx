@@ -154,9 +154,11 @@ export default function BookingWidget({ property }) {
       <div className="flex items-baseline justify-between mb-6">
         <div className="flex items-baseline space-x-1">
           <span className="text-2xl font-bold text-gray-900 tracking-tight">
-            ₦{Number(currentPrice).toLocaleString()}
+            ₦{pricingDetails ? pricingDetails.baseTotal.toLocaleString() : Number(currentPrice).toLocaleString()}
           </span>
-          <span className="text-gray-500 text-sm font-medium">/ night</span>
+          <span className="text-gray-500 text-sm font-medium">
+            {pricingDetails ? '/ total' : '/ night'}
+          </span>
         </div>
         <div className="flex items-center space-x-1">
           <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
