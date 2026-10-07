@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { 
   Home, CarFront, Hotel, Crown, ShieldCheck, 
   MapPin, Calendar, Clock, Loader2, CheckCircle, 
-  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star
+  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star, Sparkles
 } from 'lucide-react';
 
 import { getMyPropertyBookings } from '../api/reservation';
@@ -12,7 +12,6 @@ import { getMyCarBookings, confirmCarHandover } from '../api/car';
 import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
 import { executePayout } from '../api/payouts';
 
-// --- NEW IMPORTS FOR FAVORITES ---
 import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
@@ -27,10 +26,11 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
 
   const isCar = booking.type === 'CAR';
   const isHotel = booking.type === 'HOTEL';
+  const isVip = booking.type === 'VIP'; 
 
   const title = isCar 
     ? `${booking.carId?.make} ${booking.carId?.carModel} ${booking.carId?.year}`
-    : booking.propertyId?.title || (isHotel ? 'Luxury Hotel' : 'Luxury Shortlet');
+    : booking.propertyId?.title || (isHotel ? 'Luxury Hotel' : isVip ? 'Exclusive Venue' : 'Luxury Shortlet');
   
   const image = isCar 
     ? booking.carId?.images?.[0] 
@@ -59,6 +59,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
       } else if (isHotel) {
         await confirmHotelGuestCheckIn(booking._id);
       } else {
+        // VIP and Shortlet share the unified property check-in logic
         await confirmPropertyCheckIn(booking._id);
       }
 
@@ -84,7 +85,11 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
   };
 
   return (
-    <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row group">
+    <div className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] flex flex-col md:flex-row group relative">
+      
+      {/* Decorative VIP Glow */}
+      {isVip && <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>}
+
       {/* Image Section */}
       <div className="relative h-56 md:h-auto md:w-72 bg-gray-100 overflow-hidden shrink-0">
         <img 
@@ -92,23 +97,29 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           alt={title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
-        <div className="absolute top-4 left-4 px-3 py-1 bg-white/90 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full text-gray-900 shadow-sm">
-          {isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}
+        
+        {/* Dynamic Badge Styling based on type */}
+        <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5
+          ${isVip ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-gray-900'}
+        `}>
+          {isVip && <Sparkles className="w-3 h-3" />}
+          <span>{isVip ? 'VIP Concierge' : isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}</span>
         </div>
-        {booking.reservationStatus === 'ACTIVE' && (
-          <div className="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-xs font-bold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1">
+
+        {(booking.reservationStatus === 'ACTIVE' || booking.paymentStatus === 'SUCCESS') && !isReleased && (
+          <div className="absolute top-4 right-4 px-3 py-1 bg-green-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5">
             <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse"></span>
-            <span>Active</span>
+            <span>Secured</span>
           </div>
         )}
       </div>
 
       {/* Details & Escrow Section */}
-      <div className="p-6 md:p-8 flex-1 flex flex-col justify-between">
+      <div className="p-6 md:p-8 flex-1 flex flex-col justify-between relative z-10">
         <div>
           <div className="flex justify-between items-start mb-2">
             <h3 className="text-xl md:text-2xl font-bold text-gray-900 tracking-tight leading-tight">{title}</h3>
-            <span className="text-lg font-bold text-gray-900">₦{(booking.totalAmount || 0).toLocaleString()}</span>
+            <span className="text-lg font-black text-gray-900 tracking-tight">₦{(booking.totalAmount || 0).toLocaleString()}</span>
           </div>
           
           <div className="flex items-center text-gray-500 text-sm font-medium space-x-4 mb-6">
@@ -119,7 +130,8 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
             <div className="flex items-center space-x-1">
               <Calendar className="w-4 h-4 text-gray-400" />
               <span>
-                {startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} - {endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}
+                {startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} 
+                {!isVip && ` - ${endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
               </span>
             </div>
             {isCar && (
@@ -131,69 +143,72 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
           </div>
         </div>
 
-        {booking.reservationStatus === 'ACTIVE' && (
-          <div className="mt-4 pt-6 border-t border-gray-100">
-            {isReleased ? (
-              <div className="flex items-center space-x-3 bg-green-50/50 text-green-700 px-5 py-4 rounded-2xl border border-green-100">
-                <div className="bg-green-500 rounded-full p-1 shadow-sm">
-                  <CheckCircle className="w-4 h-4 text-white" />
+        {/* Action Panel */}
+        <div className="mt-4 pt-6 border-t border-gray-100">
+          {isReleased ? (
+            <div className={`flex items-center space-x-3 px-5 py-4 rounded-2xl border ${isVip ? 'bg-amber-50/50 text-amber-900 border-amber-100' : 'bg-green-50/50 text-green-700 border-green-100'}`}>
+              <div className={`rounded-full p-1 shadow-sm ${isVip ? 'bg-amber-500 text-black' : 'bg-green-500 text-white'}`}>
+                <CheckCircle className="w-4 h-4" />
+              </div>
+              <div>
+                <div className="text-sm font-bold">
+                  {isCar ? 'Pickup Confirmed & Active' : isVip ? 'Arrival Confirmed' : 'Checked-in & Secured'}
                 </div>
+                <div className={`text-xs font-medium mt-0.5 ${isVip ? 'text-amber-700' : 'text-green-600'}`}>
+                  Funds released to venue. Enjoy your {isCar ? 'ride' : 'experience'}.
+                </div>
+              </div>
+            </div>
+          ) : hasGuestConfirmed && !hasHostConfirmed ? (
+            <div className="flex items-center space-x-3 bg-gray-50/50 text-gray-700 px-5 py-4 rounded-2xl border border-gray-200">
+              <div className="bg-gray-400 rounded-full p-1.5 shadow-sm">
+                <Clock className="w-3.5 h-3.5 text-white" />
+              </div>
+              <div>
+                <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : isVip ? 'Concierge' : 'Host'}</div>
+                <div className="text-xs font-medium text-gray-500 mt-0.5">
+                  You've confirmed. Escrow will release once the venue acknowledges.
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border ${
+              hasHostConfirmed 
+                ? isVip ? 'bg-amber-50/50 border-amber-200' : 'bg-blue-50/50 border-blue-200' 
+                : 'bg-gray-50/50 border-gray-100'
+            }`}>
+              <div className="flex items-start space-x-3">
+                <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVip ? 'text-amber-600' : 'text-blue-600' : 'text-gray-900'}`} />
                 <div>
-                  <div className="text-sm font-bold">
-                    {isCar ? 'Pickup Confirmed & Active' : 'Checked-in & Secured'}
+                  <div className={`text-sm font-bold ${hasHostConfirmed ? isVip ? 'text-amber-900' : 'text-blue-900' : 'text-gray-900'}`}>
+                    {hasHostConfirmed ? `${isCar ? 'Owner' : isVip ? 'Concierge' : 'Host'} Confirmed ${isVip ? 'Arrival' : 'Handover'}` : 'Deposit Escrowed'}
                   </div>
-                  <div className="text-xs font-medium text-green-600 mt-0.5">
-                    Funds released to {isCar ? 'owner' : 'host'}. Enjoy your {isCar ? 'ride' : 'stay'}.
-                  </div>
-                </div>
-              </div>
-            ) : hasGuestConfirmed && !hasHostConfirmed ? (
-              <div className="flex items-center space-x-3 bg-amber-50/50 text-amber-700 px-5 py-4 rounded-2xl border border-amber-100">
-                <div className="bg-amber-500 rounded-full p-1.5 shadow-sm">
-                  <Clock className="w-3.5 h-3.5 text-white" />
-                </div>
-                <div>
-                  <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : 'Host'}</div>
-                  <div className="text-xs font-medium text-amber-600 mt-0.5">
-                    You've confirmed. Payment will release once they confirm.
+                  <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVip ? 'text-amber-700' : 'text-blue-700' : 'text-gray-500'}`}>
+                    {hasHostConfirmed 
+                      ? 'Please tap confirm to release the deposit to the venue.' 
+                      : `Venue is unpaid until you confirm your ${isCar ? 'pickup' : 'arrival'}.`}
                   </div>
                 </div>
               </div>
-            ) : (
-              <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border ${
-                hasHostConfirmed ? 'bg-blue-50/50 border-blue-200' : 'bg-gray-50/50 border-gray-100'
-              }`}>
-                <div className="flex items-start space-x-3">
-                  <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? 'text-blue-600' : 'text-gray-900'}`} />
-                  <div>
-                    <div className={`text-sm font-bold ${hasHostConfirmed ? 'text-blue-900' : 'text-gray-900'}`}>
-                      {hasHostConfirmed ? `${isCar ? 'Owner' : 'Host'} Confirmed Handover` : 'Escrow Protected'}
-                    </div>
-                    <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? 'text-blue-700' : 'text-gray-500'}`}>
-                      {hasHostConfirmed 
-                        ? 'Please confirm on your end to release their payment.' 
-                        : `${isCar ? 'Owner' : 'Host'} is unpaid until you confirm ${isCar ? 'pickup' : 'arrival'}.`}
-                    </div>
-                  </div>
-                </div>
-                
-                <button 
-                  onClick={handleConfirm}
-                  disabled={isConfirming}
-                  className={`w-full sm:w-auto px-6 py-3 text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
-                    hasHostConfirmed ? 'bg-blue-600 hover:bg-blue-700' : 'bg-gray-900 hover:bg-brand-primary'
-                  }`}
-                >
-                  {isConfirming ? (
-                    <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
-                  ) : (
-                    `Confirm ${isCar ? 'Vehicle Pickup' : 'Check-In'}`
-                  )}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
+              
+              <button 
+                onClick={handleConfirm}
+                disabled={isConfirming}
+                className={`w-full sm:w-auto px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
+                  hasHostConfirmed 
+                    ? isVip ? 'bg-amber-500 hover:bg-amber-400 text-black' : 'bg-blue-600 hover:bg-blue-700 text-white' 
+                    : 'bg-gray-900 hover:bg-black text-white'
+                }`}
+              >
+                {isConfirming ? (
+                  <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
+                ) : (
+                  `Confirm ${isCar ? 'Vehicle Pickup' : isVip ? 'Venue Arrival' : 'Check-In'}`
+                )}
+              </button>
+            </div>
+          )}
+        </div>
 
         <div className={`absolute bottom-6 left-1/2 -translate-x-1/2 z-10 transition-all duration-300 ease-out ${localToast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 translate-y-2 scale-95 pointer-events-none'}`}>
           <div className={`px-4 py-2.5 rounded-xl shadow-lg flex items-center space-x-2 border font-bold text-xs tracking-wide whitespace-nowrap ${
@@ -241,7 +256,6 @@ const FavoriteCard = ({ property, onRemove }) => {
           className={`object-cover w-full h-full transition-transform duration-500 group-hover:scale-105 ${isRemoving ? 'opacity-50 blur-sm' : ''}`}
         />
         
-        {/* Smart Availability Badge */}
         <div className="absolute top-3 left-3">
           {isAvailable ? (
             <div className="bg-green-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">
@@ -254,7 +268,6 @@ const FavoriteCard = ({ property, onRemove }) => {
           )}
         </div>
 
-        {/* Favorite Toggle Button */}
         <button 
           onClick={handleHeartClick}
           disabled={isRemoving}
@@ -297,25 +310,25 @@ export default function GuestDashboard() {
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
 
+  // SURGICAL FIX: Un-disable the VIP tab
   const TABS = [
     { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
     { id: 'SHORTLET', label: 'Shortlets', icon: Home },
     { id: 'CAR', label: 'Car Rentals', icon: CarFront },
     { id: 'HOTEL', label: 'Hotels', icon: Hotel },
-    { id: 'FAVORITES', label: 'Saved Stays', icon: Heart }, // NEW TAB
-    { id: 'VIP', label: 'VIP (Soon)', icon: Crown, disabled: true },
+    { id: 'VIP', label: 'VIP Venues', icon: Crown }, 
+    { id: 'FAVORITES', label: 'Saved Stays', icon: Heart },
   ];
 
   useEffect(() => {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        // Fetch all 4 endpoints in parallel securely
         const [propertyRes, carRes, hotelRes, favRes] = await Promise.allSettled([
           getMyPropertyBookings(),
           getMyCarBookings(),
           getMyHotelBookings(),
-          getMyFavoritesApi() // Fetching the favorites
+          getMyFavoritesApi() 
         ]);
 
         let unifiedBookings = [];
@@ -323,8 +336,11 @@ export default function GuestDashboard() {
         if (propertyRes.status === 'fulfilled' && propertyRes.value.data?.bookings) {
           const reservations = propertyRes.value.data.bookings.map(b => {
             let trueType = 'SHORTLET';
+            // SURGICAL FIX: Map VIP category safely from the unified reservation collection
             if (b.propertyId?.category === 'HOTEL' || b.type === 'HOTEL') {
               trueType = 'HOTEL';
+            } else if (b.propertyId?.category === 'VIP RESERVATION' || b.propertyId?.category === 'VIP' || b.type === 'VIP') {
+              trueType = 'VIP';
             } else if (b.carId || b.type === 'CAR') {
               trueType = 'CAR';
             }
@@ -384,15 +400,14 @@ export default function GuestDashboard() {
     }));
 
     if (isPayoutReleased) {
-      setToastMessage(`Confirmation complete! Funds released to ${type === 'CAR' ? 'owner' : 'host'}.`);
+      setToastMessage(`Confirmation complete! Funds released to ${type === 'CAR' ? 'owner' : type === 'VIP' ? 'venue' : 'host'}.`);
     } else {
-      setToastMessage(`${type === 'CAR' ? 'Pickup' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
+      setToastMessage(`${type === 'CAR' ? 'Pickup' : type === 'VIP' ? 'Arrival' : 'Check-in'} confirmed! Waiting for ${type === 'CAR' ? 'owner' : 'host'}.`);
     }
     setTimeout(() => setToastMessage(''), 4000);
   };
 
   const handleRemoveFavorite = (propertyId) => {
-    // Remove visually from the grid instantly without refetching
     setFavorites(prev => prev.filter(p => (p._id || p.id) !== propertyId));
     setToastMessage("Property removed from Saved Stays.");
     setTimeout(() => setToastMessage(''), 2500);
@@ -429,17 +444,18 @@ export default function GuestDashboard() {
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
+              const isVipTab = tab.id === 'VIP';
               return (
                 <button
                   key={tab.id}
                   disabled={tab.disabled}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left
-                    ${isActive ? 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
+                    ${isActive ? isVipTab ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
                     ${tab.disabled ? 'opacity-40 cursor-not-allowed bg-transparent' : ''}
                   `}
                 >
-                  <Icon className={`w-5 h-5 ${isActive ? 'text-brand-primary' : ''}`} />
+                  <Icon className={`w-5 h-5 ${isActive && !isVipTab ? 'text-brand-primary' : ''}`} />
                   <span className="whitespace-nowrap flex-1">{tab.label}</span>
                   {!tab.disabled && isActive && <ChevronRight className="w-4 h-4 hidden lg:block opacity-50" />}
                 </button>
@@ -456,7 +472,6 @@ export default function GuestDashboard() {
               <p className="font-medium text-lg">Loading your dashboard...</p>
             </div>
           ) : activeTab === 'FAVORITES' ? (
-            // --- FAVORITES RENDER BLOCK ---
             favorites.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
@@ -477,7 +492,6 @@ export default function GuestDashboard() {
               </div>
             )
           ) : (
-            // --- STANDARD BOOKINGS RENDER BLOCK ---
             filteredBookings.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6">
