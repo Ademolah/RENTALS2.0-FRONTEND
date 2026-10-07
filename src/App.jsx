@@ -57,7 +57,7 @@ function App() {
           Mobile: z-40 (Yields to the mobile search modal).
           Desktop (md:): z-[99] (Highest priority so Auth dropdown crushes the red search button).
         */}
-        <div className="relative z-40 md:z-[99]">
+        <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar 
             activeCategory={activeCategory} 
             onCategoryChange={setActiveCategory} 

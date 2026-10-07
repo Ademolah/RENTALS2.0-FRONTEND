@@ -37,7 +37,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   return (
     <>
       {/* TOP NAVBAR */}
-      <nav className="sticky top-0 z-50 w-full bg-white border-b border-gray-100 shadow-navbar">
+      <nav className="sticky top-0 z-[99999] w-full bg-white border-b border-gray-100 shadow-navbar">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
@@ -82,7 +82,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                 {getCtaText()}
               </button>
 
-              <div className="relative">
+              <div className="relative z-[99999]">
                 <button 
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white"
@@ -94,7 +94,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                 </button>
 
                 {isMenuOpen && (
-                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100 p-2 z-[60] animate-in fade-in slide-in-from-top-2 origin-top-right duration-200">
+                  <div className="absolute right-0 mt-3 w-72 bg-white rounded-[1.5rem] shadow-[0_20px_60px_rgba(0,0,0,0.08)] border border-gray-100 p-2 z-[99999] animate-in fade-in slide-in-from-top-2 origin-top-right duration-200 mobile-menu-open">
                     {user ? (
                       <>
                         <div className="bg-gradient-to-br from-gray-900 via-gray-800 to-black rounded-xl p-4 relative overflow-hidden group cursor-default shadow-md">
@@ -186,7 +186,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
       </nav>
 
       {/* MOBILE BOTTOM NAVIGATION BAR */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[60]">
+      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 z-[99999]">
         <div className="flex justify-around items-center h-16 pb-safe">
           {categories.map((cat) => {
             const Icon = cat.icon;

@@ -35,7 +35,10 @@ export function AuthProvider({ children }) {
     return { token, user };
   };
 
+ 
+
   const login = async (credentials) => {
+    // Return the promise directly so AuthModal's try/catch can handle failures
     const rawResponse = await loginApi(credentials);
     const { token, user: userPayload } = extractAuthData(rawResponse);
     
@@ -47,7 +50,6 @@ export function AuthProvider({ children }) {
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
     
-    // Close modal on success
     setShowAuthModal(false);
     redirectUserByRole(userPayload.role);
     return rawResponse;
@@ -65,12 +67,11 @@ export function AuthProvider({ children }) {
     localStorage.setItem('rentals_user', JSON.stringify(userPayload));
     setUser(userPayload);
 
-    // Close modal on success
     setShowAuthModal(false);
     redirectUserByRole(userPayload.role);
     return rawResponse;
   };
-
+  
   const logout = () => {
     localStorage.removeItem('rentals_token');
     localStorage.removeItem('rentals_user');

@@ -22,13 +22,20 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Optional: Intercept responses to handle global errors (e.g., auto-logout on 401)
+// Intercept responses to handle global errors
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
+    // 1. Check if the error is coming from the login API itself
+    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+
     if (error.response?.status === 401) {
       localStorage.removeItem('rentals_token');
-      window.location.href = '/login'; // Force redirect to login
+      
+      // 2. Only redirect if the 401 is a session expiration, NOT a bad login attempt
+      if (!isLoginEndpoint) {
+        window.location.href = '/'; // Safely route to the home page instead of a non-existent /login
+      }
     }
     return Promise.reject(error);
   }

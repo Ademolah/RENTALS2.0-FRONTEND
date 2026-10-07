@@ -108,7 +108,7 @@ export default function PropertyCard({ property }) {
           <p className="text-gray-500 text-sm truncate">{property.title}</p>
           <p className="text-gray-500 text-sm">{property.dates}</p>
           <div className="mt-1 flex items-center space-x-1">
-            <span className="font-semibold">₦{(property.price || property.pricePerNight).toLocaleString()}</span>
+            <span className="font-semibold">₦{Number(property.price || property.pricePerNight || 0).toLocaleString()}</span>
             <span className="text-gray-800 text-sm">night</span>
           </div>
         </div>
