@@ -215,49 +215,93 @@ export default function AdminDashboard() {
         </header>
 
         {/* --- TAB 1: OVERVIEW STATS --- */}
+       {/* --- TAB 1: OVERVIEW STATS --- */}
         {activeTab === 'overview' && (
-          <div className="animate-in fade-in space-y-6">
+          <div className="animate-in fade-in">
             {loading ? (
               <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
             ) : stats ? (
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2.5 md:p-3 bg-blue-50 text-blue-600 rounded-xl"><Users className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h3 className="font-bold text-gray-500 text-sm md:text-base">Users & Hosts</h3>
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                {/* Network Card */}
+                <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Network</h3>
+                    <Users className="w-4 h-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Total Users</span><span className="text-gray-900">{stats.users.totalUsers}</span></div>
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Verified Landlords</span><span className="text-gray-900">{stats.users.totalHosts}</span></div>
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Pending Apps</span><span className="text-brand-primary">{stats.users.pendingHosts}</span></div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-black text-gray-900 tracking-tight">{stats.users.totalUsers}</div>
+                      <div className="text-sm font-bold text-gray-400 mt-1">Total Registered Users</div>
+                    </div>
+                    <div className="pt-5 border-t border-gray-100 flex justify-between">
+                      <div>
+                        <div className="text-sm font-extrabold text-gray-900">{stats.users.totalHosts}</div>
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Verified Hosts</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-extrabold text-brand-primary">{stats.users.pendingHosts}</div>
+                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Pending Apps</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2.5 md:p-3 bg-emerald-50 text-emerald-600 rounded-xl"><TrendingUp className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h3 className="font-bold text-gray-500 text-sm md:text-base">Financials (NGN)</h3>
+                {/* Inventory Card */}
+                <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Inventory</h3>
+                    <Building className="w-4 h-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Total Volume</span><span className="text-gray-900">₦{stats.financials.totalPlatformVolume.toLocaleString()}</span></div>
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Escrow Held</span><span className="text-gray-900">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</span></div>
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Platform Revenue</span><span className="text-emerald-600">₦{stats.financials.totalPlatformRevenue.toLocaleString()}</span></div>
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-6">
+                    <div>
+                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalShortlets}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Shortlets</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalHotels}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Hotels</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalVip}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">VIP Venues</div>
+                    </div>
+                    <div>
+                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalCars}</div>
+                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Vehicles</div>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-white p-5 md:p-6 rounded-2xl border border-gray-200 shadow-sm">
-                  <div className="flex items-center space-x-3 mb-4">
-                    <div className="p-2.5 md:p-3 bg-purple-50 text-purple-600 rounded-xl"><Building className="w-5 h-5 md:w-6 md:h-6" /></div>
-                    <h3 className="font-bold text-gray-500 text-sm md:text-base">Active Assets</h3>
+                {/* Financial Ledger Card (Dark Mode) */}
+                <div className="bg-gray-900 p-6 border border-gray-800 rounded-xl shadow-lg text-white">
+                  <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Financial Ledger</h3>
+                    <Wallet className="w-4 h-4 text-gray-400" />
                   </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Properties</span><span className="text-gray-900">{stats.assets.totalProperties}</span></div>
-                    <div className="flex justify-between font-bold text-xs md:text-sm"><span className="text-gray-500">Vehicles</span><span className="text-gray-900">{stats.assets.totalCars}</span></div>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-3xl font-black tracking-tight">
+                        ₦{(stats.financials.totalPlatformVolume / 1000000).toFixed(1)}M
+                      </div>
+                      <div className="text-sm font-bold text-gray-400 mt-1">Total Transaction Volume</div>
+                    </div>
+                    <div className="pt-5 border-t border-gray-800 flex justify-between">
+                      <div>
+                        <div className="text-sm font-extrabold text-emerald-400">₦{stats.financials.totalPlatformRevenue.toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Platform Cut (5%)</div>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm font-extrabold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Escrow Held</div>
+                      </div>
+                    </div>
                   </div>
                 </div>
+
               </div>
             ) : (
-              <div className="text-gray-500">No stats available.</div>
+              <div className="text-gray-500 font-bold">No stats available.</div>
             )}
           </div>
         )}
@@ -393,7 +437,7 @@ export default function AdminDashboard() {
                     ledger.map((record) => {
                       const isCar = !!record.carId;
                       const assetTitle = isCar ? `${record.carId?.make} ${record.carId?.model}` : record.propertyId?.title;
-                      const guestName = record.userId ? `${record.userId.firstName}` : 'Unknown';
+                      const guestName = record.userId ? `${record.userId.firstName || ''} ${record.userId.lastName || ''}`.trim() || 'Unknown' : 'Unknown';
                       const amount = (record.totalAmount || 0).toLocaleString();
                       const eStatus = record.escrowStatus || record.payoutStatus || 'PROCESSING';
                       
