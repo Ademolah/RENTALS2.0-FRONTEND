@@ -13,11 +13,13 @@ import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
 import { executePayout } from '../api/payouts';
 
 import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
+import HostUpgradeModal from '../components/HostUpgradeModal';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
 const BookingCard = ({ booking, onConfirmEscrow }) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [localToast, setLocalToast] = useState({ visible: false, message: '', type: 'success' });
+
 
   const showLocalToast = (message, type = 'success') => {
     setLocalToast({ visible: true, message, type });
@@ -309,6 +311,7 @@ export default function GuestDashboard() {
   const [favorites, setFavorites] = useState([]);
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   // SURGICAL FIX: Un-disable the VIP tab
   const TABS = [
@@ -461,6 +464,18 @@ export default function GuestDashboard() {
                 </button>
               );
             })}
+
+            <div className="hidden lg:block my-4 border-t border-gray-200"></div>
+            <button
+              onClick={() => setIsUpgradeModalOpen(true)}
+              className="flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left bg-gradient-to-br from-brand-primary/10 to-transparent hover:bg-brand-primary/20 text-brand-dark border border-brand-primary/20"
+            >
+              <div className="bg-brand-primary/20 p-1.5 rounded-lg">
+                <Crown className="w-4 h-4 text-brand-primary" />
+              </div>
+              <span className="whitespace-nowrap flex-1">Become a Host</span>
+              <ChevronRight className="w-4 h-4 text-brand-primary/50" />
+            </button>
           </div>
         </div>
 
@@ -524,6 +539,13 @@ export default function GuestDashboard() {
           </div>
         </div>
       )}
+
+      <HostUpgradeModal 
+        isOpen={isUpgradeModalOpen} 
+        onClose={() => setIsUpgradeModalOpen(false)} 
+      />
+
+
     </div>
   );
 }
