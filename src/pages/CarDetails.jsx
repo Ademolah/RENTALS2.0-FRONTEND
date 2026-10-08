@@ -12,7 +12,6 @@ export default function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   
-  // 1. Pulled setShowAuthModal to trigger the global login popup
   const { user, setShowAuthModal } = useAuth();
   
   const [car, setCar] = useState(null);
@@ -32,28 +31,48 @@ export default function CarDetails() {
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState(null); 
 
+  // --- CUSTOM CALENDAR STATE ---
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date());
+
   useEffect(() => {
     setAvailabilityStatus(null);
     setBookingError('');
   }, [pickupDate, pickupTime, durationSlots]);
-
-  const generateNext14Days = () => {
-    const dates = [];
-    const today = new Date();
-    for (let i = 0; i < 14; i++) {
-      const d = new Date(today);
-      d.setDate(today.getDate() + i);
-      dates.push(d);
-    }
-    return dates;
-  };
 
   const CONCIERGE_TIME_SLOTS = [
     "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", 
     "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM", "07:00 PM"
   ];
 
-  const [availableDates] = useState(generateNext14Days());
+  // --- CALENDAR LOGIC ---
+  const todayDateObj = new Date();
+  todayDateObj.setHours(0, 0, 0, 0);
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+  
+  const generateCalendarDays = () => {
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const days = [];
+    
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+    
+    return days;
+  };
+
+  const handleDateSelect = (dateObj) => {
+    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
+    setPickupDate(offsetDate.toISOString().split('T')[0]);
+    setShowCalendar(false);
+  };
+
+  const nextMonth = (e) => { e.preventDefault(); setCalendarViewDate(new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1)); };
+  const prevMonth = (e) => { e.preventDefault(); setCalendarViewDate(new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1)); };
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -89,7 +108,6 @@ export default function CarDetails() {
         console.error("Failed to load similar cars", err);
       }
     }
-    
     if (car) fetchSimilar();
   }, [car]);
 
@@ -104,7 +122,7 @@ export default function CarDetails() {
     if (!car) return null;
     
     const baseRate = car.pricePer12Hours || 0;
-    const chauffeurRate = needsChauffeur ? 25000 * durationSlots : 0; 
+    const chauffeurRate = needsChauffeur ? 25000 * Math.ceil(durationSlots / 2) : 0; // Chauffeur charged per day (every 2 slots)
     
     const rentalTotal = baseRate * durationSlots;
     const subtotal = rentalTotal + chauffeurRate;
@@ -117,7 +135,7 @@ export default function CarDetails() {
   const handleCheckAvailability = async () => {
     if (!pickupDate || !pickupTime) {
       setBookingError('Please select a pick-up date and time first.');
-      return;
+      return false;
     }
     
     setIsCheckingAvailability(true);
@@ -135,12 +153,15 @@ export default function CarDetails() {
       
       if (response.available) {
         setAvailabilityStatus('available');
+        return true;
       } else {
         setAvailabilityStatus('booked');
         if (response.message) setBookingError(response.message);
+        return false;
       }
     } catch (err) {
       setBookingError(err.response?.data?.message || 'Failed to verify availability. Please try again.');
+      return false;
     } finally {
       setIsCheckingAvailability(false);
     }
@@ -166,6 +187,15 @@ export default function CarDetails() {
     }
 
     setBookingLoading(true);
+
+    // INTERCEPTOR: Auto-check availability if bypassed
+    if (availabilityStatus !== 'available') {
+      const isAvailable = await handleCheckAvailability();
+      if (!isAvailable) {
+        setBookingLoading(false);
+        return;
+      }
+    }
 
     try {
       const pickupDateTime = new Date(`${pickupDate} ${pickupTime}`);
@@ -195,10 +225,16 @@ export default function CarDetails() {
     }
   };
 
-  // 2. The perfectly locked-down WhatsApp Concierge Handler
   const handleWhatsAppClick = (e) => {
     e.preventDefault();
     
+    // GUARD: Ensure date is selected
+    if (!pickupDate || !pickupTime) {
+      setBookingError('Please select your pickup date and time before contacting the concierge.');
+      setShowCalendar(true);
+      return;
+    }
+
     if (!user) {
       if (setShowAuthModal) setShowAuthModal(true);
       return;
@@ -209,13 +245,13 @@ export default function CarDetails() {
       return;
     }
 
-    const WHATSAPP_NUMBER = "2348000000000"; // Replace with actual Rentals Africa number
+    const WHATSAPP_NUMBER = "2348000000000"; 
     
     const waMessage = encodeURIComponent(
       `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
       `🚘 Vehicle: ${car.make} ${car.model} ${car.year}\n` +
       `📍 Location: ${car.location?.city || 'Not specified'}\n` +
-      `📅 Pickup: ${pickupDate || '(Not selected)'} at ${pickupTime}\n` +
+      `📅 Pickup: ${pickupDate} at ${pickupTime}\n` +
       `⏱ Duration: ${durationSlots * 12} hours\n` +
       `👨‍✈️ Chauffeur: ${needsChauffeur ? 'Yes' : 'No'}\n\n` +
       `Could you please assist me with this reservation?`
@@ -383,53 +419,89 @@ export default function CarDetails() {
         <div className="lg:col-span-1">
           <div className="bg-white border border-gray-200 p-5 lg:p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] sticky top-28">
             
-            <div className="flex items-baseline space-x-1 mb-5 pb-5 border-b border-gray-100">
+            {/* REACTIVE TOP PRICE */}
+            <div className="flex items-baseline space-x-1 mb-5 pb-5 border-b border-gray-100 transition-all duration-300">
               <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
-                ₦{Number(car.pricePer12Hours).toLocaleString()}
+                ₦{pricing ? pricing.subtotal.toLocaleString() : Number(car.pricePer12Hours).toLocaleString()}
               </span>
-              <span className="text-gray-500 text-sm font-medium">/ day</span>
+              <span className="text-gray-500 text-sm font-medium">
+                {pricing && durationSlots > 1 ? '/ total' : '/ day'}
+              </span>
             </div>
 
             {bookingError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100 flex items-start">
+              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100 flex items-start animate-in fade-in">
                 <span>{bookingError}</span>
               </div>
             )}
 
             <form onSubmit={handleReservation} className="space-y-3">
               
-              <div className="space-y-5 p-4 lg:p-5 border border-gray-100 rounded-2xl bg-gray-50/50 shadow-sm">
+              <div className="space-y-5 p-4 lg:p-5 border border-gray-100 rounded-2xl bg-gray-50/50 shadow-sm relative">
                 
-                {/* COMPACT Date Selector */}
-                <div>
+                {/* BESPOKE DATE PICKER */}
+                <div className="relative">
                   <div className="flex items-center space-x-2 mb-2.5">
                     <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
                     <label className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Pickup Date</label>
                   </div>
-                  <div className="flex overflow-x-auto gap-2 pb-2 custom-scrollbar snap-x">
-                    {availableDates.map((date, index) => {
-                      const dateString = date.toISOString().split('T')[0];
-                      const isSelected = pickupDate === dateString;
-                      return (
-                        <button
-                          key={dateString}
-                          type="button"
-                          onClick={() => setPickupDate(dateString)}
-                          className={`snap-start shrink-0 flex flex-col items-center justify-center w-14 h-[72px] rounded-xl transition-all duration-300 border ${
-                            isSelected ? 'bg-gray-900 border-gray-900 text-white shadow-md scale-[1.02]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900'
-                          }`}
-                        >
-                          <span className={`text-[9px] font-bold uppercase tracking-wider mb-0.5 ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
-                            {index === 0 ? 'Today' : date.toLocaleDateString('en-US', { weekday: 'short' })}
-                          </span>
-                          <span className="text-xl font-extrabold tracking-tight">{date.getDate()}</span>
-                          <span className={`text-[9px] font-bold uppercase tracking-widest mt-0.5 ${isSelected ? 'text-gray-300' : 'text-gray-400'}`}>
-                            {date.toLocaleDateString('en-US', { month: 'short' })}
-                          </span>
-                        </button>
-                      );
-                    })}
+                  
+                  <div 
+                    onClick={() => setShowCalendar(!showCalendar)}
+                    className={`w-full bg-white border rounded-xl py-3.5 pl-4 pr-4 cursor-pointer transition-colors flex items-center justify-between ${showCalendar ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300'}`}
+                  >
+                    <span className={pickupDate ? 'text-gray-900 font-bold text-sm' : 'text-gray-400 font-medium text-sm'}>
+                      {pickupDate ? new Date(pickupDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Select Date'}
+                    </span>
                   </div>
+
+                  {/* Calendar Popover */}
+                  {showCalendar && (
+                    <div className="absolute top-[70px] left-0 w-full bg-white border border-gray-200 shadow-2xl rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+                      <div className="flex justify-between items-center mb-4">
+                        <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                        <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
+                          {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                        </span>
+                        <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                      </div>
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
+                        {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
+                      </div>
+                      <div className="grid grid-cols-7 gap-y-2">
+                        {generateCalendarDays().map((dateObj, i) => {
+                          if (!dateObj) return <div key={i} className="h-8"></div>;
+                          
+                          const dateStr = dateObj.toISOString().split('T')[0];
+                          const isPast = dateObj < todayDateObj;
+                          const isSelected = dateStr === pickupDate;
+                          
+                          let bgClass = 'hover:bg-gray-100 text-gray-900';
+                          if (isPast) bgClass = 'text-gray-300 cursor-not-allowed';
+                          if (isSelected) bgClass = 'bg-gray-900 text-white shadow-md';
+
+                          return (
+                            <button
+                              key={i}
+                              disabled={isPast}
+                              onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
+                              className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
+                            >
+                              {dateObj.getDate()}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <div className="mt-4 pt-3 border-t border-gray-100 text-right">
+                        <button 
+                          onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
+                          className="text-xs font-bold text-gray-900 underline underline-offset-2"
+                        >
+                          Close
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="w-full h-px bg-gray-200/60"></div>
@@ -460,7 +532,7 @@ export default function CarDetails() {
                 </div>
 
                 {/* COMPACT Duration Dropdown */}
-                <div className="p-2.5 bg-white border border-gray-200 rounded-xl shadow-sm">
+                <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
                   <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-0.5">Rental Duration</label>
                   <select 
                     value={durationSlots}
@@ -499,13 +571,13 @@ export default function CarDetails() {
 
               {/* Availability Status Indicator */}
               {availabilityStatus === 'available' && (
-                <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-2.5 rounded-xl border border-green-200 mt-2">
+                <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-2.5 rounded-xl border border-green-200 mt-2 animate-in fade-in">
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
                   <span className="text-xs font-bold">Vehicle is available!</span>
                 </div>
               )}
               {availabilityStatus === 'booked' && (
-                <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-2.5 rounded-xl border border-red-200 mt-2">
+                <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-2.5 rounded-xl border border-red-200 mt-2 animate-in fade-in">
                   <XCircle className="w-4 h-4 text-red-600" />
                   <span className="text-xs font-bold">Time slot is already booked.</span>
                 </div>
@@ -545,7 +617,6 @@ export default function CarDetails() {
                   </button>
                 </div>
 
-                {/* 3. Replaced <a> tag with <button> to execute lockdown logic */}
                 <button 
                   type="button"
                   onClick={handleWhatsAppClick}
@@ -596,7 +667,7 @@ export default function CarDetails() {
         </div>
       </div>
 
-      {/* --- NEW: SIMILAR CARS SECTION --- */}
+      {/* --- SIMILAR CARS SECTION --- */}
       {similarCars.length > 0 && (
         <div className="mt-12 pt-16 border-t border-gray-100">
           <div className="flex justify-between items-end mb-8">
@@ -642,7 +713,6 @@ export default function CarDetails() {
           </div>
         </div>
       )}
-
     </main>
   );
 }

@@ -1,12 +1,10 @@
 import { useState, useMemo, useEffect } from 'react';
-import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, MessageCircle, CalendarSearch, CheckCircle2, XCircle } from 'lucide-react';
+import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, CheckCircle2, XCircle, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
 import { initiateBooking } from '../api/reservation';
 import { checkPropertyAvailability } from '../api/properties';
 import { useAuth } from '../context/AuthContext';
 
-
 export default function BookingWidget({ property }) {
-  // 1. Pulled setShowAuthModal to trigger the global login popup
   const { user, setShowAuthModal } = useAuth();
   
   const [checkIn, setCheckIn] = useState('');
@@ -15,17 +13,19 @@ export default function BookingWidget({ property }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
-  // Availability States
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
-  const [availabilityStatus, setAvailabilityStatus] = useState(null); // 'available' | 'booked' | null
+  const [availabilityStatus, setAvailabilityStatus] = useState(null); 
 
-  // Reset availability status if dates change
+  // --- CUSTOM CALENDAR STATE ---
+  const [showCalendar, setShowCalendar] = useState(false);
+  const [calendarMode, setCalendarMode] = useState('checkIn'); // 'checkIn' | 'checkOut'
+  const [calendarViewDate, setCalendarViewDate] = useState(new Date());
+
   useEffect(() => {
     setAvailabilityStatus(null);
     setError('');
   }, [checkIn, checkOut]);
 
-  // Live Price Engine
   const pricingDetails = useMemo(() => {
     if (!checkIn || !checkOut || !property?.price) return null;
     
@@ -37,16 +37,61 @@ export default function BookingWidget({ property }) {
     if (nights <= 0) return null;
 
     const baseTotal = nights * property.price;
-    const platformFee = Math.round(baseTotal * 0.05); // 5% Platform Escrow Fee
+    const platformFee = Math.round(baseTotal * 0.05); 
     const grandTotal = baseTotal + platformFee;
 
     return { nights, baseTotal, platformFee, grandTotal };
   }, [checkIn, checkOut, property]);
 
+  // --- CALENDAR LOGIC ---
+  const todayDateObj = new Date();
+  todayDateObj.setHours(0, 0, 0, 0);
+
+  const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
+  const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
+  
+  const generateCalendarDays = () => {
+    const year = calendarViewDate.getFullYear();
+    const month = calendarViewDate.getMonth();
+    const daysInMonth = getDaysInMonth(year, month);
+    const firstDay = getFirstDayOfMonth(year, month);
+    const days = [];
+    
+    for (let i = 0; i < firstDay; i++) days.push(null);
+    for (let i = 1; i <= daysInMonth; i++) days.push(new Date(year, month, i));
+    
+    return days;
+  };
+
+  const handleDateSelect = (dateObj) => {
+    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
+    const dateStr = offsetDate.toISOString().split('T')[0];
+
+    if (calendarMode === 'checkIn') {
+      setCheckIn(dateStr);
+      if (checkOut && dateStr >= checkOut) {
+        setCheckOut('');
+      }
+      setCalendarMode('checkOut'); // Auto-switch to checkout mode
+    } else {
+      setCheckOut(dateStr);
+      setShowCalendar(false); // Close when complete
+    }
+  };
+
+  const nextMonth = (e) => { e.preventDefault(); setCalendarViewDate(new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1)); };
+  const prevMonth = (e) => { e.preventDefault(); setCalendarViewDate(new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() - 1, 1)); };
+
+  const openCalendar = (mode) => {
+    setCalendarMode(mode);
+    setShowCalendar(true);
+  };
+
+  // --- API HANDLERS ---
   const handleCheckAvailability = async () => {
     if (!checkIn || !checkOut) {
       setError('Please select check-in and check-out dates first.');
-      return;
+      return false;
     }
     
     setIsCheckingAvailability(true);
@@ -60,12 +105,15 @@ export default function BookingWidget({ property }) {
       
       if (response.available) {
         setAvailabilityStatus('available');
+        return true;
       } else {
         setAvailabilityStatus('booked');
         if (response.message) setError(response.message);
+        return false;
       }
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to verify dates. Please try again.');
+      return false;
     } finally {
       setIsCheckingAvailability(false);
     }
@@ -78,7 +126,7 @@ export default function BookingWidget({ property }) {
       return;
     }
 
-    if (!pricingDetails || pricingDetails.nights <= 0) {
+    if (!checkIn || !checkOut || !pricingDetails || pricingDetails.nights <= 0) {
       setError('Please select valid check-in and check-out dates.');
       return;
     }
@@ -90,6 +138,15 @@ export default function BookingWidget({ property }) {
 
     setLoading(true);
     setError('');
+
+    // INTERCEPTOR: Auto-Check Availability if the user bypassed the manual check button
+    if (availabilityStatus !== 'available') {
+      const isAvailable = await handleCheckAvailability();
+      if (!isAvailable) {
+        setLoading(false);
+        return; // Halts the booking process and displays the error automatically
+      }
+    }
 
     try {
       const response = await initiateBooking({
@@ -114,10 +171,17 @@ export default function BookingWidget({ property }) {
     }
   };
 
-  // 2. The completely locked-down WhatsApp Concierge Handler
   const handleWhatsAppClick = (e) => {
     e.preventDefault();
     
+    // WHATSAPP GUARD: Block click if dates are missing
+    if (!checkIn || !checkOut) {
+      setError('Please select your check-in and check-out dates before contacting the concierge.');
+      setShowCalendar(true);
+      setCalendarMode('checkIn');
+      return;
+    }
+
     if (!user) {
       if (setShowAuthModal) setShowAuthModal(true);
       return;
@@ -135,7 +199,7 @@ export default function BookingWidget({ property }) {
       `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
       `🏠 Property: ${property?.title || 'Luxury Shortlet'}${propertyIdText}\n` +
       `📍 Location: ${property?.location || 'Not specified'}\n` +
-      `📅 Dates: ${checkIn || '(Not selected)'} to ${checkOut || '(Not selected)'}\n` +
+      `📅 Dates: ${checkIn} to ${checkOut}\n` +
       `👥 Guests: ${guests}\n\n` +
       `Could you please assist me with this reservation?`
     );
@@ -143,7 +207,6 @@ export default function BookingWidget({ property }) {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank');
   };
 
-  const today = new Date().toISOString().split('T')[0];
   const currentPrice = property?.price || 0;
   const maxAllowedGuests = property?.maxGuests || 1;
 
@@ -167,7 +230,7 @@ export default function BookingWidget({ property }) {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start">
+        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start animate-in fade-in">
           <span>{error}</span>
         </div>
       )}
@@ -175,76 +238,134 @@ export default function BookingWidget({ property }) {
       {/* Booking Form */}
       <form onSubmit={handleReservation} className="space-y-5">
         
-        {/* Date & Guest Selection */}
-        <div className="border border-gray-300 rounded-2xl overflow-hidden">
-          <div className="flex border-b border-gray-300">
-            <div className="flex-1 p-3 border-r border-gray-300 relative">
-              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Check-in</label>
-              <input 
-                type="date" 
-                required
-                min={today}
-                value={checkIn}
-                onChange={(e) => setCheckIn(e.target.value)}
-                className="w-full text-sm outline-none bg-transparent font-medium mt-1 cursor-pointer text-gray-900"
-              />
+        {/* BESPOKE DATE PICKER WRAPPER */}
+        <div className="relative">
+          <div className={`border rounded-2xl overflow-hidden bg-white shadow-sm transition-all flex flex-col ${showCalendar ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-300'}`}>
+            <div className="flex border-b border-gray-300">
+              {/* Check-In Button */}
+              <div 
+                onClick={() => openCalendar('checkIn')}
+                className={`flex-1 p-3.5 border-r border-gray-300 relative cursor-pointer transition-colors ${calendarMode === 'checkIn' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+              >
+                <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-1">Check-in</label>
+                <div className="text-sm font-bold text-gray-900 flex items-center">
+                  {checkIn ? new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
+                </div>
+              </div>
+              
+              {/* Check-Out Button */}
+              <div 
+                onClick={() => openCalendar('checkOut')}
+                className={`flex-1 p-3.5 relative cursor-pointer transition-colors ${calendarMode === 'checkOut' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
+              >
+                <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-1">Check-out</label>
+                <div className="text-sm font-bold text-gray-900 flex items-center">
+                  {checkOut ? new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
+                </div>
+              </div>
             </div>
-            <div className="flex-1 p-3 relative">
-              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Check-out</label>
-              <input 
-                type="date" 
-                required
-                min={checkIn || today}
-                value={checkOut}
-                onChange={(e) => setCheckOut(e.target.value)}
-                className="w-full text-sm outline-none bg-transparent font-medium mt-1 cursor-pointer text-gray-900"
-              />
+            
+            {/* Plus / Minus Guest Counter */}
+            <div className="p-4 flex justify-between items-center bg-gray-50/50">
+              <div>
+                <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Guests</label>
+                <span className="text-xs text-gray-500 font-medium">Max {maxAllowedGuests}</span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <button 
+                  type="button" 
+                  onClick={() => setGuests(prev => Math.max(1, prev - 1))}
+                  disabled={guests <= 1}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                >
+                  <Minus className="w-4 h-4" />
+                </button>
+                <span className="font-semibold text-gray-900 w-4 text-center">{guests}</span>
+                <button 
+                  type="button" 
+                  onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
+                  disabled={guests >= maxAllowedGuests}
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                >
+                  <Plus className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
-          
-          {/* Plus / Minus Guest Counter */}
-          <div className="p-4 flex justify-between items-center bg-gray-50/50">
-            <div>
-              <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Guests</label>
-              <span className="text-xs text-gray-500 font-medium">Max {maxAllowedGuests}</span>
+
+          {/* Calendar Popover */}
+          {showCalendar && (
+            <div className="absolute top-[75px] left-0 mt-2 w-full bg-white border border-gray-200 shadow-2xl rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+              <div className="flex justify-between items-center mb-4">
+                <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
+                  {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </span>
+                <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+              </div>
+              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
+                {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
+              </div>
+              <div className="grid grid-cols-7 gap-y-2">
+                {generateCalendarDays().map((dateObj, i) => {
+                  if (!dateObj) return <div key={i} className="h-8"></div>;
+                  
+                  const dateStr = dateObj.toISOString().split('T')[0];
+                  const isPast = dateObj < todayDateObj;
+                  const isSelectedIn = dateStr === checkIn;
+                  const isSelectedOut = dateStr === checkOut;
+                  const isBetween = checkIn && checkOut && dateStr > checkIn && dateStr < checkOut;
+                  
+                  const isDisabledForCheckOut = calendarMode === 'checkOut' && checkIn && dateStr <= checkIn;
+                  const disabled = isPast || isDisabledForCheckOut;
+
+                  let bgClass = 'hover:bg-gray-100 text-gray-900';
+                  if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
+                  if (isBetween) bgClass = 'bg-gray-100 text-gray-900';
+                  if (isSelectedIn || isSelectedOut) bgClass = 'bg-gray-900 text-white shadow-md';
+
+                  return (
+                    <button
+                      key={i}
+                      disabled={disabled}
+                      onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
+                      className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
+                    >
+                      {dateObj.getDate()}
+                    </button>
+                  );
+                })}
+              </div>
+              
+              <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
+                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                  Selecting: {calendarMode === 'checkIn' ? 'Check-in' : 'Check-out'}
+                </span>
+                <button 
+                  onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
+                  className="text-xs font-bold text-gray-900 underline underline-offset-2"
+                >
+                  Close
+                </button>
+              </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <button 
-                type="button" 
-                onClick={() => setGuests(prev => Math.max(1, prev - 1))}
-                disabled={guests <= 1}
-                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
-              >
-                <Minus className="w-4 h-4" />
-              </button>
-              <span className="font-semibold text-gray-900 w-4 text-center">{guests}</span>
-              <button 
-                type="button" 
-                onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
-                disabled={guests >= maxAllowedGuests}
-                className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
-              >
-                <Plus className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
+          )}
         </div>
 
         {/* Availability Status Indicator */}
         {availabilityStatus === 'available' && (
-          <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200">
+          <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
             <span className="text-sm font-bold">Dates are available!</span>
           </div>
         )}
         {availabilityStatus === 'booked' && (
-          <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-3 rounded-xl border border-red-200">
+          <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-3 rounded-xl border border-red-200 animate-in fade-in">
             <XCircle className="w-4 h-4 text-red-600" />
             <span className="text-sm font-bold">These dates are already booked.</span>
           </div>
         )}
 
-        
         {/* Action Buttons */}
         <div className="flex flex-col gap-3 pt-2">
           
@@ -260,7 +381,7 @@ export default function BookingWidget({ property }) {
               ) : (
                 <>
                   <CalendarSearch className="w-4 h-4 mr-2" />
-                  Check Availability
+                  Check Dates
                 </>
               )}
             </button>
@@ -278,7 +399,6 @@ export default function BookingWidget({ property }) {
             </button>
           </div>
 
-          {/* 3. Replaced <a> tag with <button> to execute the lockdown logic */}
           <button 
             type="button"
             onClick={handleWhatsAppClick}
