@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
   Loader2, ShieldCheck, Calendar as CalendarIcon, 
-  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch
+  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X
 } from 'lucide-react';
 import { getCarById, createCarReservation, checkCarAvailability, getCars } from '../api/car'; 
 import { useAuth } from '../context/AuthContext';
@@ -34,6 +34,9 @@ export default function CarDetails() {
   // --- CUSTOM CALENDAR STATE ---
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
+
+  // --- LIGHTBOX STATE ---
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   useEffect(() => {
     setAvailabilityStatus(null);
@@ -279,8 +282,52 @@ export default function CarDetails() {
 
   const images = car.images?.length > 0 ? car.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'];
 
+  // Lightbox Handlers
+  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
+    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
+
+      {/* FULL SCREEN LIGHTBOX */}
+      {lightboxIndex !== null && (
+        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+          <button 
+            onClick={() => setLightboxIndex(null)} 
+            className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          
+          {images.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); prevImage(); }} 
+              className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+            >
+              <ChevronLeft className="w-10 h-10" />
+            </button>
+          )}
+
+          <img 
+            src={images[lightboxIndex]} 
+            alt="Expanded view" 
+            className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+          />
+
+          {images.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); nextImage(); }} 
+              className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+            >
+              <ChevronRight className="w-10 h-10" />
+            </button>
+          )}
+          
+          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
+            {lightboxIndex + 1} / {images.length}
+          </div>
+        </div>
+      )}
 
       <button 
         onClick={() => navigate(-1)}
@@ -308,7 +355,11 @@ export default function CarDetails() {
         <div className="md:hidden relative h-[300px] rounded-2xl overflow-hidden group">
           <div ref={mobileScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {images.map((img, idx) => (
-              <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+              <div 
+                key={idx} 
+                onClick={() => setLightboxIndex(idx)}
+                className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+              >
                 <img src={img} className="absolute inset-0 w-full h-full object-cover" alt={`View ${idx + 1}`} />
               </div>
             ))}
@@ -324,29 +375,52 @@ export default function CarDetails() {
         {/* DESKTOP GALLERY */}
         <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden">
           {images.length === 1 && (
-            <div className="w-full h-full relative">
+            <div 
+              className="w-full h-full relative cursor-pointer"
+              onClick={() => setLightboxIndex(0)}
+            >
               <img src={images[0]} className="absolute inset-0 w-full h-full object-cover rounded-2xl" alt="Main View" />
             </div>
           )}
           {images.length === 2 && (
             <div className="grid grid-cols-2 gap-2 h-full">
-              <div className="w-full h-full relative"><img src={images[0]} className="absolute inset-0 w-full h-full object-cover" alt="View 1"/></div>
-              <div className="w-full h-full relative"><img src={images[1]} className="absolute inset-0 w-full h-full object-cover" alt="View 2"/></div>
+              <div 
+                className="w-full h-full relative cursor-pointer"
+                onClick={() => setLightboxIndex(0)}
+              >
+                <img src={images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 1"/>
+              </div>
+              <div 
+                className="w-full h-full relative cursor-pointer"
+                onClick={() => setLightboxIndex(1)}
+              >
+                <img src={images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2"/>
+              </div>
             </div>
           )}
           {images.length >= 3 && (
             <div className="grid grid-cols-2 gap-2 h-full">
-              <div className="w-full h-full relative group">
+              <div 
+                className="w-full h-full relative group cursor-pointer"
+                onClick={() => setLightboxIndex(0)}
+              >
                 <img src={images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="Main View" />
               </div>
               <div className="grid grid-rows-2 gap-2 h-full">
-                <div className="w-full h-full relative group">
+                <div 
+                  className="w-full h-full relative group cursor-pointer"
+                  onClick={() => setLightboxIndex(1)}
+                >
                   <img src={images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2" />
                 </div>
                 <div className="w-full h-full relative group">
                   <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
                     {images.slice(2).map((img, idx) => (
-                      <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                      <div 
+                        key={idx} 
+                        onClick={() => setLightboxIndex(idx + 2)}
+                        className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                      >
                         <img src={img} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt={`View ${idx + 3}`} />
                       </div>
                     ))}
@@ -425,7 +499,7 @@ export default function CarDetails() {
                 ₦{pricing ? pricing.subtotal.toLocaleString() : Number(car.pricePer12Hours).toLocaleString()}
               </span>
               <span className="text-gray-500 text-sm font-medium">
-                {pricing && durationSlots > 1 ? '/ total' : '/ day'}
+                {pricing && durationSlots > 1 ? '/ total' : '/ 12 hrs'}
               </span>
             </div>
 

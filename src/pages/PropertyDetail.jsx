@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Share, Heart, Medal, ArrowLeft, Loader2, ChevronLeft, ChevronRight, MapPin } from 'lucide-react';
+import { Share, Heart, Medal, ArrowLeft, Loader2, ChevronLeft, ChevronRight, MapPin, X } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
@@ -12,6 +12,9 @@ export default function PropertyDetail() {
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
   const [similarProperties, setSimilarProperties] = useState([]);
+
+  // --- LIGHTBOX STATE ---
+  const [lightboxIndex, setLightboxIndex] = useState(null);
 
   const mobileScrollRef = useRef(null);
   const desktopScrollRef = useRef(null);
@@ -83,6 +86,10 @@ export default function PropertyDetail() {
     if (property) fetchSimilar();
   }, [property]);
 
+  // Lightbox Handlers
+  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % property.images.length);
+  const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? property.images.length - 1 : prev - 1));
+
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
@@ -101,8 +108,48 @@ export default function PropertyDetail() {
   }
 
   return (
-    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500">
+    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
       
+      {/* FULL SCREEN LIGHTBOX */}
+      {lightboxIndex !== null && (
+        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+          <button 
+            onClick={() => setLightboxIndex(null)} 
+            className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
+          >
+            <X className="w-8 h-8" />
+          </button>
+          
+          {property.images.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); prevImage(); }} 
+              className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+            >
+              <ChevronLeft className="w-10 h-10" />
+            </button>
+          )}
+
+          <img 
+            src={property.images[lightboxIndex]} 
+            alt="Expanded view" 
+            className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+          />
+
+          {property.images.length > 1 && (
+            <button 
+              onClick={(e) => { e.stopPropagation(); nextImage(); }} 
+              className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+            >
+              <ChevronRight className="w-10 h-10" />
+            </button>
+          )}
+          
+          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
+            {lightboxIndex + 1} / {property.images.length}
+          </div>
+        </div>
+      )}
+
       <button onClick={() => navigate(-1)} className="inline-flex items-center space-x-2 text-sm font-bold text-gray-500 hover:text-gray-900 mb-6 transition-all group w-fit">
         <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
         <span>Back to listings</span>
@@ -144,9 +191,13 @@ export default function PropertyDetail() {
             <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group shadow-sm">
               <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {property.images.map((img, idx) => (
-                  <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
+                  <div 
+                    key={idx} 
+                    onClick={() => setLightboxIndex(idx)}
+                    className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                  >
                     <img src={img} alt={`${property.title} - ${idx + 1}`} className="w-full h-full object-cover" />
-                    <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg">
+                    <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg pointer-events-none">
                       {idx + 1} / {property.images.length}
                     </div>
                   </div>
@@ -164,30 +215,53 @@ export default function PropertyDetail() {
             {/* DESKTOP VIEW */}
             <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden shadow-sm">
               {property.images.length === 1 && (
-                <div className="w-full h-full relative">
-                  <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300 rounded-2xl" alt="Main View" />
+                <div 
+                  className="w-full h-full relative cursor-pointer"
+                  onClick={() => setLightboxIndex(0)}
+                >
+                  <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300 rounded-2xl" alt="Main View" />
                 </div>
               )}
               {property.images.length === 2 && (
                 <div className="grid grid-cols-2 gap-2 h-full">
-                  <div className="w-full h-full relative"><img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 1"/></div>
-                  <div className="w-full h-full relative"><img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" alt="View 2"/></div>
+                  <div 
+                    className="w-full h-full relative cursor-pointer"
+                    onClick={() => setLightboxIndex(0)}
+                  >
+                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 1"/>
+                  </div>
+                  <div 
+                    className="w-full h-full relative cursor-pointer"
+                    onClick={() => setLightboxIndex(1)}
+                  >
+                    <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2"/>
+                  </div>
                 </div>
               )}
               {property.images.length >= 3 && (
                 <div className="grid grid-cols-2 gap-2 h-full">
-                  <div className="w-full h-full relative group">
-                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300" alt="Main View" />
+                  <div 
+                    className="w-full h-full relative group cursor-pointer"
+                    onClick={() => setLightboxIndex(0)}
+                  >
+                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Main View" />
                   </div>
                   <div className="grid grid-rows-2 gap-2 h-full">
-                    <div className="w-full h-full relative group">
-                      <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover cursor-pointer group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
+                    <div 
+                      className="w-full h-full relative group cursor-pointer"
+                      onClick={() => setLightboxIndex(1)}
+                    >
+                      <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
                     </div>
                     <div className="w-full h-full relative group">
                       <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {property.images.slice(2).map((img, idx) => (
-                          <div key={idx} className="w-full h-full flex-shrink-0 snap-center relative">
-                            <img src={img} className="absolute inset-0 w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity duration-300" alt={`Interior ${idx + 2}`} />
+                          <div 
+                            key={idx} 
+                            onClick={() => setLightboxIndex(idx + 2)}
+                            className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                          >
+                            <img src={img} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300" alt={`Interior ${idx + 2}`} />
                             {property.images.length > 3 && (
                               <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full pointer-events-none shadow-lg">
                                 {idx + 1} / {property.images.length - 2}

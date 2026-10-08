@@ -57,7 +57,7 @@ export default function CarCard({ car }) {
         <div className="flex items-center justify-between text-gray-500 text-xs font-medium px-1">
           <div className="flex items-center gap-1.5" title="Seats">
             <Users className="w-4 h-4" />
-            <span>{car.seats || 4} Seats</span>
+            <span>{car.seatNumber || 4} Seats</span>
           </div>
           <div className="flex items-center gap-1.5" title="Transmission">
             <Settings2 className="w-4 h-4" />
