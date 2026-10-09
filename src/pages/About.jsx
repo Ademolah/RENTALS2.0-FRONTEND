@@ -75,9 +75,11 @@ export default function About() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <div className="text-center max-w-4xl mx-auto space-y-6">
-            <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-bold uppercase tracking-widest animate-in fade-in duration-500">
-              <Compass className="w-4 h-4" />
-              <span>Redefining African Mobility & Hospitality</span>
+            <div className="flex items-center space-x-3 animate-in fade-in duration-500">
+              <div className="h-4 w-0.5 bg-brand-primary"></div>
+              <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
+                Redefining African Mobility & Hospitality
+              </span>
             </div>
 
             <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">

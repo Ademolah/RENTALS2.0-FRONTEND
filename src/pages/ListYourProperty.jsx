@@ -71,8 +71,11 @@ export default function ListProperty() {
             
             {/* Left Content Column */}
             <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
-              <div className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-brand-primary/10 border border-brand-primary/20 text-brand-primary text-xs font-bold uppercase tracking-widest">
-                <span>Earn on Your Terms</span>
+              <div className="flex items-center space-x-3">
+                <div className="h-4 w-0.5 bg-brand-primary"></div>
+                <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
+                  Earn On Your Terms
+                </span>
               </div>
 
               <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-gray-900 leading-[1.15]">

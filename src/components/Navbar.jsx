@@ -160,23 +160,34 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                       </>
                     ) : (
                       <div className="p-1">
-                        <div className="text-center p-4">
-                          <div className="w-12 h-12 bg-brand-primary/10 rounded-full flex items-center justify-center mx-auto mb-3">
-                            <Crown className="w-6 h-6 text-brand-primary" />
-                          </div>
-                          <h4 className="text-sm font-bold text-gray-900">Exclusive Access</h4>
-                          <p className="text-[10px] font-medium text-gray-500 mt-1 mb-4 leading-relaxed">
-                            Log in to manage reservations, view saved properties, and unlock VIP rentals.
-                          </p>
-                          {/* 4. UPDATE DROPDOWN SIGN IN TO USE GLOBAL STATE */}
-                          <button
-                            onClick={() => { setIsMenuOpen(false); setShowAuthModal(true); }}
-                            className="w-full py-3 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold shadow-md hover:shadow-lg transition-all active:scale-95 flex items-center justify-center space-x-2"
-                          >
-                            <LogIn className="w-4 h-4" />
-                            <span>Sign In / Register</span>
-                          </button>
-                        </div>
+                        <div className="relative bg-black rounded-2xl p-6 border border-neutral-800 shadow-2xl text-left">
+  
+  {/* Architectural Corner Accent */}
+  <div className="flex items-center space-x-3 mb-5">
+    <div className="w-1 h-3.5 bg-amber-400 rounded-full"></div>
+    <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-[0.25em]">
+      Member Portal
+    </span>
+  </div>
+
+  {/* Headline & Subtitle */}
+  <h4 className="text-xl font-extrabold text-neutral-100 tracking-tight leading-snug">
+    Exclusive Access
+  </h4>
+  
+  <p className="text-xs font-normal text-neutral-400 mt-2 mb-6 leading-relaxed">
+    Sign in to manage your reservations, access saved shortlets, and unlock private VIP fleet rentals.
+  </p>
+
+  {/* High-End Primary Button */}
+  <button
+    onClick={() => { setIsMenuOpen(false); setShowAuthModal(true); }}
+    className="w-full py-3.5 bg-neutral-100 hover:bg-white text-black rounded-xl text-xs font-bold tracking-wider uppercase transition-all duration-200 active:scale-[0.98]"
+  >
+    Sign In or Register
+  </button>
+  
+</div>
                       </div>
                     )}
                   </div>
