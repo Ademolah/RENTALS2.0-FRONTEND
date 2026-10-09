@@ -1,8 +1,8 @@
-import { useState } from 'react';
-import { Routes, Route ,useLocation } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Routes, Route, useLocation } from 'react-router-dom';
 import './index.css';
 import WelcomeOverlay from './components/WelcomeOverlay';
-import CitySelectorModal from "./components/CitySelectorModal"
+import CitySelectorModal from "./components/CitySelectorModal";
 import Navbar from './components/Navbar';
 import AdvancedSearch from './components/AdvancedSearch';
 import Home from './pages/Home';
@@ -15,6 +15,8 @@ import AdminDashboard from './pages/AdminDashboard';
 import CarDetails from './pages/CarDetails';
 import VipDetails from './pages/VipDetails';
 import VipSuccess from './pages/VipSuccess';
+import ListYourProperty from './pages/ListYourProperty';
+import About from './pages/About';
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -23,6 +25,9 @@ function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
   
+  // SURGICAL FIX: Declare selectedCity state variable (defaults to 'Lagos')
+  const [selectedCity, setSelectedCity] = useState('Lagos');
+  
   // 2. Initialize the state using the tracker's inverse value
   const [showCityModal, setShowCityModal] = useState(!hasSeenCityModalThisSession);
   
@@ -30,9 +35,14 @@ function App() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
+  useEffect(() => {
+    setSearchFilters({});
+  }, [activeCategory]);
+
   const handleCitySelect = (selectedState) => {
     // 3. Update the tracker so it remembers the selection globally
     hasSeenCityModalThisSession = true;
+    setSelectedCity(selectedState); // SURGICAL FIX: Save selected city to state
     setSearchFilters({ ...searchFilters, location: selectedState });
     setShowCityModal(false);
   };
@@ -46,17 +56,9 @@ function App() {
         <CitySelectorModal onSelect={handleCitySelect} />
       )}
       
-      {/* 
-        Header Wrapper: Reverted to z-50. 
-        This ensures WelcomeOverlay can naturally cover the header again.
-      */}
+      {/* Header Wrapper */}
       <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
         
-        {/* 
-          Navbar Wrapper: 
-          Mobile: z-40 (Yields to the mobile search modal).
-          Desktop (md:): z-[99] (Highest priority so Auth dropdown crushes the red search button).
-        */}
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar 
             activeCategory={activeCategory} 
@@ -64,16 +66,14 @@ function App() {
           />
         </div>
         
-        {/* 
-          AdvancedSearch Wrapper: 
-          Mobile: z-[60] (Escapes the Navbar to cover the screen).
-          Desktop (md:): z-30 (Stays quietly underneath the dropdown).
-        */}
+        {/* AdvancedSearch Wrapper */}
         {isHomePage && (
           <div className="relative z-[60] md:z-30 pb-4 bg-white">
             <AdvancedSearch 
-            activeCategory={activeCategory}
-            onSearch={setSearchFilters} />
+              activeCategory={activeCategory}
+              activeCityContext={selectedCity}
+              onSearch={setSearchFilters} 
+            />
           </div>
         )}
       </div>
@@ -86,6 +86,7 @@ function App() {
               <Home 
                 activeCategory={activeCategory} 
                 searchFilters={searchFilters} 
+                activeCityContext={selectedCity}
               />
             } 
           />
@@ -99,10 +100,12 @@ function App() {
           <Route path="/dashboard/guest" element={<GuestDashboard />} />
           <Route path="/dashboard/landlord" element={<LandlordDashboard />} />
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/list-property" element={<ListYourProperty />} />
+          <Route path="/about" element={<About />} />
         </Routes>
       </div>
 
-      {/* Conditionally hide the Footer on Dashboards if they have their own full-screen layout */}
+      {/* Conditionally hide the Footer on Dashboards */}
       {!location.pathname.startsWith('/dashboard') && <Footer />}
     </div>
   );

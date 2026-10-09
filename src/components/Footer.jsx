@@ -1,4 +1,5 @@
 import { Globe } from 'lucide-react'; // 💡 Keep Globe as it's a utility icon
+import { Link } from 'react-router-dom'; // 💡 Keep Link for internal navigation
 
 export default function Footer() {
   return (
@@ -17,7 +18,9 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-brand-dark mb-4 text-sm">Company</h4>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li><a href="#" className="hover:underline">About Rentals</a></li>
+              <li><Link to="/about" className="hover:underline">
+                About Rentals
+              </Link></li>
               <li><a href="#" className="hover:underline">Careers</a></li>
               <li><a href="#" className="hover:underline">Investors</a></li>
             </ul>
@@ -25,7 +28,11 @@ export default function Footer() {
           <div>
             <h4 className="font-semibold text-brand-dark mb-4 text-sm">Hosting</h4>
             <ul className="space-y-3 text-sm text-gray-600">
-              <li><a href="#" className="hover:underline">List your property</a></li>
+              <li>
+              <Link to="/list-property" className="hover:underline">
+                List your property
+              </Link>
+            </li>
               <li><a href="#" className="hover:underline">Host resources</a></li>
               <li><a href="#" className="hover:underline">Community forum</a></li>
             </ul>

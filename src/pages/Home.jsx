@@ -2,26 +2,24 @@ import { useState, useEffect } from 'react';
 import PropertyCard from '../components/PropertyCard';
 import CarCard from '../components/CarCard'; 
 import HotelListingView from '../components/HotelCard'; 
-import VipListingView from '../components/VipListingView'; // SURGICAL FIX: Import VIP View
+import VipListingView from '../components/VipListingView';
 import { getProperties } from '../api/properties';
 import { getCars } from '../api/car'; 
 import { Loader2, Search } from 'lucide-react';
 
-export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }) {
+export default function Home({ 
+  searchFilters = {}, 
+  activeCategory = 'SHORTLET',
+  activeCityContext = 'Lagos' // Default to Lagos if not set
+}) {
   const [listings, setListings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [isSearchCleared, setIsSearchCleared] = useState(false);
-
-  useEffect(() => {
-    if (Object.keys(searchFilters).length > 0) {
-      setIsSearchCleared(false);
-    }
-  }, [searchFilters]);
 
   useEffect(() => {
     async function fetchListings() {
-      // SURGICAL FIX: Bypass standard fetch for both Hotel and VIP since they manage their own views
       const normalizedCategory = activeCategory.toLowerCase();
+      
+      // Hotel & VIP handle their own state internally
       if (normalizedCategory === 'hotel' || normalizedCategory === 'vip reservation' || normalizedCategory === 'vip') {
         setLoading(false);
         return;
@@ -41,26 +39,67 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
           ? responseData 
           : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
 
-        if (!isSearchCleared && Object.keys(searchFilters).length > 0) {
-          if (searchFilters.location) {
-            const searchStr = searchFilters.location.toLowerCase();
-            results = results.filter(item => {
-              const city = (item.address?.city || item.location?.city || '').toLowerCase();
-              const state = (item.address?.state || item.location?.state || '').toLowerCase();
-              const street = (item.address?.street || '').toLowerCase();
-              
-              return searchStr.includes(city) || city.includes(searchStr) || 
-                     searchStr.includes(state) || state.includes(searchStr) ||
-                     searchStr.includes(street) || street.includes(searchStr);
-            });
-          }
+        // --- CITY CONTEXT ENFORCEMENT ---
+        // Always filter Shortlets by the active selected city (Lagos/Abuja) unless a specific search location overrides it
+        const targetCity = (searchFilters.location && searchFilters.location.trim() !== '')
+          ? searchFilters.location.toLowerCase().trim()
+          : activeCityContext.toLowerCase().trim();
 
-          if (normalizedCategory !== 'car') {
-            const requestedGuests = (searchFilters.adults || 0) + (searchFilters.children || 0);
-            if (requestedGuests > 0) {
-              results = results.filter(prop => (prop.maxGuests || 1) >= requestedGuests);
-            }
+        if (normalizedCategory !== 'car') {
+          results = results.filter(item => {
+            const city = (item.address?.city || item.location?.city || '').toLowerCase();
+            const state = (item.address?.state || item.location?.state || '').toLowerCase();
+            const street = (item.address?.street || item.location?.street || '').toLowerCase();
+            
+            return city.includes(targetCity) || targetCity.includes(city) ||
+                   state.includes(targetCity) || targetCity.includes(state) ||
+                   street.includes(targetCity);
+          });
+        }
+
+        // --- SEARCH BAR SPECIFIC FILTERS ---
+        if (searchFilters.location && searchFilters.location.trim() !== '' && normalizedCategory === 'car') {
+          const searchStr = searchFilters.location.toLowerCase().trim();
+          results = results.filter(item => {
+            const city = (item.address?.city || item.location?.city || '').toLowerCase();
+            const state = (item.address?.state || item.location?.state || '').toLowerCase();
+            const title = (item.title || item.make || item.carModel || '').toLowerCase();
+            
+            return city.includes(searchStr) || searchStr.includes(city) ||
+                   state.includes(searchStr) || searchStr.includes(state) ||
+                   title.includes(searchStr);
+          });
+        }
+
+        // Guest Capacity Filter
+        if (normalizedCategory !== 'car') {
+          const requestedGuests = (Number(searchFilters.adults) || 0) + (Number(searchFilters.children) || 0);
+          if (requestedGuests > 0) {
+            results = results.filter(prop => (prop.maxGuests || prop.capacity?.guests || 1) >= requestedGuests);
           }
+        }
+
+        // Date Availability Filter
+        const requestedStart = searchFilters.checkIn || searchFilters.pickupDate;
+        const requestedEnd = searchFilters.checkOut || searchFilters.dropoffDate;
+
+        if (requestedStart && requestedEnd && Array.isArray(results)) {
+          const reqStartMs = new Date(requestedStart).getTime();
+          const reqEndMs = new Date(requestedEnd).getTime();
+
+          results = results.filter(item => {
+            if (!item.bookedDates || !Array.isArray(item.bookedDates) || item.bookedDates.length === 0) {
+              return true;
+            }
+
+            const hasOverlap = item.bookedDates.some(booking => {
+              const existingStart = new Date(booking.startDate).getTime();
+              const existingEnd = new Date(booking.endDate).getTime();
+              return reqStartMs < existingEnd && reqEndMs > existingStart;
+            });
+
+            return !hasOverlap;
+          });
         }
           
         setListings(results);
@@ -73,20 +112,24 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
     }
 
     fetchListings();
-  }, [activeCategory, JSON.stringify(searchFilters), isSearchCleared]);
+  }, [activeCategory, activeCityContext, JSON.stringify(searchFilters)]);
 
-  // Normalization for the render check
   const isHotel = activeCategory.toLowerCase() === 'hotel';
   const isVip = activeCategory.toLowerCase() === 'vip' || activeCategory.toLowerCase() === 'vip reservation';
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       
-      {/* SURGICAL FIX: Intercept the render based on active category[cite: 8] */}
+      {/* Hotel View */}
       {isHotel ? (
-        <HotelListingView />
+        <HotelListingView activeCityContext={activeCityContext} searchFilters={searchFilters} />
       ) : isVip ? (
-        <VipListingView defaultLocation={searchFilters.location}/>
+        /* VIP View now falls back gracefully to activeCityContext so it never renders blank */
+        <VipListingView 
+          defaultLocation={searchFilters.location || activeCityContext} 
+          defaultService={searchFilters.serviceType}
+          defaultDate={searchFilters.date || searchFilters.checkIn}
+        />
       ) : loading ? (
         <div className="flex flex-col items-center justify-center py-20 text-gray-400">
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-2" />
@@ -99,15 +142,8 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
           </div>
           <h3 className="text-xl font-bold text-gray-900">No exact matches found</h3>
           <p className="text-gray-500 text-sm mt-2 mb-8 max-w-sm mx-auto leading-relaxed">
-            We couldn't find any listings matching your exact search criteria.
+            We couldn't find any listings matching your search criteria in {activeCityContext}.
           </p>
-          
-          <button 
-            onClick={() => setIsSearchCleared(true)}
-            className="px-8 py-3.5 bg-gray-900 text-white rounded-full font-semibold hover:bg-black hover:shadow-lg transition-all active:scale-95"
-          >
-            Clear Search & Explore
-          </button>
         </div>
       ) : (
         <>
@@ -132,7 +168,9 @@ export default function Home({ searchFilters = {}, activeCategory = 'SHORTLET' }
                   property={{
                     id: item._id,
                     title: item.title,
-                    location: `${item.address?.city}, ${item.address?.state}`,
+                    location: item.address?.city && item.address?.state 
+                      ? `${item.address.city}, ${item.address.state}`
+                      : item.address?.city || item.address?.state || `${activeCityContext}, Nigeria`,
                     price: Number(item.pricePerNight || item.price || 0), 
                     rating: item.rating || "5.0", 
                     dates: "Available Now",

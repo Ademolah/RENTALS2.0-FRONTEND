@@ -38,10 +38,22 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [hoveredDate, setHoveredDate] = useState(null);
 
+  // --- ENHANCED CONTEXTUAL CATEGORIZATION ---
   const normalizedCategory = activeCategory.toLowerCase();
-  const isCar = normalizedCategory === 'car';
+  const isCar = normalizedCategory === 'car' || normalizedCategory === 'cars';
   const isVip = normalizedCategory === 'vip';
-  const isStandard = !isCar && !isVip;
+  const isHotel = normalizedCategory === 'hotel' || normalizedCategory === 'hotels';
+  const isStandard = !isCar && !isVip; // Catches both shortlets and hotels for standard layout
+
+  // Automatically clear search bar inputs when switching service categories
+  useEffect(() => {
+    setLocation('');
+    setCheckIn('');
+    setCheckOut('');
+    setServiceType('');
+    setGuests({ adults: 1, children: 0 });
+    setActiveMenu(null);
+  }, [activeCategory]);
 
   // Prevent background scrolling when mobile modal is open
   useEffect(() => {
@@ -141,6 +153,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
       } else if (isVip) {
         onSearch({ serviceType, date: checkIn, location });
       } else {
+        // Handles both Shortlets and Hotels perfectly
         onSearch({ location, checkIn, checkOut, adults: guests.adults, children: guests.children });
       }
     }
@@ -235,7 +248,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   return (
     <div className="w-full flex justify-center mt-4 md:mt-8 px-4 z-40 relative" ref={searchBarRef}>
       
-      {/* DESKTOP VIEW (Unchanged - Keeps perfect desktop styling) */}
+      {/* DESKTOP VIEW */}
       <div className={`hidden md:flex relative items-center max-w-4xl w-full rounded-full transition-all duration-300 ${
         activeMenu ? 'bg-gray-100' : 'bg-white border border-gray-200 shadow-search hover:shadow-lg divide-x divide-gray-200'
       }`}>
@@ -289,7 +302,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <>
             <button onClick={() => setActiveMenu('location')} className={`flex-1 text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-[11px] font-extrabold tracking-widest text-gray-900 uppercase">Where</div>
-              <input type="text" placeholder="Search neighborhoods" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-gray-900 placeholder-gray-500 font-medium truncate mt-0.5" />
+              <input type="text" placeholder={isHotel ? "Search destinations or hotels" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-gray-900 placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-[11px] font-extrabold tracking-widest text-gray-900 uppercase">Check in</div>
@@ -405,7 +418,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         <Search className="w-5 h-5 text-gray-900 mr-4" />
         <div className="flex flex-col flex-grow text-left">
           <span className="text-sm font-bold text-gray-900">
-            {isVip ? (serviceType || 'What service?') : (location || 'Where to?')}
+            {isVip ? (serviceType || 'What service?') : (location || (isHotel ? 'Find a hotel' : 'Where to?'))}
           </span>
           <span className="text-[11px] text-gray-500 flex items-center space-x-1 font-medium mt-0.5">
             <span>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Anywhere'}</span>
@@ -475,11 +488,11 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
               {activeMenu === 'location' ? (
                 <div className="animate-in fade-in duration-300">
                   <h2 className="text-2xl font-bold mb-4 text-gray-900">
-                    {isVip ? 'Where do you need this?' : (activeCityContext ? `Explore ${activeCityContext}` : (isCar ? 'Pick-up Location?' : 'Where to?'))}
+                    {isVip ? 'Where do you need this?' : (activeCityContext ? `Explore ${activeCityContext}` : (isCar ? 'Pick-up Location?' : (isHotel ? 'Where are you staying?' : 'Where to?')))}
                   </h2>
                   <div className="relative mb-4">
                     <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-900" />
-                    <input autoFocus type="text" placeholder={isCar ? "Search city or airport" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full pl-12 pr-5 py-4 bg-[#f7f7f7] rounded-xl outline-none font-bold text-gray-900 text-base" />
+                    <input autoFocus type="text" placeholder={isCar ? "Search city or airport" : (isHotel ? "Search cities or hotels" : "Search neighborhoods")} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full pl-12 pr-5 py-4 bg-[#f7f7f7] rounded-xl outline-none font-bold text-gray-900 text-base" />
                   </div>
                   <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
                     {displayedDestinations.map(dest => (
@@ -499,7 +512,9 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
             <div className={`rounded-3xl transition-all duration-300 overflow-hidden ${activeMenuIsDate ? 'bg-white shadow-xl p-6 border-transparent' : 'bg-white shadow-sm p-4 border border-gray-200 active:scale-[0.98]'}`}>
               {activeMenuIsDate ? (
                 <div className="animate-in fade-in duration-300">
-                  <h2 className="text-2xl font-bold mb-6 text-gray-900">{isCar ? 'When do you need the car?' : isVip ? 'When is the service?' : "When's your trip?"}</h2>
+                  <h2 className="text-2xl font-bold mb-6 text-gray-900">
+                    {isCar ? 'When do you need the car?' : isVip ? 'When is the service?' : (isHotel ? 'When are you staying?' : "When's your trip?")}
+                  </h2>
                   {!isVip && (
                     <div className="flex bg-[#f7f7f7] rounded-xl p-1 mb-6">
                       <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeMenu === 'checkIn' ? 'bg-white shadow-sm text-gray-900' : 'text-gray-500'}`}>{isCar ? 'Pick-up' : 'Check-in'}</button>
