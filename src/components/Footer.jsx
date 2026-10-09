@@ -48,7 +48,7 @@ export default function Footer() {
             <span className="hidden md:inline">·</span>
             <Link to="/privacy" className="hover:underline">Privacy</Link>
             <span className="hidden md:inline">·</span>
-            <a href="#" className="hover:underline">Sitemap</a>
+            <Link to="/sitemap" className="hover:underline">Sitemap</Link>
           </div>
 
           <div className="flex items-center space-x-6 text-brand-dark">

@@ -19,6 +19,7 @@ import ListYourProperty from './pages/ListYourProperty';
 import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
+import Sitemap from './pages/Sitemap';
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -106,6 +107,7 @@ function App() {
           <Route path="/about" element={<About />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
+          <Route path="/sitemap" element={<Sitemap />} />
         </Routes>
       </div>
 
