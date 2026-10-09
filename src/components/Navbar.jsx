@@ -41,14 +41,17 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-20">
             
-            <Link to="/" className="flex-shrink-0 flex items-center text-brand-primary">
-              <div className="w-10 h-10 bg-brand-primary rounded-xl flex items-center justify-center mr-2 shadow-sm">
-                <span className="text-white text-xl font-bold">R</span>
-              </div>
-              <span className="font-bold text-2xl hidden lg:block text-brand-primary tracking-tight">
-                Rentals
-              </span>
+            <div className="flex-shrink-0">
+            <Link to="/" className="flex items-center group">
+              <img 
+                src="/Rentals-Navbar.png" 
+                alt="Rentals Platform" 
+                className="h-6 w-auto sm:h-7 md:h-8 object-contain transition-transform duration-300 group-hover:scale-[1.02] select-none"
+                draggable="false"
+              />
             </Link>
+          </div>
+
 
             <div className="hidden md:flex flex-1 justify-center px-8">
               <div className="flex space-x-1 bg-gray-50 p-1 rounded-full border border-gray-100 shadow-inner">

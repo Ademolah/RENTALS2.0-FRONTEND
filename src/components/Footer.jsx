@@ -44,9 +44,9 @@ export default function Footer() {
           <div className="flex flex-wrap items-center justify-center md:justify-start text-sm text-gray-600 gap-2">
             <span>© 2026 Rentals, Inc.</span>
             <span className="hidden md:inline">·</span>
-            <a href="#" className="hover:underline">Terms</a>
+            <Link to="/terms" className="hover:underline">Terms</Link>
             <span className="hidden md:inline">·</span>
-            <a href="#" className="hover:underline">Privacy</a>
+            <Link to="/privacy" className="hover:underline">Privacy</Link>
             <span className="hidden md:inline">·</span>
             <a href="#" className="hover:underline">Sitemap</a>
           </div>
