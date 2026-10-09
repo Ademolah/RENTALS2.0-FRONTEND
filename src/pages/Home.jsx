@@ -172,14 +172,16 @@ export default function Home({
                       ? `${item.address.city}, ${item.address.state}`
                       : item.address?.city || item.address?.state || `${activeCityContext}, Nigeria`,
                     price: Number(item.pricePerNight || item.price || 0), 
-                    rating: item.rating || "5.0", 
+                    rating: item.rating || 0, // ✅ Pass raw number
+                    numReviews: item.numReviews || 0, // ✅ Ensure numReviews is passed down
                     dates: "Available Now",
                     isRentalVerified: item.isVerified ?? true, 
                     isAvailable: item.isAvailable,
+                    images: item.images, // ✅ Pass the full array instead of just 'image' to match the Card's expectation
                     image: item.images && item.images.length > 0 
                       ? item.images[0] 
                       : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
-                  }} 
+                  }}
                 />
               )
             ))}

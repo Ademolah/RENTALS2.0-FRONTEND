@@ -100,10 +100,19 @@ export default function PropertyCard({ property }) {
             <h3 className="font-semibold text-[15px] leading-tight truncate pr-4">
               {property.location || `${property.address?.city}, ${property.address?.state}`}
             </h3>
-            <div className="flex items-center space-x-1 shrink-0">
-              <Star className="w-3.5 h-3.5 fill-brand-dark text-brand-dark" />
-              <span className="text-sm">{property.rating || '5.0'}</span>
-            </div>
+            
+            {/* SURGICAL INSERTION: Dynamic Rating Check */}
+            {property.numReviews > 0 ? (
+              <div className="flex items-center space-x-1 shrink-0">
+                <Star className="w-3.5 h-3.5 fill-gray-900 text-gray-900" />
+                <span className="text-sm font-medium">{(property.rating || 0).toFixed(1)}</span>
+              </div>
+            ) : (
+              <div className="flex items-center space-x-1 shrink-0">
+                <Star className="w-3.5 h-3.5 text-gray-400 fill-gray-400/20" />
+                <span className="text-sm font-medium text-gray-500">New</span>
+              </div>
+            )}
           </div>
           <p className="text-gray-500 text-sm truncate">{property.title}</p>
           <p className="text-gray-500 text-sm">{property.dates}</p>
