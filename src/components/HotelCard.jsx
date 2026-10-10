@@ -25,9 +25,17 @@ const PremiumHotelCard = ({ hotel }) => {
   const locationString = hotel.address ? `${hotel.address.city}, ${hotel.address.state}` : 'Location unavailable';
   const displayAmenities = hotel.amenities ? hotel.amenities.slice(0, 3) : [];
   
-  const rating = hotel.rating || 9.0;
-  const ratingText = hotel.ratingText || 'Superb';
-  const reviewsCount = hotel.reviewsCount || Math.floor(Math.random() * (300 - 50) + 50);
+  // 💡 SURGICAL FIX: Pull true production data from the backend model
+  const reviewsCount = hotel.numReviews || hotel.reviewsCount || 0;
+  const rating = hotel.rating || 0;
+
+  // Dynamic rating text generator based on real scores
+  const getRatingText = (val) => {
+    if (val >= 4.5) return 'Superb';
+    if (val >= 4.0) return 'Very Good';
+    if (val >= 3.0) return 'Good';
+    return 'Fair';
+  };
 
   const mockUrgencies = [
     "Only 2 rooms left on our site",
@@ -52,11 +60,15 @@ const PremiumHotelCard = ({ hotel }) => {
           
           <div className="absolute top-4 right-4 flex items-center space-x-2">
             <div className="flex flex-col items-end">
-              <span className="text-white font-bold text-sm drop-shadow-md">{ratingText}</span>
-              <span className="text-white text-[10px] font-medium drop-shadow-md">{reviewsCount} reviews</span>
+              <span className="text-white font-bold text-sm drop-shadow-md">
+                {reviewsCount > 0 ? getRatingText(rating) : 'New Listing'}
+              </span>
+              <span className="text-white text-[10px] font-medium drop-shadow-md">
+                {reviewsCount} review{reviewsCount !== 1 ? 's' : ''}
+              </span>
             </div>
-            <div className="bg-blue-900 text-white font-black text-lg px-2.5 py-1.5 rounded-t-xl rounded-bl-xl rounded-br-sm shadow-lg">
-              {rating.toFixed(1)}
+            <div className="bg-brand-primary text-white font-black text-lg px-2.5 py-1.5 rounded-t-xl rounded-bl-xl rounded-br-sm shadow-lg">
+              {reviewsCount > 0 ? rating.toFixed(1) : 'New'}
             </div>
           </div>
         </div>

@@ -3,12 +3,14 @@ import {
   MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
   CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2,
-  Dumbbell, Leaf, X // Added X for the lightbox
+  Dumbbell, Leaf, X, MessageSquare 
 } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
+import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
+import { useAuth } from '../context/AuthContext';
 
 // PRESET_AMENITIES Match
 const getAmenityIcon = (amenity) => {
@@ -33,7 +35,8 @@ export default function HotelDetails() {
   const navigate = useNavigate();
   const galleryRef = useRef(null);
   
-  const isLoggedIn = Boolean(localStorage.getItem('rentals_token'));
+  const { user, setShowAuthModal } = useAuth();
+  const isLoggedIn = Boolean(user);
 
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -48,6 +51,14 @@ export default function HotelDetails() {
   // --- LIGHTBOX STATE ---
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
+  // --- REVIEWS STATE ---
+  const [reviews, setReviews] = useState([]);
+  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [showReviewModal, setShowReviewModal] = useState(false);
+  const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
+  const [isSubmittingReview, setIsSubmittingReview] = useState(false);
+  const [reviewError, setReviewError] = useState('');
+
   // --- BESPOKE CALENDAR STATE ---
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarMode, setCalendarMode] = useState('checkIn'); 
@@ -55,14 +66,28 @@ export default function HotelDetails() {
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    const fetchHotel = async () => {
+    const fetchHotelAndReviews = async () => {
       try {
         setLoading(true);
+        // Fetch Hotel
         const response = await getHotelById(id);
         const data = response?.data?.hotel || response?.data?.property || response?.data || response;
         setHotel(data);
         if (data.roomTypes && data.roomTypes.length > 0) {
           setSelectedRoom(data.roomTypes[0]._id);
+        }
+
+        // Fetch Reviews
+        setReviewsLoading(true);
+        try {
+          const revResponse = await getPropertyReviewsApi(data._id);
+          if (revResponse?.success) {
+            setReviews(revResponse.reviews);
+          }
+        } catch (revErr) {
+          console.error("Failed to load hotel reviews:", revErr);
+        } finally {
+          setReviewsLoading(false);
         }
       } catch (err) {
         console.error("Failed to load hotel:", err);
@@ -71,7 +96,7 @@ export default function HotelDetails() {
         setLoading(false);
       }
     };
-    if (id) fetchHotel();
+    if (id) fetchHotelAndReviews();
   }, [id]);
 
   const showToast = (message) => {
@@ -81,7 +106,8 @@ export default function HotelDetails() {
 
   const handleBookClick = () => {
     if (!isLoggedIn) {
-      showToast("Please log in or register to secure a reservation.");
+      if (setShowAuthModal) setShowAuthModal(true);
+      else showToast("Please log in or register to secure a reservation.");
       return;
     }
     if (!checkInDate || !checkOutDate) {
@@ -91,6 +117,57 @@ export default function HotelDetails() {
     setIsBookModalOpen(true);
   };
 
+  // --- REVIEW SUBMISSION LOGIC ---
+  const handleReviewSubmit = async (e) => {
+    e.preventDefault();
+    setReviewError('');
+
+    if (reviewForm.rating === 0) {
+      setReviewError('Please select a rating score.');
+      return;
+    }
+    if (reviewForm.comment.trim().length < 10) {
+      setReviewError('Please provide a comment of at least 10 characters.');
+      return;
+    }
+
+    try {
+      setIsSubmittingReview(true);
+      
+      // 💡 THE FIX: Securely grab the token from localStorage if user.token is undefined
+      const token = user?.token || localStorage.getItem('rentals_token');
+      
+      const res = await createPropertyReviewApi(hotel._id, reviewForm, token);
+      
+      if (res.success) {
+        setReviews([{
+          _id: res.review._id,
+          rating: res.review.rating,
+          comment: res.review.comment,
+          createdAt: res.review.createdAt,
+          user: {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            profilePicture: user.profilePicture
+          }
+        }, ...reviews]);
+        
+        setHotel(prev => ({
+          ...prev,
+          rating: res.updatedPropertyStats?.rating || prev.rating,
+          reviewsCount: res.updatedPropertyStats?.numReviews || prev.reviewsCount + 1
+        }));
+
+        setShowReviewModal(false);
+        setReviewForm({ rating: 0, comment: '' });
+        showToast("Review submitted successfully!");
+      }
+    } catch (err) {
+      setReviewError(err.response?.data?.message || 'Failed to submit review.');
+    } finally {
+      setIsSubmittingReview(false);
+    }
+  };
   // --- LIGHTBOX LOGIC ---
   const nextImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev + 1) % hotel.images.length); };
   const prevImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev === 0 ? hotel.images.length - 1 : prev - 1)); };
@@ -180,7 +257,76 @@ export default function HotelDetails() {
   return (
     <main className="bg-gray-50 min-h-screen pb-32 lg:pb-12 relative animate-in fade-in duration-500">
       
-      {/* 💡 RESTORED LIGHTBOX */}
+      {/* REVIEW SUBMISSION MODAL */}
+      {showReviewModal && (
+        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative">
+            <button 
+              onClick={() => setShowReviewModal(false)}
+              className="absolute top-5 right-5 text-gray-400 hover:text-gray-900 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            
+            <div className="p-8">
+              <div className="flex items-center space-x-3 mb-6">
+                <div className="h-4 w-0.5 bg-brand-primary"></div>
+                <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
+                  Guest Feedback
+                </span>
+              </div>
+              
+              <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">Rate your stay</h3>
+              <p className="text-sm font-medium text-gray-500 mb-8">Your feedback helps maintain our world-class standard.</p>
+
+              <form onSubmit={handleReviewSubmit} className="space-y-6">
+                <div>
+                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Overall Rating</label>
+                  <div className="flex space-x-2">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        type="button"
+                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                        className="focus:outline-none transition-transform active:scale-90"
+                      >
+                        <Star className={`w-8 h-8 ${reviewForm.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Written Review</label>
+                  <textarea
+                    rows={4}
+                    value={reviewForm.comment}
+                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                    placeholder="Share the details of your stay..."
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all resize-none"
+                  ></textarea>
+                </div>
+
+                {reviewError && (
+                  <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
+                    {reviewError}
+                  </div>
+                )}
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingReview}
+                  className="w-full py-4 bg-gray-900 hover:bg-black text-white rounded-xl text-sm font-bold tracking-wider uppercase transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center shadow-lg"
+                >
+                  {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Review'}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RESTORED LIGHTBOX */}
       {lightboxIndex !== null && (
         <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
           <button 
@@ -260,9 +406,11 @@ export default function HotelDetails() {
                 </h1>
                 <div className="hidden md:flex flex-col items-end ml-4">
                   <div className="bg-brand-primary text-white font-black text-xl px-4 py-2 rounded-xl shadow-sm">
-                    {hotel.rating ? hotel.rating.toFixed(1) : '9.0'}
+                    {hotel.reviewsCount > 0 ? hotel.rating?.toFixed(1) : 'New'}
                   </div>
-                  <span className="text-sm font-bold text-gray-500 mt-1">{hotel.reviewsCount || 'New'} reviews</span>
+                  <span className="text-sm font-bold text-gray-500 mt-1">
+                    {hotel.reviewsCount || 0} review{hotel.reviewsCount !== 1 ? 's' : ''}
+                  </span>
                 </div>
               </div>
               
@@ -302,7 +450,7 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
-            {/* 💡 BESPOKE DATE PICKER INJECTED HERE */}
+            {/* BESPOKE DATE PICKER INJECTED HERE */}
             <div id="dates-section" className="pt-2 pb-4">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Select your dates</h2>
               <p className="text-gray-500 text-sm font-medium mb-6">
@@ -448,6 +596,81 @@ export default function HotelDetails() {
                   );
                 })}
               </div>
+            </div>
+
+            <hr className="border-gray-200" />
+
+            {/* 💡 REVIEWS SECTION */}
+            <div id="reviews-section" className="pt-4 pb-8">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center space-x-3">
+                  <Star className="w-6 h-6 fill-gray-900 text-gray-900" />
+                  <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                    {hotel.reviewsCount === 0 || !hotel.reviewsCount ? 'No reviews yet' : `${hotel.rating?.toFixed(1) || '5.0'} | ${hotel.reviewsCount} review${hotel.reviewsCount !== 1 ? 's' : ''}`}
+                  </h3>
+                </div>
+                
+                <button 
+                  onClick={() => {
+                    if (!isLoggedIn) {
+                      if (setShowAuthModal) setShowAuthModal(true);
+                      else showToast('Please log in to submit a review.');
+                    } else if (user?.role === 'USER') {
+                      setShowReviewModal(true);
+                    } else {
+                      showToast('Only guest accounts can submit reviews.');
+                    }
+                  }}
+                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                >
+                  Write a Review
+                </button>
+              </div>
+
+              {reviewsLoading ? (
+                <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Loading guest feedback...</span>
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 flex flex-col items-center text-center">
+                  <MessageSquare className="w-8 h-8 text-gray-300 mb-3" />
+                  <h4 className="text-gray-900 font-bold mb-1">Be the first to review</h4>
+                  <p className="text-sm font-medium text-gray-500 max-w-sm">Share your experience to help other travelers make informed decisions.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
+                  {reviews.map((review) => (
+                    <div key={review._id} className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                          {review.user?.profilePicture ? (
+                            <img src={review.user.profilePicture} alt="User" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-bold text-lg uppercase">
+                              {review.user?.firstName?.charAt(0) || 'G'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="font-bold text-gray-900">{review.user?.firstName}</div>
+                          <div className="text-xs font-medium text-gray-500">
+                            {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex space-x-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`w-3 h-3 ${review.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
+                        ))}
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed font-medium">
+                        {review.comment}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             <hr className="border-gray-200" />
