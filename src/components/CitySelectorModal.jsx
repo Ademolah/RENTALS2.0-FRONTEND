@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { ArrowRight, Building2, Landmark } from 'lucide-react';
+import { ArrowRight, CheckCircle2 } from 'lucide-react';
 
 export default function CitySelectorModal({ 
   onSelect, 
   title = "Where to?", 
-  subtitle = "Select your destination to see curated spaces.", 
-  buttonText = "Explore Curated Properties" 
+  subtitle = "Select your destination to explore our curated portfolio.", 
+  buttonText = "Explore Portfolio" 
 }) {
   const [selectedState, setSelectedState] = useState('');
 
@@ -15,91 +15,91 @@ export default function CitySelectorModal({
     }
   };
 
+  // Upgraded to immersive image cards instead of generic icons
   const cities = [
     {
       id: 'Lagos',
       name: 'Lagos',
-      description: 'Commercial hub',
-      icon: Building2
+      description: 'The Commercial Capital',
+      image: '/lagos.jpg'
     },
     {
       id: 'Abuja',
       name: 'Abuja',
-      description: 'Capital city',
-      icon: Landmark
+      description: 'The Federal Capital',
+      image: '/abuja.jpg'
     }
   ];
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/70 backdrop-blur-xl animate-in fade-in duration-500 p-4">
-      <div className="bg-white p-6 md:p-8 rounded-[2rem] shadow-[0_20px_60px_rgba(0,0,0,0.15)] max-w-md w-full relative overflow-hidden transform transition-all">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/60 backdrop-blur-md p-4 transition-all duration-500">
+      <div className="bg-white rounded-[24px] p-5 sm:p-8 max-w-[380px] sm:max-w-md w-full relative shadow-2xl animate-in fade-in zoom-in-95 slide-in-from-bottom-4 duration-500 ease-out">
         
-        <div className="absolute -top-24 -right-24 w-48 h-48 bg-brand-primary/10 blur-[60px] rounded-full pointer-events-none"></div>
-
-        <div className="relative z-10">
-          
-          <div className="flex items-center space-x-4 mb-6">
-            <div className="h-[1px] w-8 bg-brand-primary"></div>
-            <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-[0.3em]">
-              Your Journey Begins
-            </span>
-          </div>
-          
-          <h2 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight mb-2">
+        <div className="text-center mb-6">
+          <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">
             {title}
           </h2>
-          <p className="text-gray-500 text-sm font-medium mb-6 leading-relaxed">
+          <p className="text-gray-500 text-sm font-medium px-4">
             {subtitle}
           </p>
+        </div>
 
-          <div className="grid grid-cols-2 gap-3 md:gap-4 mb-8">
-            {cities.map((city) => {
-              const Icon = city.icon;
-              const isSelected = selectedState === city.id;
-              
-              return (
-                <button
-                  key={city.id}
-                  onClick={() => setSelectedState(city.id)}
-                  className={`relative text-left p-4 rounded-2xl border-2 transition-all duration-300 group ${
-                    isSelected 
-                      ? 'border-brand-primary bg-brand-primary/5 shadow-[0_8px_30px_rgba(0,0,0,0.04)]' 
-                      : 'border-gray-100 bg-white hover:border-gray-200 hover:bg-gray-50/50'
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-3 right-3 w-2 h-2 bg-brand-primary rounded-full shadow-[0_0_8px_rgba(var(--brand-primary),0.4)]"></div>
-                  )}
-                  
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-colors duration-300 ${
-                    isSelected 
-                      ? 'bg-brand-primary text-white' 
-                      : 'bg-gray-100 text-gray-400 group-hover:text-brand-primary group-hover:bg-brand-primary/10'
-                  }`}>
-                    <Icon className="w-5 h-5" />
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 mb-8">
+          {cities.map((city) => {
+            const isSelected = selectedState === city.id;
+            
+            return (
+              <button
+                key={city.id}
+                onClick={() => setSelectedState(city.id)}
+                // aspect-[4/5] gives a sleek portrait card on mobile
+                className="group relative aspect-[4/5] sm:aspect-square overflow-hidden rounded-2xl text-left transition-all duration-300"
+              >
+                {/* Background Image with slow zoom on hover */}
+                <img 
+                  src={city.image} 
+                  alt={city.name} 
+                  className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                />
+                
+                {/* Rich Gradient Overlay for Text Readability */}
+                <div className="absolute inset-0 bg-gradient-to-t from-gray-900/95 via-gray-900/20 to-transparent transition-opacity duration-300"></div>
+                
+                {/* Brand Primary Selected State Overlay */}
+                <div className={`absolute inset-0 border-[3px] rounded-2xl transition-all duration-300 z-10 ${
+                  isSelected ? 'border-brand-primary bg-brand-primary/10' : 'border-transparent group-hover:border-white/30'
+                }`}></div>
+
+                {/* Check Icon for Selected */}
+                {isSelected && (
+                  <div className="absolute top-3 right-3 z-20 bg-brand-primary text-white rounded-full shadow-lg animate-in zoom-in duration-200">
+                    <CheckCircle2 className="w-5 h-5" />
                   </div>
-                  
-                  <h3 className={`text-base font-bold mb-0.5 transition-colors ${isSelected ? 'text-gray-900' : 'text-gray-700'}`}>
+                )}
+
+                {/* Text Content */}
+                <div className="absolute bottom-4 left-4 right-4 z-20">
+                  <h3 className="text-white text-base sm:text-lg font-bold drop-shadow-md">
                     {city.name}
                   </h3>
-                  <p className="text-[10px] md:text-xs font-medium text-gray-500 leading-tight">
+                  <p className="text-white/80 text-[10px] sm:text-xs font-medium drop-shadow-md truncate">
                     {city.description}
                   </p>
-                </button>
-              );
-            })}
-          </div>
-
-          <button 
-            onClick={handleContinue}
-            disabled={!selectedState}
-            className="w-full flex items-center justify-center space-x-2 bg-brand-primary hover:opacity-90 text-white px-6 py-4 rounded-xl font-bold text-base transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed group shadow-lg shadow-brand-primary/25"
-          >
-            <span>{buttonText}</span>
-            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-          </button>
-
+                </div>
+              </button>
+            );
+          })}
         </div>
+
+        <button 
+          onClick={handleContinue}
+          disabled={!selectedState}
+          className="w-full flex items-center justify-center space-x-2 bg-brand-primary hover:opacity-90 text-white px-6 py-4 rounded-xl text-sm font-bold uppercase tracking-widest transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-primary/25 group"
+        >
+          <span>{buttonText}</span>
+          <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+        </button>
+
       </div>
     </div>
   );

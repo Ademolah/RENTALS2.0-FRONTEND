@@ -289,21 +289,116 @@ export default function PropertyDetail() {
         
         <div className="lg:col-span-7 flex flex-col gap-8">
           
-          {/* GALLERY IMPLEMENTATION REMAINS UNCHANGED */}
-          <div className="mb-4 hidden md:block h-[500px] rounded-2xl overflow-hidden shadow-sm">
-             <img src={property.images[0]} className="w-full h-full object-cover cursor-pointer hover:opacity-95 transition-opacity" onClick={() => setLightboxIndex(0)} alt="Main View" />
+          {/* FULL GALLERY RESTORED */}
+          <div className="mb-4">
+            
+            {/* MOBILE VIEW */}
+            <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group shadow-sm">
+              <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                {property.images.map((img, idx) => (
+                  <div 
+                    key={idx} 
+                    onClick={() => setLightboxIndex(idx)}
+                    className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                  >
+                    <img src={img} alt={`${property.title} - ${idx + 1}`} className="w-full h-full object-cover" />
+                    <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg pointer-events-none">
+                      {idx + 1} / {property.images.length}
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {property.images.length > 1 && (
+                <>
+                  <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
+                  <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronRight className="w-5 h-5" /></button>
+                </>
+              )}
+            </div>
+
+            {/* DESKTOP VIEW */}
+            <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden shadow-sm">
+              {property.images.length === 1 && (
+                <div 
+                  className="w-full h-full relative cursor-pointer"
+                  onClick={() => setLightboxIndex(0)}
+                >
+                  <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300 rounded-2xl" alt="Main View" />
+                </div>
+              )}
+              {property.images.length === 2 && (
+                <div className="grid grid-cols-2 gap-2 h-full">
+                  <div 
+                    className="w-full h-full relative cursor-pointer"
+                    onClick={() => setLightboxIndex(0)}
+                  >
+                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 1"/>
+                  </div>
+                  <div 
+                    className="w-full h-full relative cursor-pointer"
+                    onClick={() => setLightboxIndex(1)}
+                  >
+                    <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2"/>
+                  </div>
+                </div>
+              )}
+              {property.images.length >= 3 && (
+                <div className="grid grid-cols-2 gap-2 h-full">
+                  <div 
+                    className="w-full h-full relative group cursor-pointer"
+                    onClick={() => setLightboxIndex(0)}
+                  >
+                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Main View" />
+                  </div>
+                  <div className="grid grid-rows-2 gap-2 h-full">
+                    <div 
+                      className="w-full h-full relative group cursor-pointer"
+                      onClick={() => setLightboxIndex(1)}
+                    >
+                      <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
+                    </div>
+                    <div className="w-full h-full relative group">
+                      <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                        {property.images.slice(2).map((img, idx) => (
+                          <div 
+                            key={idx} 
+                            onClick={() => setLightboxIndex(idx + 2)}
+                            className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
+                          >
+                            <img src={img} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300" alt={`Interior ${idx + 2}`} />
+                            {property.images.length > 3 && (
+                              <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full pointer-events-none shadow-lg">
+                                {idx + 1} / {property.images.length - 2}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                      {property.images.length > 3 && (
+                        <>
+                          <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
+                          <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="border-b border-gray-200 pb-10">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Entire property hosted by Rentals</h2>
             
+            {/* Unicode characters removed, replaced with clean ASCII pipes */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6">
               <span>{property.maxGuests || 2} guests</span>
               {property.bedrooms && (
-                <><span>·</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
+                <><span>|</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
               )}
               {property.bathrooms && (
-                <><span>·</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
+                <><span>|</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
               )}
             </div>
 
@@ -324,14 +419,12 @@ export default function PropertyDetail() {
               </div>
             )}
 
-            {/* 💡 RESTORED: Premium Amenities Grid */}
             {property.amenities && property.amenities.length > 0 && (
               <div className="pt-8 border-t border-gray-100">
                 <h3 className="text-xl font-bold text-gray-900 mb-6">What this place offers</h3>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-5 gap-x-6">
                   {property.amenities.map((amenity, idx) => (
                     <div key={idx} className="flex items-center space-x-3">
-                      {/* Architectural square accent */}
                       <div className="w-1.5 h-1.5 bg-gray-900"></div>
                       <span className="text-gray-700 font-medium text-sm capitalize">{amenity}</span>
                     </div>
