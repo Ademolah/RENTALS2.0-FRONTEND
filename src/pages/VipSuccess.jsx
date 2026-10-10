@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Crown, CheckCircle2, ArrowRight, 
-  ShieldCheck, Mail, Loader2, Sparkles 
+  ShieldCheck, Mail, Loader2 
 } from 'lucide-react';
 
 export default function VipSuccess() {
@@ -94,16 +94,8 @@ export default function VipSuccess() {
 
           <div className="space-y-3">
             <button 
-              onClick={() => navigate('/guest-dashboard')}
+              onClick={() => navigate('/', { replace: true })}
               className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>View Itinerary</span>
-            </button>
-            
-            <button 
-              onClick={() => navigate('/')}
-              className="w-full bg-transparent hover:bg-white/5 border border-white/10 text-white py-4 rounded-xl font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2"
             >
               <span>Return Home</span>
               <ArrowRight className="w-4 h-4" />
