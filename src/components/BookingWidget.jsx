@@ -381,7 +381,7 @@ export default function BookingWidget({ property }) {
               ) : (
                 <>
                   <CalendarSearch className="w-4 h-4 mr-2" />
-                  Check Dates
+                  Check Availability
                 </>
               )}
             </button>
