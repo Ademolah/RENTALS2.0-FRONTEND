@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /dashboard/
+Disallow: /guest-dashboard/
+Disallow: /reset-password/
+Disallow: /api/
+
+# Point bots directly to your sitemap
+Sitemap: https://rentalsafrica.com/sitemap.xml

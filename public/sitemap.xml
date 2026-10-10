@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <!-- Master Hub (Your dynamic homepage containing all categories) -->
+  <url>
+    <loc>https://rentalsafrica.com/</loc>
+    <lastmod>2026-10-10</lastmod>
+    <changefreq>hourly</changefreq>
+    <priority>1.0</priority>
+  </url>
+
+  <!-- Auxiliary Pages (Only keep these if you actually have separate routes for them) -->
+  <url>
+    <loc>https://rentalsafrica.com/list-property</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://rentalsafrica.com/contact</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+</urlset>
