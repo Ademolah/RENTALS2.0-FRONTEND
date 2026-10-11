@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { 
-  MapPin, Star, Coffee, Wifi, Sparkles, ChevronRight, Clock, 
-  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Loader2 , Users
+  MapPin, Star, Coffee, Wifi, ChevronRight, Clock, 
+  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Loader2 , Users, Leaf
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHotels } from '../api/hotel'; 
@@ -15,7 +15,7 @@ const getAmenityIcon = (amenity) => {
   if (name.includes('food') || name.includes('restaurant') || name.includes('dining')) return Utensils;
   if (name.includes('bar') || name.includes('lounge')) return Wine;
   if (name.includes('park') || name.includes('valet') || name.includes('garage')) return Car;
-  if (name.includes('spa') || name.includes('massage')) return Sparkles;
+  if (name.includes('spa') || name.includes('massage')) return Leaf;
   if (name.includes('gym') || name.includes('fitness')) return Users;
   return CheckCircle2; 
 };
