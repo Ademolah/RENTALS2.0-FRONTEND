@@ -20,6 +20,7 @@ import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
+import ResetPassword from './pages/ResetPassword';
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -108,6 +109,7 @@ function App() {
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/sitemap" element={<Sitemap />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
         </Routes>
       </div>
 

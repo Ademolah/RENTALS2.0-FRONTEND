@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import ForgotPasswordModal from './ForgotPasswordModal';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
@@ -14,12 +15,30 @@ export default function AuthModal({ isOpen, onClose }) {
   
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // NEW STATE: Toggle the Forgot Password Modal
+  const [showForgot, setShowForgot] = useState(false);
 
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber:'', role: 'USER' 
   });
 
   if (!isOpen) return null;
+
+  // Render the ForgotPasswordModal if it is active. 
+  // It takes over the screen until the user closes it or clicks "Back to Login".
+  if (showForgot) {
+    return (
+      <ForgotPasswordModal 
+        isOpen={showForgot} 
+        onClose={() => {
+          setShowForgot(false);
+          onClose(); // Optional: completely close auth flow if they close the forgot modal
+        }} 
+        onBackToLogin={() => setShowForgot(false)}
+      />
+    );
+  }
 
   const handleLocalPhoneChange = (e) => {
     let val = e.target.value.replace(/\D/g, ''); 
@@ -158,7 +177,16 @@ export default function AuthModal({ isOpen, onClose }) {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Password</label>
-              {isLogin && <button type="button" className="text-[10px] font-bold text-brand-primary hover:underline">Forgot?</button>}
+              {/* THE FIX: Wire the Forgot Password button to open the modal */}
+              {isLogin && (
+                <button 
+                  type="button" 
+                  onClick={() => setShowForgot(true)}
+                  className="text-[10px] font-bold text-brand-primary hover:underline"
+                >
+                  Forgot?
+                </button>
+              )}
             </div>
             <div className="relative">
               <input type={showPassword ? "text" : "password"} name="password" required value={formData.password} onChange={handleChange} placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all pr-12" />
