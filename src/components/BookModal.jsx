@@ -13,13 +13,12 @@ export default function BookModal({
   checkOut, 
   isLoggedIn = true 
 }) {
-  // 1. ALL HOOKS MUST BE AT THE ABSOLUTE TOP
   const [timeLeft, setTimeLeft] = useState(1200);
   const [isProcessing, setIsProcessing] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
-      setTimeLeft(1200); // Reset when closed
+      setTimeLeft(1200); 
       return;
     }
 
@@ -30,15 +29,12 @@ export default function BookModal({
     return () => clearInterval(timer);
   }, [isOpen]);
 
-  // 2. CONDITIONAL RETURN MUST BE AFTER ALL HOOKS
   if (!isOpen || !roomData || !hotelData) return null;
 
-  // Format the countdown timer
   const minutes = Math.floor(timeLeft / 60);
   const seconds = timeLeft % 60;
   const timeString = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 
-  // Calculate nights and total 
   const calculateNights = () => {
     if (!checkIn || !checkOut) return 1;
     const start = new Date(checkIn);
@@ -51,7 +47,6 @@ export default function BookModal({
   const nights = calculateNights();
   const totalPrice = roomData.pricePerNight * nights;
 
-  // Generate WhatsApp Message
   const handleWhatsAppBooking = () => {
     const text = `Hello Rentals Africa Concierge! I would like to book a room.
     
@@ -64,7 +59,7 @@ export default function BookModal({
 Please assist me with the escrow payment.`;
 
     const encodedText = encodeURIComponent(text);
-    window.open(`https://wa.me/2348000000000?text=${encodedText}`, '_blank');
+    window.open(`https://wa.me/2347063688222?text=${encodedText}`, '_blank');
   };
 
   const handleInstantBooking = async () => {
@@ -72,7 +67,10 @@ Please assist me with the escrow payment.`;
       setIsProcessing(true);
       const token = localStorage.getItem('rentals_token'); 
       
-      const response = await fetch('http://localhost:8000/api/v1/reservations/book', {
+      // 💡 THE FIX: Dynamic Base URL injection replacing the hardcoded localhost trap
+      const baseURL = import.meta.env.VITE_API_URL;
+      
+      const response = await fetch(`${baseURL}/reservations/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

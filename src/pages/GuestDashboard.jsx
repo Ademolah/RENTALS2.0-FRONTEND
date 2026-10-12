@@ -104,7 +104,7 @@ const BookingCard = ({ booking, onConfirmEscrow }) => {
         <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5
           ${isVip ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-gray-900'}
         `}>
-          {isVip && <Sparkles className="w-3 h-3" />}
+          {isVip }
           <span>{isVip ? 'VIP Concierge' : isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}</span>
         </div>
 
