@@ -14,3 +14,9 @@ export const confirmCheckIn = async (reservationId) => {
   const response = await apiClient.patch(`/reservations/${reservationId}/confirm-checkin`);
   return response.data;
 };
+
+
+export const cancelBookingApi = async (reservationId) => {
+  const response = await apiClient.post(`/reservations/${reservationId}/cancel`);
+  return response.data;
+};
