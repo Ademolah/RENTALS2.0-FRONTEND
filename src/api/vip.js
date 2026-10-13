@@ -47,3 +47,11 @@ export const initiateVipReservation = async (reservationData) => {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
+
+export const deleteVipEstablishment = async (id) => {
+  const token = localStorage.getItem('rentals_token');
+  const response = await apiClient.delete(`/vip/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

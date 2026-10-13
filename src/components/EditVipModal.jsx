@@ -4,6 +4,8 @@ import {
   XCircle, Loader2, MapPin, Clock, Wine, Tags 
 } from 'lucide-react';
 import { getVipEstablishmentById, updateVipEstablishment } from '../api/vip';
+import DeleteAssetModal from './DeleteAssetModal';
+
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const COMMON_SERVICES = ['Bottle Service', 'Private Cabana', 'Valet Parking', 'VIP Host', 'Private Security', 'Shisha', 'Fine Dining'];
@@ -49,6 +51,8 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
   const [existingImages, setExistingImages] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen && establishmentId) {
@@ -354,6 +358,37 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                   <input type="range" min="50000" max="5000000" step="50000" value={depositAmount} onChange={(e) => setDepositAmount(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none accent-gray-900" />
                 </div>
               </section>
+
+                      {/* Danger Zone */}
+        <div className="mt-8 pt-8 border-t border-red-100">
+          <div className="flex items-center justify-between p-4 bg-red-50/50 rounded-xl border border-red-100">
+            <div>
+              <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
+              <p className="text-xs font-medium text-red-700/80">Permanently remove this listing from Rentals Africa.</p>
+            </div>
+            <button
+              type="button" // Important: type="button" so it doesn't submit the edit form
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+            >
+              Delete Listing
+            </button>
+          </div>
+        </div>
+
+
+        <DeleteAssetModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onSuccess={() => {
+            setIsDeleteModalOpen(false);
+            onClose();
+            onSuccess();
+          }}
+          assetId={establishmentId} 
+          assetType="VIP" 
+          assetName={title} 
+        />
 
             </form>
           )}

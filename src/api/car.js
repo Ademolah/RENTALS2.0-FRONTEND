@@ -60,3 +60,13 @@ export const updateCar = async (id, updateData) => {
   });
   return response.data;
 };
+
+export const deleteCar = async (id) => {
+  const token = localStorage.getItem('rentals_token');
+  const baseURL = import.meta.env.VITE_API_URL;
+  
+  const response = await axios.delete(`${baseURL}/cars/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};

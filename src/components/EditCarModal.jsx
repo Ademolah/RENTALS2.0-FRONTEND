@@ -1,11 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { X, Car, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { updateCar, getCarById } from '../api/car';
+import DeleteAssetModal from './DeleteAssetModal';
+
 
 export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     make: '',
@@ -257,6 +260,37 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
                 <div className={`w-6 h-6 bg-white rounded-full absolute top-1 transition-transform shadow-sm ${formData.isAvailable ? 'translate-x-7' : 'translate-x-1'}`} />
               </button>
             </div>
+
+            {/* Danger Zone */}
+          <div className="mt-8 pt-8 border-t border-red-100">
+            <div className="flex items-center justify-between p-4 bg-red-50/50 rounded-xl border border-red-100">
+              <div>
+                <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
+                <p className="text-xs font-medium text-red-700/80">Permanently remove this listing from Rentals Africa.</p>
+              </div>
+              <button
+                type="button" // Important: type="button" so it doesn't submit the edit form
+                onClick={() => setIsDeleteModalOpen(true)}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+              >
+                Delete Listing
+              </button>
+            </div>
+          </div>
+
+          {/* The Delete Confirmation Modal */}
+          <DeleteAssetModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onSuccess={() => {
+            setIsDeleteModalOpen(false);
+            onClose();
+            onSuccess();
+          }}
+          assetId={carId} 
+          assetType="CAR" 
+          assetName={formData.title || formData.carModel} 
+        />
           </form>
         )}
 

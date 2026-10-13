@@ -5,6 +5,8 @@ import {
   Droplets, Utensils, Dumbbell, Wine, Sparkles, Car, Coffee
 } from 'lucide-react';
 import { updateHotel, getHotelById } from '../api/hotel';
+import DeleteAssetModal from './DeleteAssetModal';
+
 
 const PRESET_AMENITIES = [
   { name: 'Free Wifi', icon: Wifi },
@@ -29,6 +31,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -338,6 +341,37 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
                 </label>
               </div>
             </section>
+
+            {/* Danger Zone */}
+        <div className="mt-8 pt-8 border-t border-red-100">
+          <div className="flex items-center justify-between p-4 bg-red-50/50 rounded-xl border border-red-100">
+            <div>
+              <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
+              <p className="text-xs font-medium text-red-700/80">Permanently remove this listing from Rentals Africa.</p>
+            </div>
+            <button
+              type="button" // Important: type="button" so it doesn't submit the edit form
+              onClick={() => setIsDeleteModalOpen(true)}
+              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
+            >
+              Delete Listing
+            </button>
+          </div>
+        </div>
+
+        {/* The Delete Confirmation Modal */}
+        <DeleteAssetModal
+          isOpen={isDeleteModalOpen}
+          onClose={() => setIsDeleteModalOpen(false)}
+          onSuccess={() => {
+            setIsDeleteModalOpen(false);
+            onClose();
+            onSuccess();
+          }}
+          assetId={hotelId} 
+          assetType="HOTEL" 
+          assetName={formData.title || formData.name} 
+        />
 
           </form>
         )}

@@ -50,3 +50,12 @@ export const getLandlordPropertyBookings = async () => {
   const response = await apiClient.get('/properties/landlord-bookings');
   return response.data;
 };
+
+export const deleteProperty = async (id) => {
+  const token = localStorage.getItem('rentals_token');
+  // Use apiClient like the rest, assuming it's configured with base URL
+  const response = await apiClient.delete(`/properties/${id}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
