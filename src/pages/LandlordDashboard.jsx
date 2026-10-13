@@ -83,28 +83,39 @@ export default function LandlordDashboard() {
       };
 
       // Normalize Property (Shortlet) Bookings
-      const normalizedProps = propData.map(b => ({
-        _id: b._id,
-        assetId: b.propertyId?._id,
-        type: 'SHORTLET',
-        reservationStatus: b.reservationStatus,
-        escrowStatus: b.escrowStatus,
-        checkInConfirmedByGuest: b.checkInConfirmedByGuest,
-        checkInConfirmedByHost: b.checkInConfirmedByHost,
-        payoutAmount: b.totalAmount, 
-        dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
-        guest: { 
-          firstName: b.userId?.firstName || 'Guest', 
-          lastName: b.userId?.lastName || '', 
-          phone: b.userId?.phoneNumber || 'N/A' 
-        },
-        asset: { 
-          title: b.propertyId?.title || 'Property', 
-          location: normalizeLocation(b.propertyId?.address),
-          image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'
-        },
-        createdAt: new Date(b.createdAt)
-      }));
+      // Normalize Property (Shortlet) Bookings
+      const normalizedProps = propData.map(b => {
+        // SURGICAL FIX: Dynamically assign type based on category
+        let trueType = 'SHORTLET';
+        if (b.propertyId?.category === 'VIP RESERVATION' || b.propertyId?.category === 'VIP') {
+          trueType = 'VIP';
+        } else if (b.propertyId?.category === 'HOTEL') {
+          trueType = 'HOTEL';
+        }
+
+        return {
+          _id: b._id,
+          assetId: b.propertyId?._id,
+          type: trueType,
+          reservationStatus: b.reservationStatus,
+          escrowStatus: b.escrowStatus,
+          checkInConfirmedByGuest: b.checkInConfirmedByGuest,
+          checkInConfirmedByHost: b.checkInConfirmedByHost,
+          payoutAmount: b.totalAmount, 
+          dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
+          guest: { 
+            firstName: b.userId?.firstName || 'Guest', 
+            lastName: b.userId?.lastName || '', 
+            phone: b.userId?.phoneNumber || 'N/A' 
+          },
+          asset: { 
+            title: b.propertyId?.title || 'Property', 
+            location: normalizeLocation(b.propertyId?.address),
+            image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'
+          },
+          createdAt: new Date(b.createdAt)
+        };
+      });
 
       // Normalize Hotel Bookings
       const normalizedHotels = hotelData.map(b => ({
