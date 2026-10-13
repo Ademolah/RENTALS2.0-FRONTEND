@@ -29,7 +29,7 @@ export default function VipDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
 
-  const CONCIERGE_WHATSAPP = "2348000000000"; 
+  const CONCIERGE_WHATSAPP = "2347087937649"; 
 
   useEffect(() => {
     async function loadData() {

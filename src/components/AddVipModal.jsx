@@ -37,13 +37,16 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [establishmentType, setEstablishmentType] = useState('LOUNGE');
+  const [customCategory, setCustomCategory] = useState(''); // NEW: Custom Category
   const [depositAmount, setDepositAmount] = useState(150000);
   const [dressCode, setDressCode] = useState('');
   const [openTime, setOpenTime] = useState('10:00 PM');
   const [closeTime, setCloseTime] = useState('04:00 AM');
   const [daysOpen, setDaysOpen] = useState(['Thursday', 'Friday', 'Saturday', 'Sunday']);
-  const [services, setServices] = useState([]);
   
+  const [services, setServices] = useState([]);
+  const [customService, setCustomService] = useState(''); // NEW: Custom Service
+
   // Address State
   const [street, setStreet] = useState('');
   const [city, setCity] = useState('');
@@ -112,6 +115,15 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
   };
 
+  // NEW: Add Custom Service Handler
+  const addCustomService = (e) => {
+    e.preventDefault();
+    if (customService.trim() && !services.includes(customService.trim())) {
+      setServices(prev => [...prev, customService.trim()]);
+      setCustomService('');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedFiles.length === 0) {
@@ -122,6 +134,10 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
       setError("Please select at least one operating day.");
       return;
     }
+    if (establishmentType === 'OTHER' && !customCategory.trim()) {
+      setError("Please specify the custom category for this establishment.");
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -130,7 +146,10 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('establishmentType', establishmentType);
+      
+      // Submit custom category if 'OTHER' is selected
+      formData.append('establishmentType', establishmentType === 'OTHER' ? customCategory : establishmentType);
+      
       formData.append('depositAmount', depositAmount);
       formData.append('dressCode', dressCode);
       formData.append('street', street);
@@ -166,12 +185,14 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setTitle('');
     setDescription('');
     setEstablishmentType('LOUNGE');
+    setCustomCategory('');
     setDepositAmount(150000);
     setDressCode('');
     setOpenTime('10:00 PM');
     setCloseTime('04:00 AM');
     setDaysOpen(['Thursday', 'Friday', 'Saturday', 'Sunday']);
     setServices([]);
+    setCustomService('');
     setStreet('');
     setCity('');
     setStateName('');
@@ -250,6 +271,20 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <option value="PRIVATE_YACHT">Private Yacht</option>
                         <option value="OTHER">Other</option>
                       </select>
+
+                      {/* NEW: Conditional input for bespoke category */}
+                      {establishmentType === 'OTHER' && (
+                        <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                          <input 
+                            type="text" 
+                            placeholder="e.g. Private Villa, Golf Resort" 
+                            value={customCategory} 
+                            onChange={(e) => setCustomCategory(e.target.value)}
+                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
+                            required={establishmentType === 'OTHER'}
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <div>
@@ -365,7 +400,8 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
 
                 <div>
                   <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">VIP Services Provided</label>
-                  <div className="flex flex-wrap gap-2">
+                  
+                  <div className="flex flex-wrap gap-2 mb-4">
                     {COMMON_SERVICES.map(service => {
                       const isSelected = services.includes(service);
                       return (
@@ -379,6 +415,36 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         </button>
                       )
                     })}
+
+                    {/* NEW: Render custom bespoke services */}
+                    {services.filter(s => !COMMON_SERVICES.includes(s)).map(service => (
+                      <button 
+                        key={service} type="button" onClick={() => toggleService(service)} 
+                        className="px-4 py-2 rounded-full text-xs font-semibold transition-all border bg-gray-900 text-white border-gray-900 hover:bg-red-600 hover:border-red-600 group shadow-md"
+                      >
+                        {service} <span className="ml-1 opacity-50 group-hover:opacity-100">✕</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* NEW: Input to add bespoke services */}
+                  <div className="flex gap-2">
+                    <input 
+                      type="text" 
+                      placeholder="Type a custom service (e.g. Helipad)..." 
+                      value={customService}
+                      onChange={(e) => setCustomService(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCustomService(e)}
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                    />
+                    <button 
+                      type="button" 
+                      onClick={addCustomService}
+                      disabled={!customService.trim()}
+                      className="px-5 py-3 bg-gray-900 text-white rounded-xl text-sm font-bold disabled:opacity-50 hover:bg-black transition-colors"
+                    >
+                      Add
+                    </button>
                   </div>
                 </div>
               </section>

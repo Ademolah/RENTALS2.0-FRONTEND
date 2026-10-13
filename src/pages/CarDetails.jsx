@@ -248,7 +248,7 @@ export default function CarDetails() {
       return;
     }
 
-    const WHATSAPP_NUMBER = "2348000000000"; 
+    const WHATSAPP_NUMBER = "2347087937649"; 
     
     const waMessage = encodeURIComponent(
       `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
