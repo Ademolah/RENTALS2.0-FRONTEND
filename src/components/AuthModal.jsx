@@ -2,13 +2,17 @@ import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { registerUser as registerUserApi } from '../api/auth';
 import ForgotPasswordModal from './ForgotPasswordModal';
+import { VerifyEmailModal } from './VerifyEmailModal';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const { login, register } = useAuth();
+  
+  // 💡 FIX 1: Removed 'register' from useAuth so it doesn't crash expecting a token
+  const { login } = useAuth(); 
 
   const [dialCode, setDialCode] = useState('+234');
   const [localPhone, setLocalPhone] = useState('');
@@ -16,8 +20,10 @@ export default function AuthModal({ isOpen, onClose }) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   
-  // NEW STATE: Toggle the Forgot Password Modal
   const [showForgot, setShowForgot] = useState(false);
+  
+  const [showVerifyEmail, setShowVerifyEmail] = useState(false);
+  const [registeredEmail, setRegisteredEmail] = useState('');
 
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber:'', role: 'USER' 
@@ -25,17 +31,48 @@ export default function AuthModal({ isOpen, onClose }) {
 
   if (!isOpen) return null;
 
-  // Render the ForgotPasswordModal if it is active. 
-  // It takes over the screen until the user closes it or clicks "Back to Login".
   if (showForgot) {
     return (
       <ForgotPasswordModal 
         isOpen={showForgot} 
         onClose={() => {
           setShowForgot(false);
-          onClose(); // Optional: completely close auth flow if they close the forgot modal
+          onClose(); 
         }} 
         onBackToLogin={() => setShowForgot(false)}
+      />
+    );
+  }
+
+  if (showVerifyEmail) {
+    return (
+      <VerifyEmailModal 
+        isOpen={showVerifyEmail}
+        onClose={() => {
+          setShowVerifyEmail(false);
+          onClose();
+        }}
+        email={registeredEmail}
+        onSuccess={(token, user) => {
+          // 1. Store the token and user data safely
+          localStorage.setItem('rentals_token', token);
+          localStorage.setItem('rentals_user', JSON.stringify(user));
+          
+          // 2. Close the modals cleanly
+          setShowVerifyEmail(false);
+          onClose();
+
+          if (user.role === 'LANDLORD') {
+            window.location.href = '/dashboard/landlord'; 
+          } else {
+            window.location.href = '/dashboard/guest'; 
+          }
+        }}
+        onResend={async () => {
+          const { confirmPassword, ...apiData } = formData;
+          // 💡 FIX 2: Use the raw API function here for resending OTP
+          await registerUserApi(apiData);
+        }}
       />
     );
   }
@@ -72,11 +109,14 @@ export default function AuthModal({ isOpen, onClose }) {
     try {
       if (isLogin) {
         await login({ email: formData.email, password: formData.password });
+        onClose();
       } else {
         const { confirmPassword, ...apiData } = formData;
-        await register(apiData);
+        // 💡 FIX 3: Use the raw API function here so it accepts the 'pending' status
+        await registerUserApi(apiData);
+        setRegisteredEmail(formData.email);
+        setShowVerifyEmail(true);
       }
-      onClose();
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Authentication failed. Please check credentials.');
     } finally {
@@ -90,7 +130,6 @@ export default function AuthModal({ isOpen, onClose }) {
     setFormData({ ...formData, password: '', confirmPassword: '' });
   };
 
-  // Teleport the modal directly into the document body to bypass all z-index stacking issues
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
       <div className="bg-white rounded-3xl max-w-[420px] w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
@@ -177,7 +216,6 @@ export default function AuthModal({ isOpen, onClose }) {
           <div>
             <div className="flex justify-between items-center mb-1.5">
               <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Password</label>
-              {/* THE FIX: Wire the Forgot Password button to open the modal */}
               {isLogin && (
                 <button 
                   type="button" 

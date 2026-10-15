@@ -19,3 +19,9 @@ export const registerUser = async (userData) => {
   const response = await apiClient.post('/auth/register', userData);
   return response.data;
 };
+
+
+export const verifyEmailApi = async (email, otpCode) => {
+  const response = await apiClient.post('/auth/verify-email', { email, otpCode });
+  return response.data;
+};
