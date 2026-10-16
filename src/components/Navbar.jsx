@@ -21,7 +21,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
     { id: 'car', label: 'Car Rentals', icon: CarFront },
-    { id: 'vip', label: 'VIP Reservations', icon: Crown },
+    { id: 'vip', label: 'VIP Services', icon: Crown },
     { id: 'hotel', label: 'Hotels', icon: Building2 },
   ];
 

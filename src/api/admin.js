@@ -33,6 +33,11 @@ export const toggleAssetStatus = async (assetType, assetId, data) => {
   return response.data;
 };
 
+export const updateAssetApprovalStatus = async (assetType, assetId, status) => {
+  const response = await apiClient.patch(`/admin/assets/${assetType}/${assetId}/approval`, { status });
+  return response.data;
+};
+
 // ==========================================
 // 5. HOST APPLICATIONS COMMANDS
 // ==========================================
