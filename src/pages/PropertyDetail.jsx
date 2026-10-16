@@ -1,16 +1,20 @@
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { Share, Heart, Medal, ArrowLeft, Loader2, ChevronLeft, ChevronRight, MapPin, X, Star, MessageSquare } from 'lucide-react';
+import { 
+  Share, Heart, ArrowLeft, Loader2, 
+  ChevronLeft, ChevronRight, MapPin, 
+  X, Star, MessageSquare, PlayCircle, Video 
+} from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
 import { getPropertyReviewsApi, createPropertyReviewApi } from "../api/reviews";
-import { useAuth } from '../context/AuthContext'; // Adjust path as needed
+import { useAuth } from '../context/AuthContext'; 
 
 export default function PropertyDetail() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, setShowAuthModal } = useAuth(); // Assuming useAuth exposes the current user and auth modal trigger
+  const { user, setShowAuthModal } = useAuth(); 
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -36,6 +40,29 @@ export default function PropertyDetail() {
     }
   };
 
+  // 💡 NEW: Lightbox Navigation Handlers
+  const nextLightboxImage = (e) => {
+    e?.stopPropagation();
+    setLightboxIndex((prev) => (prev + 1) % property.images.length);
+  };
+  
+  const prevLightboxImage = (e) => {
+    e?.stopPropagation();
+    setLightboxIndex((prev) => (prev === 0 ? property.images.length - 1 : prev - 1));
+  };
+
+  // 💡 NEW: Keyboard Navigation for Lightbox
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (lightboxIndex === null) return;
+      if (e.key === 'ArrowRight') nextLightboxImage();
+      if (e.key === 'ArrowLeft') prevLightboxImage();
+      if (e.key === 'Escape') setLightboxIndex(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex]);
+
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -59,6 +86,7 @@ export default function PropertyDetail() {
           bathrooms: dbProp.bathrooms,
           category: dbProp.category,
           amenities: dbProp.amenities || [],
+          video: dbProp.video || null, // 💡 NEW: Extract Video URL
           images: dbProp.images?.length > 0 
             ? dbProp.images 
             : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"],
@@ -105,9 +133,6 @@ export default function PropertyDetail() {
     
     if (property) fetchSimilar();
   }, [property]);
-
-  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % property.images.length);
-  const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? property.images.length - 1 : prev - 1));
 
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
@@ -245,12 +270,52 @@ export default function PropertyDetail() {
         </div>
       )}
 
-      {/* LIGHTBOX CODE REMAINS UNCHANGED */}
+      {/* 💡 UPDATED: LIGHTBOX NOW SUPPORTS IN-PLACE NAVIGATION */}
       {lightboxIndex !== null && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
-          {/* ... Lightbox content from previous implementation ... */}
-          <button onClick={() => setLightboxIndex(null)} className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"><X className="w-8 h-8" /></button>
-          <img src={property.images[lightboxIndex]} alt="Expanded view" className="max-h-[90vh] max-w-[90vw] object-contain select-none" />
+        <div 
+          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setLightboxIndex(null)}
+        >
+          {/* Top Bar Navigation */}
+          <div className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
+            <div className="text-white font-bold text-sm bg-black/50 px-4 py-2 rounded-full">
+              {lightboxIndex + 1} / {property.images.length}
+            </div>
+            <button 
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }} 
+              className="text-white hover:bg-white/20 bg-white/10 rounded-full p-2.5 transition-colors"
+            >
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          {/* Image Container with Nav Arrows */}
+          <div className="relative w-full max-w-7xl px-4 flex items-center justify-center">
+            {property.images.length > 1 && (
+              <button 
+                onClick={prevLightboxImage} 
+                className="absolute left-4 md:left-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            )}
+
+            <img 
+              src={property.images[lightboxIndex]} 
+              alt="Expanded view" 
+              className="max-h-[85vh] max-w-full object-contain select-none rounded-xl shadow-2xl" 
+              onClick={(e) => e.stopPropagation()} 
+            />
+
+            {property.images.length > 1 && (
+              <button 
+                onClick={nextLightboxImage} 
+                className="absolute right-4 md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -289,7 +354,6 @@ export default function PropertyDetail() {
         
         <div className="lg:col-span-7 flex flex-col gap-8">
           
-          {/* FULL GALLERY RESTORED */}
           <div className="mb-4">
             
             {/* MOBILE VIEW */}
@@ -391,7 +455,7 @@ export default function PropertyDetail() {
           <div className="border-b border-gray-200 pb-10">
             <h2 className="text-xl font-bold text-gray-900 mb-4">Entire property hosted by Rentals</h2>
             
-            {/* Unicode characters removed, replaced with clean ASCII pipes */}
+            {/* 💡 UPDATED: Clean ASCII pipes instead of unicode dots */}
             <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6">
               <span>{property.maxGuests || 2} guests</span>
               {property.bedrooms && (
@@ -416,6 +480,25 @@ export default function PropertyDetail() {
                     </span>
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* 💡 NEW: Cinematic Video Tour Section */}
+            {property.video && (
+              <div className="mt-10 mb-10">
+                <div className="flex items-center space-x-2 mb-4">
+                  <Video className="w-5 h-5 text-gray-900" />
+                  <h3 className="text-xl font-bold text-gray-900">Cinematic Tour</h3>
+                </div>
+                <div className="w-full relative rounded-2xl overflow-hidden bg-black shadow-lg group">
+                  <video 
+                    src={property.video} 
+                    controls 
+                    preload="metadata"
+                    className="w-full h-auto max-h-[450px] object-contain"
+                    poster={property.images[0]} // Use the first image as the video thumbnail
+                  />
+                </div>
               </div>
             )}
 

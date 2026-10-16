@@ -1,8 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  X, UploadCloud, AlertCircle, Sparkles, 
+  X, UploadCloud, AlertCircle, 
   CheckCircle2, XCircle, Loader2, MapPin, 
-  Users, AlignLeft
+  Users, AlignLeft, Video 
 } from 'lucide-react';
 import { createProperty } from '../api/properties';
 
@@ -32,6 +32,8 @@ const AVAILABLE_AMENITIES = [
 
 export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const fileInputRef = useRef(null);
+  const videoInputRef = useRef(null);
+
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Processing Upload...');
   const [error, setError] = useState('');
@@ -43,8 +45,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [category, setCategory] = useState('APARTMENT');
   const [pricePerNight, setPricePerNight] = useState(150000);
   const [maxGuests, setMaxGuests] = useState(2);
-  
-  // NEW STATES: Bedrooms & Bathrooms
   const [bedrooms, setBedrooms] = useState(1);
   const [bathrooms, setBathrooms] = useState(1);
   
@@ -53,9 +53,12 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [city, setCity] = useState('');
   const [stateName, setStateName] = useState('');
   
+  // Media State
   const [amenities, setAmenities] = useState([]);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
+  const [selectedVideo, setSelectedVideo] = useState(null);
+  const [videoPreviewUrl, setVideoPreviewUrl] = useState(null);
 
   // Location Taxonomy
   const LOCATION_DATA = {
@@ -77,15 +80,38 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   };
 
   useEffect(() => {
-    return () => previewUrls.forEach(url => URL.revokeObjectURL(url));
-  }, [previewUrls]);
+    return () => {
+      previewUrls.forEach(url => URL.revokeObjectURL(url));
+      if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    };
+  }, [previewUrls, videoPreviewUrl]);
 
   if (!isOpen) return null;
 
+  const handleVideoSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.size > 50 * 1024 * 1024) {
+      setError("Video exceeds the 50MB size limit.");
+      return;
+    }
+
+    setError('');
+    setSelectedVideo(file);
+    setVideoPreviewUrl(URL.createObjectURL(file));
+  };
+
+  const removeVideo = () => {
+    if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
+    setSelectedVideo(null);
+    setVideoPreviewUrl(null);
+  };
+
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    if (selectedFiles.length + files.length > 10) {
-      setError("Maximum of 10 photos allowed to maintain platform standards.");
+    if (selectedFiles.length + files.length > 15) {
+      setError("Maximum of 15 photos allowed to maintain platform standards.");
       return;
     }
     
@@ -121,6 +147,8 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    
+    // 💡 REMOVED: Video is no longer mandatory
     if (selectedFiles.length === 0) {
       setError("Please upload at least one pristine photograph of the property.");
       return;
@@ -131,7 +159,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
     setLoadingText('Locating Property...');
 
     try {
-      // 1. Invisible Auto-Geocoding
       let resolvedLat = undefined;
       let resolvedLng = undefined;
       
@@ -148,17 +175,14 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
         console.warn("Geocoding failed, proceeding with text address only", geoError);
       }
 
-      setLoadingText('Publishing Listing...');
+      setLoadingText('Uploading Media & Generating Hashes...');
 
-      // 2. Build Payload
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
       formData.append('category', category);
       formData.append('pricePerNight', pricePerNight);
       formData.append('maxGuests', maxGuests);
-      
-      // APPEND NEW FIELDS
       formData.append('bedrooms', bedrooms);
       formData.append('bathrooms', bathrooms);
       
@@ -174,9 +198,14 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       }));
       
       amenities.forEach(amenity => formData.append('amenities', amenity));
+      
+      // 💡 UPDATED: Only append the video if the user actually uploaded one
+      if (selectedVideo) {
+        formData.append('video', selectedVideo); 
+      }
+      
       selectedFiles.forEach(file => formData.append('images', file));
 
-      // 3. API Call
       const response = await createProperty(formData);
       
       setShowToast(true);
@@ -209,6 +238,8 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
     setAmenities([]);
     setSelectedFiles([]);
     setPreviewUrls([]);
+    setSelectedVideo(null);
+    setVideoPreviewUrl(null);
     setLoading(false);
     setLoadingText('Processing Upload...');
   };
@@ -269,7 +300,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     />
                   </div>
 
-                  {/* UPDATED GRID WITH BEDROOMS & BATHROOMS */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Category</label>
@@ -376,7 +406,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
 
               <section>
                 <div className="flex items-center space-x-2 mb-6">
-                  
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight">Premium Amenities</h3>
                 </div>
                 
@@ -403,62 +432,106 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
               <hr className="border-gray-100" />
 
               <section>
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-3">
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight">Pristine Media</h3>
-                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                    {selectedFiles.length} / 10 PHOTOS
-                  </span>
+                  <div className="flex space-x-2">
+                    <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                      {selectedFiles.length} / 15 PHOTOS
+                    </span>
+                    {/* 💡 UPDATED: Badge says 'OPTIONAL' if no video is selected */}
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full ${selectedVideo ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-400'}`}>
+                      {selectedVideo ? '1 / 1 VIDEO' : 'OPTIONAL VIDEO'}
+                    </span>
+                  </div>
                 </div>
                 
                 <div className="mb-6 p-5 rounded-2xl bg-gray-900 text-white shadow-md border border-gray-800">
                   <div className="flex items-center space-x-2 text-amber-400 font-bold text-[10px] tracking-widest uppercase mb-2">
-                    
                     <span>Rentals Quality Standard</span>
                   </div>
+                  {/* 💡 UPDATED: Text specifies the video is optional */}
                   <p className="text-sm text-gray-300 leading-relaxed font-medium">
-                    Upload up to 10 high-resolution, professionally lit photographs. 
+                    Upload an optional 30-second video tour and up to 15 high-resolution photographs. 
                     No watermarks, heavy filters, or renders allowed. First image becomes your cover photo.
                   </p>
                 </div>
 
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors rounded-2xl p-10 flex flex-col items-center justify-center cursor-pointer group"
-                >
-                  <input 
-                    type="file" multiple accept="image/jpeg, image/png, image/webp"
-                    className="hidden" ref={fileInputRef} onChange={handleFileSelect}
-                  />
-                  <div className="p-4 bg-gray-100 group-hover:bg-white rounded-full mb-4 transition-colors shadow-sm">
-                    <UploadCloud className="w-8 h-8 text-gray-600 group-hover:text-gray-900" />
-                  </div>
-                  <span className="text-base font-semibold text-gray-900">Click to browse or drag photos here</span>
-                  <span className="text-sm text-gray-500 mt-1">JPEG, PNG up to 10MB each</span>
+                <div className="mb-8">
+                  {/* 💡 UPDATED: Label clearly marks it as optional */}
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Cinematic Video Tour (Optional)</label>
+                  {!selectedVideo ? (
+                    <div 
+                      onClick={() => videoInputRef.current?.click()}
+                      className="border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer group"
+                    >
+                      <input 
+                        type="file" accept="video/mp4, video/quicktime"
+                        className="hidden" ref={videoInputRef} onChange={handleVideoSelect}
+                      />
+                      <div className="p-3 bg-gray-100 group-hover:bg-white rounded-full mb-3 transition-colors shadow-sm">
+                        <Video className="w-6 h-6 text-gray-600 group-hover:text-gray-900" />
+                      </div>
+                      <span className="text-sm font-semibold text-gray-900">Upload 30-second Video</span>
+                      <span className="text-xs text-gray-500 mt-1">MP4, MOV up to 50MB</span>
+                    </div>
+                  ) : (
+                    <div className="relative rounded-2xl overflow-hidden border border-gray-200 bg-black flex justify-center h-48 md:h-64 shadow-inner">
+                      <video src={videoPreviewUrl} controls className="h-full object-contain" />
+                      <button 
+                        type="button" 
+                        onClick={(e) => { e.stopPropagation(); removeVideo(); }}
+                        className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-red-500 rounded-full text-white backdrop-blur-sm transition-colors"
+                      >
+                        <XCircle className="w-5 h-5" />
+                      </button>
+                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm uppercase tracking-wider">
+                        Cinematic Tour
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {previewUrls.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-6">
-                    {previewUrls.map((url, index) => (
-                      <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200 shadow-sm">
-                        <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <button 
-                            type="button" 
-                            onClick={(e) => { e.stopPropagation(); removeFile(index); }}
-                            className="p-2 bg-white/20 hover:bg-red-500 rounded-full text-white backdrop-blur-sm transition-colors"
-                          >
-                            <XCircle className="w-6 h-6" />
-                          </button>
-                        </div>
-                        {index === 0 && (
-                          <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm">
-                            COVER
-                          </div>
-                        )}
-                      </div>
-                    ))}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">High-Resolution Photos</label>
+                  <div 
+                    onClick={() => fileInputRef.current?.click()}
+                    className="border-2 border-dashed border-gray-300 hover:border-gray-900 hover:bg-gray-50 transition-colors rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer group"
+                  >
+                    <input 
+                      type="file" multiple accept="image/jpeg, image/png, image/webp"
+                      className="hidden" ref={fileInputRef} onChange={handleFileSelect}
+                    />
+                    <div className="p-4 bg-gray-100 group-hover:bg-white rounded-full mb-4 transition-colors shadow-sm">
+                      <UploadCloud className="w-8 h-8 text-gray-600 group-hover:text-gray-900" />
+                    </div>
+                    <span className="text-base font-semibold text-gray-900">Click to browse or drag photos here</span>
+                    <span className="text-sm text-gray-500 mt-1">JPEG, PNG up to 10MB each</span>
                   </div>
-                )}
+
+                  {previewUrls.length > 0 && (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-4 mt-6">
+                      {previewUrls.map((url, index) => (
+                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200 shadow-sm">
+                          <img src={url} alt={`Preview ${index}`} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <button 
+                              type="button" 
+                              onClick={(e) => { e.stopPropagation(); removeFile(index); }}
+                              className="p-2 bg-white/20 hover:bg-red-500 rounded-full text-white backdrop-blur-sm transition-colors"
+                            >
+                              <XCircle className="w-6 h-6" />
+                            </button>
+                          </div>
+                          {index === 0 && (
+                            <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm">
+                              COVER
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </section>
 
               <hr className="border-gray-100" />
