@@ -6,6 +6,7 @@ import VipListingView from '../components/VipListingView';
 import { getProperties } from '../api/properties';
 import { getCars } from '../api/car'; 
 import { Loader2, Search } from 'lucide-react';
+import FloatingPriceToggle from '../components/FloatingPriceTag';
 
 export default function Home({ 
   searchFilters = {}, 
@@ -186,6 +187,7 @@ export default function Home({
               )
             ))}
           </div>
+          <FloatingPriceToggle />
         </>
       )}
     </main>

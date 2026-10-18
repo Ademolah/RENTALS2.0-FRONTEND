@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
-  X, UploadCloud, AlertCircle, Sparkles, 
+  X, UploadCloud, AlertCircle, 
   CheckCircle2, XCircle, Loader2, MapPin, 
-  AlignLeft, Clock, Wine, Tags
+  Clock, Wine, Tags, ShieldCheck, Building
 } from 'lucide-react';
-import { createVipEstablishment } from '../api/vip';
+import { createVipEstablishment, createVipService } from '../api/vip';
 
 // --- CUSTOM SUCCESS TOAST COMPONENT ---
 const SuccessToast = ({ message, isVisible, onClose }) => {
@@ -25,7 +25,8 @@ const SuccessToast = ({ message, isVisible, onClose }) => {
 };
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const COMMON_SERVICES = ['Bottle Service', 'Private Cabana', 'Valet Parking', 'VIP Host', 'Private Security', 'Shisha', 'Fine Dining'];
+const COMMON_VENUE_SERVICES = ['Bottle Service', 'Private Cabana', 'Valet Parking', 'VIP Host', 'Private Security', 'Shisha', 'Fine Dining'];
+const COMMON_LOGISTICS_SERVICES = ['Armed Guards', 'Armored Vehicle', 'Advance Route Planning', '24/7 Availability', 'Dedicated Driver', 'Bilingual Staff'];
 
 export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const fileInputRef = useRef(null);
@@ -33,19 +34,31 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const [error, setError] = useState('');
   const [showToast, setShowToast] = useState(false);
 
+  // 💡 NEW: Listing Category Toggle ('VENUE' | 'SERVICE')
+  const [listingCategory, setListingCategory] = useState('VENUE');
+
   // Schema-Aligned Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  
+  // Venue State
   const [establishmentType, setEstablishmentType] = useState('LOUNGE');
-  const [customCategory, setCustomCategory] = useState(''); // NEW: Custom Category
-  const [depositAmount, setDepositAmount] = useState(150000);
+  const [customCategory, setCustomCategory] = useState('');
   const [dressCode, setDressCode] = useState('');
   const [openTime, setOpenTime] = useState('10:00 PM');
   const [closeTime, setCloseTime] = useState('04:00 AM');
   const [daysOpen, setDaysOpen] = useState(['Thursday', 'Friday', 'Saturday', 'Sunday']);
   
+  // Service State
+  const [serviceType, setServiceType] = useState('ARMED_ESCORT');
+  const [customServiceType, setCustomServiceType] = useState('');
+
+  // Shared Pricing State (Used as depositAmount for Venues, pricePerDay for Services)
+  const [priceAmount, setPriceAmount] = useState(150000);
+  
+  // Shared Inclusions State (services array)
   const [services, setServices] = useState([]);
-  const [customService, setCustomService] = useState(''); // NEW: Custom Service
+  const [customService, setCustomService] = useState(''); 
 
   // Address State
   const [street, setStreet] = useState('');
@@ -55,7 +68,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
 
-  // Location Taxonomy (Strictly Lagos & Abuja)
+  // Location Taxonomy 
   const LOCATION_DATA = {
     "Lagos": [
       "Ikoyi", "Banana Island", "Victoria Island", "Lekki Phase 1", 
@@ -78,12 +91,19 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     return () => previewUrls.forEach(url => URL.revokeObjectURL(url));
   }, [previewUrls]);
 
+  // Reset category-specific arrays when switching tabs
+  useEffect(() => {
+    setServices([]);
+  }, [listingCategory]);
+
   if (!isOpen) return null;
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    if (selectedFiles.length + files.length > 10) {
-      setError("Maximum of 10 photos allowed.");
+    const maxFiles = listingCategory === 'VENUE' ? 10 : 5;
+    
+    if (selectedFiles.length + files.length > maxFiles) {
+      setError(`Maximum of ${maxFiles} photos allowed for VIP ${listingCategory === 'VENUE' ? 'Venues' : 'Services'}.`);
       return;
     }
     
@@ -115,7 +135,6 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
   };
 
-  // NEW: Add Custom Service Handler
   const addCustomService = (e) => {
     e.preventDefault();
     if (customService.trim() && !services.includes(customService.trim())) {
@@ -127,16 +146,15 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (selectedFiles.length === 0) {
-      setError("Please upload at least one pristine photograph of the establishment.");
+      setError("Please upload at least one photograph of the listing.");
       return;
     }
-    if (daysOpen.length === 0) {
-      setError("Please select at least one operating day.");
-      return;
-    }
-    if (establishmentType === 'OTHER' && !customCategory.trim()) {
-      setError("Please specify the custom category for this establishment.");
-      return;
+    
+    if (listingCategory === 'VENUE') {
+      if (daysOpen.length === 0) return setError("Please select at least one operating day.");
+      if (establishmentType === 'OTHER' && !customCategory.trim()) return setError("Please specify the custom category.");
+    } else {
+      if (serviceType === 'OTHER' && !customServiceType.trim()) return setError("Please specify the custom service type.");
     }
 
     setLoading(true);
@@ -146,30 +164,39 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      
-      // Submit custom category if 'OTHER' is selected
-      formData.append('establishmentType', establishmentType === 'OTHER' ? customCategory : establishmentType);
-      
-      formData.append('depositAmount', depositAmount);
-      formData.append('dressCode', dressCode);
-      formData.append('street', street);
       formData.append('city', city);
       formData.append('state', stateName);
-      formData.append('open', openTime);
-      formData.append('close', closeTime);
-      
-      // Backend controller parses these JSON strings
-      formData.append('daysOpen', JSON.stringify(daysOpen));
       formData.append('services', JSON.stringify(services));
-      
       selectedFiles.forEach(file => formData.append('images', file));
 
-      const response = await createVipEstablishment(formData);
+      let response;
+
+      // 💡 NEW: Dynamic Payload Construction based on Category
+      if (listingCategory === 'VENUE') {
+        formData.append('establishmentType', establishmentType === 'OTHER' ? customCategory : establishmentType);
+        formData.append('depositAmount', priceAmount);
+        formData.append('dressCode', dressCode);
+        formData.append('street', street);
+        formData.append('open', openTime);
+        formData.append('close', closeTime);
+        formData.append('daysOpen', JSON.stringify(daysOpen));
+        
+        response = await createVipEstablishment(formData);
+      } else {
+        formData.append('serviceType', serviceType === 'OTHER' ? customServiceType : serviceType);
+        formData.append('pricePerDay', priceAmount);
+        formData.append('street', street || 'Service Area'); // Optional for services
+        
+        response = await createVipService(formData);
+      }
       
       setShowToast(true);
       
       setTimeout(() => {
-        if (onEstablishmentAdded) onEstablishmentAdded(response.data.data.establishment);
+        if (onEstablishmentAdded) {
+          // Send back the newly created doc to immediately render it
+          onEstablishmentAdded(response.data?.data?.establishment || response.data?.data?.service);
+        }
         setShowToast(false);
         onClose();
         resetForm();
@@ -185,8 +212,10 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setTitle('');
     setDescription('');
     setEstablishmentType('LOUNGE');
+    setServiceType('ARMED_ESCORT');
     setCustomCategory('');
-    setDepositAmount(150000);
+    setCustomServiceType('');
+    setPriceAmount(150000);
     setDressCode('');
     setOpenTime('10:00 PM');
     setCloseTime('04:00 AM');
@@ -201,9 +230,11 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setLoading(false);
   };
 
+  const currentCommonServices = listingCategory === 'VENUE' ? COMMON_VENUE_SERVICES : COMMON_LOGISTICS_SERVICES;
+
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6 overflow-hidden">
         <div className="bg-white md:rounded-3xl w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl flex flex-col shadow-2xl relative animate-in fade-in zoom-in-95 duration-200">
           
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex justify-between items-center md:rounded-t-3xl">
@@ -219,8 +250,38 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
             </button>
           </div>
 
-          <div className="overflow-y-auto p-6 md:p-8 space-y-12 custom-scrollbar">
+          <div className="overflow-y-auto p-6 md:p-8 space-y-10 custom-scrollbar">
             
+            {/* 💡 NEW: Segmented Control for Venue vs Service */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-gray-100 p-1.5 rounded-2xl inline-flex space-x-1 shadow-inner border border-gray-200 w-full md:w-auto">
+                <button
+                  type="button"
+                  onClick={() => setListingCategory('VENUE')}
+                  className={`flex-1 md:flex-none flex justify-center items-center space-x-2 px-6 py-3 rounded-xl text-xs md:text-sm font-black tracking-widest uppercase transition-all duration-300 ${
+                    listingCategory === 'VENUE' 
+                      ? 'bg-black text-amber-400 shadow-md' 
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <Building className="w-4 h-4" />
+                  <span>VIP Venue</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setListingCategory('SERVICE')}
+                  className={`flex-1 md:flex-none flex justify-center items-center space-x-2 px-6 py-3 rounded-xl text-xs md:text-sm font-black tracking-widest uppercase transition-all duration-300 ${
+                    listingCategory === 'SERVICE' 
+                      ? 'bg-black text-amber-400 shadow-md' 
+                      : 'text-gray-500 hover:text-gray-900'
+                  }`}
+                >
+                  <ShieldCheck className="w-4 h-4" />
+                  <span>VIP Service</span>
+                </button>
+              </div>
+            </div>
+
             {error && (
               <div className="p-4 bg-red-50 border border-red-100 text-red-600 rounded-2xl text-sm font-medium flex items-start space-x-3">
                 <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
@@ -233,69 +294,99 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
               <section>
                 <div className="flex items-center space-x-2 mb-6">
                   <Wine className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Establishment Details</h3>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Listing Details</h3>
                 </div>
                 
                 <div className="space-y-6">
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Establishment Name</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                      {listingCategory === 'VENUE' ? 'Establishment Name' : 'Service Title'}
+                    </label>
                     <input 
                       type="text" required maxLength={70}
-                      placeholder="e.g. The Velvet Room"
+                      placeholder={listingCategory === 'VENUE' ? "e.g. The Velvet Room" : "e.g. Elite Armed Escort Convoy"}
                       value={title} onChange={(e) => setTitle(e.target.value)}
                       className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Vibe & Description</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Description</label>
                     <textarea 
                       required rows={3}
-                      placeholder="Describe the aesthetic, music genre, and exclusive features..."
+                      placeholder="Describe the exclusive experience, features, and target audience..."
                       value={description} onChange={(e) => setDescription(e.target.value)}
                       className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white resize-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Category Dropdown (Dynamic based on Category) */}
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Category</label>
-                      <select 
-                        value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
-                      >
-                        <option value="LOUNGE">Premium Lounge</option>
-                        <option value="CLUB">Nightclub</option>
-                        <option value="FINE_DINING">Fine Dining</option>
-                        <option value="BEACH_CLUB">Beach Club</option>
-                        <option value="PRIVATE_YACHT">Private Yacht</option>
-                        <option value="OTHER">Other</option>
-                      </select>
-
-                      {/* NEW: Conditional input for bespoke category */}
-                      {establishmentType === 'OTHER' && (
-                        <div className="mt-3 animate-in fade-in slide-in-from-top-2">
-                          <input 
-                            type="text" 
-                            placeholder="e.g. Private Villa, Golf Resort" 
-                            value={customCategory} 
-                            onChange={(e) => setCustomCategory(e.target.value)}
-                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
-                            required={establishmentType === 'OTHER'}
-                          />
-                        </div>
+                      {listingCategory === 'VENUE' ? (
+                        <>
+                          <select 
+                            value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)}
+                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
+                          >
+                            <option value="LOUNGE">Premium Lounge</option>
+                            <option value="CLUB">Nightclub</option>
+                            <option value="FINE_DINING">Fine Dining</option>
+                            <option value="BEACH_CLUB">Beach Club</option>
+                            <option value="PRIVATE_YACHT">Private Yacht</option>
+                            <option value="OTHER">Other</option>
+                          </select>
+                          {establishmentType === 'OTHER' && (
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                              <input 
+                                type="text" placeholder="e.g. Golf Resort" 
+                                value={customCategory} onChange={(e) => setCustomCategory(e.target.value)}
+                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
+                                required={establishmentType === 'OTHER'}
+                              />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <select 
+                            value={serviceType} onChange={(e) => setServiceType(e.target.value)}
+                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
+                          >
+                            <option value="ARMED_ESCORT">Armed Escort</option>
+                            <option value="CHAUFFEUR">Private Chauffeur</option>
+                            <option value="PRIVATE_CHEF">Private Chef</option>
+                            <option value="HELICOPTER_CHARTER">Helicopter Charter</option>
+                            <option value="CONCIERGE">Personal Concierge</option>
+                            <option value="OTHER">Other Service</option>
+                          </select>
+                          {serviceType === 'OTHER' && (
+                            <div className="mt-3 animate-in fade-in slide-in-from-top-2">
+                              <input 
+                                type="text" placeholder="e.g. VIP Event Security" 
+                                value={customServiceType} onChange={(e) => setCustomServiceType(e.target.value)}
+                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
+                                required={serviceType === 'OTHER'}
+                              />
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
 
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Dress Code</label>
-                      <input 
-                        type="text" required
-                        placeholder="e.g. Smart Elegant. No athletic wear."
-                        value={dressCode} onChange={(e) => setDressCode(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
-                      />
-                    </div>
+                    {/* Venue Only: Dress Code */}
+                    {listingCategory === 'VENUE' && (
+                      <div className="animate-in fade-in">
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Dress Code</label>
+                        <input 
+                          type="text" required
+                          placeholder="e.g. Smart Elegant. No athletic wear."
+                          value={dressCode} onChange={(e) => setDressCode(e.target.value)}
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        />
+                      </div>
+                    )}
                   </div>
                 </div>
               </section>
@@ -305,15 +396,15 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
               <section>
                 <div className="flex items-center space-x-2 mb-6">
                   <MapPin className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Location (Exclusive)</h3>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Location</h3>
                 </div>
                 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Street Address</label>
                     <input 
-                      type="text" required
-                      placeholder="e.g. 15 Adetokunbo Ademola Street"
+                      type="text" required={listingCategory === 'VENUE'}
+                      placeholder={listingCategory === 'VENUE' ? "e.g. 15 Adetokunbo Ademola Street" : "e.g. Dispatch HQ (Optional)"}
                       value={street} onChange={(e) => setStreet(e.target.value)}
                       className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
                     />
@@ -335,7 +426,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">City / Neighborhood</label>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">City / Base</label>
                     <select 
                       required
                       value={city} 
@@ -357,52 +448,62 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
               <section>
                 <div className="flex items-center space-x-2 mb-6">
                   <Clock className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Operations & Services</h3>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">
+                    {listingCategory === 'VENUE' ? 'Operations & Services' : 'Service Inclusions'}
+                  </h3>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Opening Time</label>
-                    <input 
-                      type="text" required placeholder="e.g. 10:00 PM"
-                      value={openTime} onChange={(e) => setOpenTime(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Closing Time</label>
-                    <input 
-                      type="text" required placeholder="e.g. 04:00 AM"
-                      value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
-                    />
-                  </div>
-                </div>
+                {/* Venue Only: Times and Days */}
+                {listingCategory === 'VENUE' && (
+                  <div className="animate-in fade-in">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Opening Time</label>
+                        <input 
+                          type="text" required placeholder="e.g. 10:00 PM"
+                          value={openTime} onChange={(e) => setOpenTime(e.target.value)}
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Closing Time</label>
+                        <input 
+                          type="text" required placeholder="e.g. 04:00 AM"
+                          value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        />
+                      </div>
+                    </div>
 
-                <div className="mb-8">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Operating Days</label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAYS_OF_WEEK.map(day => {
-                      const isSelected = daysOpen.includes(day);
-                      return (
-                        <button
-                          key={day} type="button" onClick={() => toggleDay(day)}
-                          className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${
-                            isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-900'
-                          }`}
-                        >
-                          {day.substring(0, 3)}
-                        </button>
-                      )
-                    })}
+                    <div className="mb-8">
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Operating Days</label>
+                      <div className="flex flex-wrap gap-2">
+                        {DAYS_OF_WEEK.map(day => {
+                          const isSelected = daysOpen.includes(day);
+                          return (
+                            <button
+                              key={day} type="button" onClick={() => toggleDay(day)}
+                              className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all duration-200 border ${
+                                isSelected ? 'bg-gray-900 text-white border-gray-900 shadow-md' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-900'
+                              }`}
+                            >
+                              {day.substring(0, 3)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
 
+                {/* Common: Service Inclusions (Pills) */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">VIP Services Provided</label>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">
+                    {listingCategory === 'VENUE' ? 'VIP Amenities Provided' : 'What is Included?'}
+                  </label>
                   
                   <div className="flex flex-wrap gap-2 mb-4">
-                    {COMMON_SERVICES.map(service => {
+                    {currentCommonServices.map(service => {
                       const isSelected = services.includes(service);
                       return (
                         <button
@@ -416,22 +517,20 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       )
                     })}
 
-                    {/* NEW: Render custom bespoke services */}
-                    {services.filter(s => !COMMON_SERVICES.includes(s)).map(service => (
+                    {services.filter(s => !currentCommonServices.includes(s)).map(service => (
                       <button 
                         key={service} type="button" onClick={() => toggleService(service)} 
-                        className="px-4 py-2 rounded-full text-xs font-semibold transition-all border bg-gray-900 text-white border-gray-900 hover:bg-red-600 hover:border-red-600 group shadow-md"
+                        className="px-4 py-2 rounded-full text-xs font-semibold transition-all border bg-gray-900 text-white border-gray-900 hover:bg-red-600 hover:border-red-600 group shadow-md flex items-center"
                       >
                         {service} <span className="ml-1 opacity-50 group-hover:opacity-100">✕</span>
                       </button>
                     ))}
                   </div>
 
-                  {/* NEW: Input to add bespoke services */}
                   <div className="flex gap-2">
                     <input 
                       type="text" 
-                      placeholder="Type a custom service (e.g. Helipad)..." 
+                      placeholder={listingCategory === 'VENUE' ? "Add custom amenity (e.g. Helipad)..." : "Add custom inclusion (e.g. 1 SUV)..."}
                       value={customService}
                       onChange={(e) => setCustomService(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addCustomService(e)}
@@ -455,7 +554,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight">Premium Media</h3>
                   <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                    {selectedFiles.length} / 10 PHOTOS
+                    {selectedFiles.length} / {listingCategory === 'VENUE' ? '10' : '5'} PHOTOS
                   </span>
                 </div>
                 
@@ -464,7 +563,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                     <span>Rentals Quality Standard</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed font-medium">
-                    Upload high-resolution, vibrant photographs of the venue. First image becomes the cover photo.
+                    Upload high-resolution, vibrant photographs. The first image becomes the primary cover photo.
                   </p>
                 </div>
 
@@ -507,31 +606,37 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
               <section className="pb-10">
                 <div className="flex items-center space-x-2 mb-6">
                   <Tags className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Deposit Configuration</h3>
+                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Pricing Configuration</h3>
                 </div>
                 
                 <div className="p-8 rounded-2xl border border-gray-200 bg-gray-50/50">
                   <div className="flex justify-between items-end mb-8">
                     <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Required Escrow Deposit</label>
-                      <p className="text-sm text-gray-500">Minimum spend or table deposit to secure the reservation.</p>
+                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
+                        {listingCategory === 'VENUE' ? 'Required Escrow Deposit' : 'Daily Rate (NGN)'}
+                      </label>
+                      <p className="text-sm text-gray-500">
+                        {listingCategory === 'VENUE' 
+                          ? 'Minimum spend or table deposit to secure the reservation.' 
+                          : 'The base cost per day for this service.'}
+                      </p>
                     </div>
                     <div className="text-right">
-                      <span className="text-4xl font-bold text-gray-900 tracking-tight">₦{Number(depositAmount).toLocaleString()}</span>
+                      <span className="text-4xl font-bold text-gray-900 tracking-tight">₦{Number(priceAmount).toLocaleString()}</span>
                     </div>
                   </div>
 
                   <input 
                     type="range" 
                     min="20000" max="5000000" step="20000"
-                    value={depositAmount}
-                    onChange={(e) => setDepositAmount(Number(e.target.value))}
+                    value={priceAmount}
+                    onChange={(e) => setPriceAmount(Number(e.target.value))}
                     className="w-full h-2.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/10"
                   />
                   
                   <div className="flex justify-between items-center text-sm pt-6 mt-6 border-t border-gray-200">
-                    <span className="text-gray-500 font-medium">Platform Concierge Fee</span>
-                    <span className="font-semibold text-gray-700">5% Charged to Guest</span>
+                    <span className="text-gray-500 font-medium">Platform Escrow Fee</span>
+                    <span className="font-semibold text-gray-700">5% Charged to Guest at Checkout</span>
                   </div>
                 </div>
               </section>
@@ -554,7 +659,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                     <span className="font-semibold text-sm tracking-wide">Publishing...</span>
                   </>
                 ) : (
-                  <span className="font-semibold text-sm tracking-wide">Publish VIP Listing</span>
+                  <span className="font-semibold text-sm tracking-wide">Publish {listingCategory === 'VENUE' ? 'Venue' : 'Service'}</span>
                 )}
               </div>
             </button>
@@ -564,7 +669,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
       </div>
       
       <SuccessToast 
-        message="VIP Establishment published successfully!" 
+        message={`VIP ${listingCategory === 'VENUE' ? 'Establishment' : 'Service'} published successfully!`} 
         isVisible={showToast} 
         onClose={() => setShowToast(false)} 
       />

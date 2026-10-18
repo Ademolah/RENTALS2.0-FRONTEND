@@ -7,21 +7,17 @@ import {
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel'; 
-// SURGICAL FIX: Import VIP APIs
 import { getLandlordVipEstablishments, confirmVipArrival } from '../api/vip'; 
 
 import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddCarModal from '../components/AddCarModal';
 import CreateHotelModal from '../components/CreateHotelModal';
-// SURGICAL FIX: Import VIP Modals
 import AddVipModal from '../components/AddVipModal';
-import EditVipModal from '../components/EditVipModal'; // Create a stub for this file if you haven't yet
-
+import EditVipModal from '../components/EditVipModal'; 
 import EditCarModal from '../components/EditCarModal';
 import EditPropertyModal from '../components/EditPropertyModal';
 import EditHotelModal from '../components/EditHotelModal';
-
 
 export default function LandlordDashboard() {
   const [activeTab, setActiveTab] = useState('ACTION_FEED');
@@ -35,13 +31,11 @@ export default function LandlordDashboard() {
   const [isPropertyModalOpen, setIsPropertyModalOpen] = useState(false);
   const [isCarModalOpen, setIsCarModalOpen] = useState(false);
   const [isHotelModalOpen, setIsHotelModalOpen] = useState(false);
-  // SURGICAL FIX: VIP Modal States
   const [isVipModalOpen, setIsVipModalOpen] = useState(false);
   
   const [editingCarId, setEditingCarId] = useState(null);
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [editingHotelId, setEditingHotelId] = useState(null);
-  // SURGICAL FIX: VIP Edit State
   const [editingVipId, setEditingVipId] = useState(null);
 
   useEffect(() => {
@@ -51,7 +45,6 @@ export default function LandlordDashboard() {
   const fetchPortfolioData = async () => {
     setIsLoading(true);
     try {
-      // SURGICAL FIX: Add rawVIPsResponse to the fetch batch
       const [
         propResponse, carResponse, hotelResponse, rawHotelsResponse, rawVIPsResponse
       ] = await Promise.all([
@@ -66,11 +59,9 @@ export default function LandlordDashboard() {
       const carData = carResponse?.data?.bookings || [];
       const hotelData = hotelResponse?.data?.bookings || [];
       
-      // Extract raw hotels
       const extractedHotels = rawHotelsResponse?.data?.data?.hotels || rawHotelsResponse?.data?.hotels;
       const rawHotels = Array.isArray(extractedHotels) ? extractedHotels : [];
 
-      // SURGICAL FIX: Strictly extract establishments array and guarantee it is an array
       const extractedVIPs = rawVIPsResponse?.data?.data?.establishments || rawVIPsResponse?.data?.establishments;
       const rawVIPs = Array.isArray(extractedVIPs) ? extractedVIPs : [];
 
@@ -82,16 +73,23 @@ export default function LandlordDashboard() {
           : 'Location hidden';
       };
 
-      // Normalize Property (Shortlet) Bookings
-      // Normalize Property (Shortlet) Bookings
+      // Normalize Property Bookings (This now catches Shortlets, VIP Venues, AND VIP Services)
       const normalizedProps = propData.map(b => {
-        // SURGICAL FIX: Dynamically assign type based on category
         let trueType = 'SHORTLET';
-        if (b.propertyId?.category === 'VIP RESERVATION' || b.propertyId?.category === 'VIP') {
+        const category = b.propertyId?.category;
+        
+        if (category === 'VIP_SERVICE') {
+          trueType = 'VIP_SERVICE';
+        } else if (category === 'VIP RESERVATION' || category === 'VIP') {
           trueType = 'VIP';
-        } else if (b.propertyId?.category === 'HOTEL') {
+        } else if (category === 'HOTEL') {
           trueType = 'HOTEL';
         }
+
+        // Services use start/end date logic, Venues use checkIn/checkOut. We safely fallback.
+        const dateString = b.startDate && b.endDate 
+          ? `${new Date(b.startDate).toLocaleDateString()} - ${new Date(b.endDate).toLocaleDateString()}`
+          : `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`;
 
         return {
           _id: b._id,
@@ -99,17 +97,17 @@ export default function LandlordDashboard() {
           type: trueType,
           reservationStatus: b.reservationStatus,
           escrowStatus: b.escrowStatus,
-          checkInConfirmedByGuest: b.checkInConfirmedByGuest,
-          checkInConfirmedByHost: b.checkInConfirmedByHost,
+          checkInConfirmedByGuest: b.guestConfirmedDelivery || b.checkInConfirmedByGuest,
+          checkInConfirmedByHost: b.ownerConfirmedDelivery || b.checkInConfirmedByHost,
           payoutAmount: b.totalAmount, 
-          dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
+          dates: dateString,
           guest: { 
-            firstName: b.userId?.firstName || 'Guest', 
+            firstName: b.userId?.firstName || 'Client', 
             lastName: b.userId?.lastName || '', 
             phone: b.userId?.phoneNumber || 'N/A' 
           },
           asset: { 
-            title: b.propertyId?.title || 'Property', 
+            title: b.propertyId?.title || 'Asset', 
             location: normalizeLocation(b.propertyId?.address),
             image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'
           },
@@ -117,7 +115,6 @@ export default function LandlordDashboard() {
         };
       });
 
-      // Normalize Hotel Bookings
       const normalizedHotels = hotelData.map(b => ({
         _id: b._id,
         type: 'HOTEL',
@@ -127,20 +124,14 @@ export default function LandlordDashboard() {
         checkInConfirmedByHost: b.checkInConfirmedByHost,
         payoutAmount: b.totalAmount, 
         dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
-        guest: { 
-          firstName: b.userId?.firstName || 'Guest', 
-          lastName: b.userId?.lastName || '', 
-          phone: b.userId?.phoneNumber || 'N/A' 
-        },
+        guest: { firstName: b.userId?.firstName || 'Guest', lastName: b.userId?.lastName || '', phone: b.userId?.phoneNumber || 'N/A' },
         asset: { 
-          title: b.propertyId?.title || 'Hotel', 
-          location: normalizeLocation(b.propertyId?.address),
+          title: b.propertyId?.title || 'Hotel', location: normalizeLocation(b.propertyId?.address),
           image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1551882547-ff40eb0d1556?auto=format&fit=crop&w=800&q=80'
         },
         createdAt: new Date(b.createdAt)
       }));
 
-      // Normalize Car Bookings
       const normalizedCars = carData.map(b => ({
         _id: b._id,
         assetId: b.carId?._id,
@@ -151,11 +142,7 @@ export default function LandlordDashboard() {
         ownerConfirmedHandover: b.ownerConfirmedHandover,
         payoutAmount: b.totalAmount, 
         dates: `${new Date(b.pickupTime).toLocaleDateString()} - ${new Date(b.dropoffTime).toLocaleDateString()}`,
-        guest: { 
-          firstName: b.userId?.firstName || 'Guest', 
-          lastName: b.userId?.lastName || '', 
-          phone: b.userId?.phoneNumber || 'N/A' 
-        },
+        guest: { firstName: b.userId?.firstName || 'Guest', lastName: b.userId?.lastName || '', phone: b.userId?.phoneNumber || 'N/A' },
         asset: { 
           title: b.carId ? `${b.carId.make} ${b.carId.carModel} ${b.carId.year}` : 'Vehicle', 
           location: b.carId?.location?.city ? `${b.carId.location.city}, ${b.carId.location.state}` : 'Platform Pickup',
@@ -164,34 +151,24 @@ export default function LandlordDashboard() {
         createdAt: new Date(b.createdAt)
       }));
 
-      // Normalize Raw Hotels (for the specific tab display)
       const normalizedRawHotels = rawHotels.map(h => ({
-        _id: h._id,
-        assetId: h._id,
-        type: 'HOTEL',
-        isRawAsset: true, 
-        payoutAmount: 0, 
-        dates: 'No active bookings',
+        _id: h._id, assetId: h._id, type: 'HOTEL', isRawAsset: true, payoutAmount: 0, dates: 'No active bookings',
         guest: { firstName: 'No', lastName: 'Guest Yet', phone: 'N/A' }, 
-        asset: { 
-          title: h.title || 'Hotel', 
-          location: normalizeLocation(h.address),
-          image: h.images?.[0] || 'https://images.unsplash.com/photo-1551882547-ff40eb0d1556?auto=format&fit=crop&w=800&q=80'
-        },
+        asset: { title: h.title || 'Hotel', location: normalizeLocation(h.address), image: h.images?.[0] },
         createdAt: new Date(h.createdAt || Date.now())
       }));
 
-      // SURGICAL FIX: Normalize Raw VIP Establishments
+      // Normalize Raw VIP Assets (Separates Venues from Services dynamically)
       const normalizedRawVIPs = rawVIPs.map(v => ({
         _id: v._id,
         assetId: v._id,
-        type: 'VIP',
+        type: v.category === 'VIP_SERVICE' ? 'VIP_SERVICE' : 'VIP',
         isRawAsset: true, 
         payoutAmount: 0, 
         dates: 'No active reservations',
-        guest: { firstName: 'No', lastName: 'Guest Yet', phone: 'N/A' }, 
+        guest: { firstName: 'No', lastName: 'Client Yet', phone: 'N/A' }, 
         asset: { 
-          title: v.title || 'VIP Venue', 
+          title: v.title || 'VIP Asset', 
           location: normalizeLocation(v.address),
           image: v.images?.[0] || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?auto=format&fit=crop&w=800&q=80'
         },
@@ -215,7 +192,7 @@ export default function LandlordDashboard() {
     const { _id: id, type } = booking;
     const isCar = type === 'CAR';
     const isHotel = type === 'HOTEL';
-    const isVip = type === 'VIP'; // Determine if VIP
+    const isVip = type === 'VIP' || type === 'VIP_SERVICE'; 
     
     const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
     
@@ -226,7 +203,8 @@ export default function LandlordDashboard() {
       } else if (isHotel) {
         await confirmHotelCheckIn(id); 
       } else if (isVip) {
-        await confirmVipArrival(id); // Use VIP specific endpoint
+        // Both Venues and Services use the same backend engine
+        await confirmVipArrival(id); 
       } else {
         await confirmPropertyCheckIn(id);
       }
@@ -240,7 +218,7 @@ export default function LandlordDashboard() {
         if (b._id === id) {
           const updated = { ...b };
           if (isCar) updated.ownerConfirmedHandover = true;
-          else updated.checkInConfirmedByHost = true; // Works for Hotel, Shortlet, and VIP
+          else updated.checkInConfirmedByHost = true; 
 
           if (isPayoutReleased) updated.escrowStatus = 'RELEASED';
           return updated;
@@ -267,7 +245,6 @@ export default function LandlordDashboard() {
     if (type === 'PROPERTY') setIsPropertyModalOpen(true);
     else if (type === 'CAR') setIsCarModalOpen(true);
     else if (type === 'HOTEL') setIsHotelModalOpen(true);
-    // SURGICAL FIX: Trigger VIP Modal instead of alert
     else if (type === 'VIP') setIsVipModalOpen(true); 
   };
 
@@ -276,7 +253,8 @@ export default function LandlordDashboard() {
     if (type === 'SHORTLET') return 'Confirm Checkin';
     if (type === 'CAR') return 'Confirm Pickup';
     if (type === 'HOTEL') return 'Guest Checked In';
-    if (type === 'VIP') return 'Confirm Arrival'; // VIP Button text
+    if (type === 'VIP') return 'Confirm Arrival'; 
+    if (type === 'VIP_SERVICE') return 'Confirm Service Delivery'; 
     return 'Confirm';
   };
 
@@ -289,8 +267,7 @@ export default function LandlordDashboard() {
     if (booking.type === 'CAR') setEditingCarId(booking.assetId);
     else if (booking.type === 'SHORTLET') setEditingPropertyId(booking.assetId);
     else if (booking.type === 'HOTEL') setEditingHotelId(booking.assetId);
-    // SURGICAL FIX: Manage VIP Asset
-    else if (booking.type === 'VIP') setEditingVipId(booking.assetId);
+    else if (booking.type === 'VIP' || booking.type === 'VIP_SERVICE') setEditingVipId(booking.assetId);
   };
 
   return (
@@ -354,8 +331,8 @@ export default function LandlordDashboard() {
                     <button onClick={() => handleAssetMenuClick('VIP')} className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
                       <Crown className="w-5 h-5 text-amber-500 group-hover:text-amber-600 transition-colors" />
                       <div className="text-left">
-                        <div className="text-sm font-bold text-gray-900">VIP Venue</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Lounge • Club • Yacht</div>
+                        <div className="text-sm font-bold text-gray-900">VIP Asset</div>
+                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Venue • Service • Security</div>
                       </div>
                     </button>
                   </div>
@@ -390,10 +367,10 @@ export default function LandlordDashboard() {
         </div>
       </div>
 
-      {/* STRICT TAB NAVIGATION WITH NEW VIP TAB */}
+      {/* STRICT TAB NAVIGATION */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-12">
         <div className="flex overflow-x-auto pb-4 scrollbar-hide space-x-8 border-b border-gray-200">
-          {['ACTION_FEED', 'SHORTLETS', 'HOTELS', 'CARS', 'VIP VENUES'].map((tab) => (
+          {['ACTION_FEED', 'SHORTLETS', 'HOTELS', 'CARS', 'VIP ASSETS'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
@@ -401,7 +378,7 @@ export default function LandlordDashboard() {
                 activeTab === tab ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'
               }`}
             >
-              {tab === 'ACTION_FEED' ? 'Ledger & Actions' : tab === 'VIP VENUES' ? 'VIP VENUES' : `My ${tab}`}
+              {tab === 'ACTION_FEED' ? 'Ledger & Actions' : tab === 'VIP ASSETS' ? 'VIP ASSETS' : `My ${tab}`}
               {activeTab === tab && (
                 <div className="absolute bottom-0 left-0 w-full h-[3px] bg-brand-primary rounded-t-full" />
               )}
@@ -410,7 +387,6 @@ export default function LandlordDashboard() {
         </div>
       </div>
 
-    
       {/* CONTENT AREA */}
       <div className="max-w-7xl mx-auto px-6 lg:px-12 mt-10">
         {isLoading ? (
@@ -424,6 +400,7 @@ export default function LandlordDashboard() {
               const isCar = booking.type === 'CAR';
               const isHotel = booking.type === 'HOTEL';
               const isVip = booking.type === 'VIP';
+              const isVipService = booking.type === 'VIP_SERVICE';
               const isReleased = booking.escrowStatus === 'RELEASED';
               const hasHostConfirmed = isCar ? booking.ownerConfirmedHandover : booking.checkInConfirmedByHost;
               const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
@@ -432,8 +409,8 @@ export default function LandlordDashboard() {
               return (
                 <div key={booking._id} className="bg-white border border-gray-100 hover:border-gray-300 hover:shadow-xl transition-all p-6 relative group flex flex-col lg:flex-row gap-8 rounded-2xl overflow-hidden">
                   
-                  <div className={`absolute top-4 left-4 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg z-10 shadow-sm ${isVip ? 'bg-amber-400 text-gray-900' : 'bg-gray-900/90 text-white'}`}>
-                    {isCar ? 'Vehicle' : isHotel ? 'Hotel Room' : isVip ? 'VIP Reservation' : 'Property'}
+                  <div className={`absolute top-4 left-4 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg z-10 shadow-sm ${(isVip || isVipService) ? 'bg-amber-400 text-gray-900' : 'bg-gray-900/90 text-white'}`}>
+                    {isCar ? 'Vehicle' : isHotel ? 'Hotel Room' : isVipService ? 'VIP Service' : isVip ? 'VIP Reservation' : 'Property'}
                   </div>
 
                   <div className="w-full lg:w-72 h-56 lg:h-auto relative overflow-hidden bg-gray-100 shrink-0 rounded-xl">
@@ -455,7 +432,7 @@ export default function LandlordDashboard() {
                       
                       <div className="space-y-5 bg-gray-50 rounded-xl p-5 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Guest</div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Client</div>
                           <div className="text-right">
                             <div className="text-sm font-bold text-gray-900">{booking.guest.firstName} {booking.guest.lastName}</div>
                             <div className="text-xs text-gray-500 font-medium">{booking.guest.phone}</div>
@@ -481,11 +458,11 @@ export default function LandlordDashboard() {
                           </div>
                         ) : hasHostConfirmed && !hasGuestConfirmed ? (
                           <div className="flex items-center space-x-2 text-amber-700 bg-amber-50 border border-amber-200 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold">
-                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Awaiting Guest</span>
+                            <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Awaiting Client</span>
                           </div>
                         ) : hasGuestConfirmed && !hasHostConfirmed ? (
                           <div className="flex items-center space-x-2 text-brand-primary bg-brand-primary/10 border border-brand-primary/20 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-[10px] sm:text-xs font-bold">
-                            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Guest Confirmed</span>
+                            <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Client Confirmed</span>
                           </div>
                         ) : null}
                        </div>
@@ -509,7 +486,7 @@ export default function LandlordDashboard() {
               );
             })}
           </div>
-        ) : ['SHORTLETS', 'CARS', 'HOTELS', 'VIP VENUES'].includes(activeTab) ? (
+        ) : ['SHORTLETS', 'CARS', 'HOTELS', 'VIP ASSETS'].includes(activeTab) ? (
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
             {Array.from(new Map(
@@ -517,7 +494,7 @@ export default function LandlordDashboard() {
                 if (activeTab === 'SHORTLETS') return b.type === 'SHORTLET';
                 if (activeTab === 'HOTELS') return b.type === 'HOTEL';
                 if (activeTab === 'CARS') return b.type === 'CAR';
-                if (activeTab === 'VIP VENUES') return b.type === 'VIP';
+                if (activeTab === 'VIP ASSETS') return b.type === 'VIP' || b.type === 'VIP_SERVICE';
                 return false;
               }).map(item => [item.asset.title, item])
             ).values()).map((booking) => (
@@ -528,8 +505,8 @@ export default function LandlordDashboard() {
                       alt={booking.asset.title} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest text-gray-900 shadow-sm">
-                      Active
+                    <div className={`absolute top-4 right-4 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm ${booking.type === 'VIP_SERVICE' ? 'bg-amber-400 text-gray-900' : 'bg-white/90 text-gray-900'}`}>
+                      {booking.type === 'VIP_SERVICE' ? 'Service' : 'Venue'}
                     </div>
                 </div>
                 <div className="p-5">
@@ -554,71 +531,22 @@ export default function LandlordDashboard() {
               <ShieldCheck className="w-10 h-10 text-gray-300" />
             </div>
             <h3 className="text-2xl font-black text-gray-900 tracking-tight">No Active Ledger Entries</h3>
-            <p className="text-gray-500 mt-3 max-w-md mx-auto leading-relaxed">Your portfolio is currently empty. List a new property, vehicle, or hotel to begin accepting premium reservations.</p>
+            <p className="text-gray-500 mt-3 max-w-md mx-auto leading-relaxed">Your portfolio is currently empty. List a new property, vehicle, or VIP service to begin accepting premium reservations.</p>
           </div>
         ) : null}
       </div>
 
       {/* MODALS */}
-      <BankSetupModal 
-        isOpen={isBankModalOpen}
-        onClose={() => setIsBankModalOpen(false)}
-        onSuccess={() => console.log("Bank saved successfully!")}
-      />
-
-      <AddPropertyModal 
-        isOpen={isPropertyModalOpen}
-        onClose={() => setIsPropertyModalOpen(false)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      <AddCarModal 
-        isOpen={isCarModalOpen}
-        onClose={() => setIsCarModalOpen(false)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      <CreateHotelModal 
-        isOpen={isHotelModalOpen}
-        onClose={() => setIsHotelModalOpen(false)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      {/* SURGICAL FIX: VIP Create Modal */}
-      <AddVipModal 
-        isOpen={isVipModalOpen}
-        onClose={() => setIsVipModalOpen(false)}
-        onEstablishmentAdded={() => fetchPortfolioData()}
-      />
-
-      <EditCarModal 
-        isOpen={!!editingCarId}
-        carId={editingCarId}
-        onClose={() => setEditingCarId(null)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      <EditPropertyModal 
-        isOpen={!!editingPropertyId}
-        propertyId={editingPropertyId}
-        onClose={() => setEditingPropertyId(null)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      <EditHotelModal 
-        isOpen={!!editingHotelId}
-        hotelId={editingHotelId}
-        onClose={() => setEditingHotelId(null)}
-        onSuccess={() => fetchPortfolioData()}
-      />
-
-      {/* SURGICAL FIX: VIP Edit Modal */}
-      <EditVipModal 
-        isOpen={!!editingVipId}
-        establishmentId={editingVipId}
-        onClose={() => setEditingVipId(null)}
-        onSuccess={() => fetchPortfolioData()}
-      />
+      <BankSetupModal isOpen={isBankModalOpen} onClose={() => setIsBankModalOpen(false)} onSuccess={() => console.log("Bank saved successfully!")} />
+      <AddPropertyModal isOpen={isPropertyModalOpen} onClose={() => setIsPropertyModalOpen(false)} onSuccess={() => fetchPortfolioData()} />
+      <AddCarModal isOpen={isCarModalOpen} onClose={() => setIsCarModalOpen(false)} onSuccess={() => fetchPortfolioData()} />
+      <CreateHotelModal isOpen={isHotelModalOpen} onClose={() => setIsHotelModalOpen(false)} onSuccess={() => fetchPortfolioData()} />
+      <AddVipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} onEstablishmentAdded={() => fetchPortfolioData()} />
+      
+      <EditCarModal isOpen={!!editingCarId} carId={editingCarId} onClose={() => setEditingCarId(null)} onSuccess={() => fetchPortfolioData()} />
+      <EditPropertyModal isOpen={!!editingPropertyId} propertyId={editingPropertyId} onClose={() => setEditingPropertyId(null)} onSuccess={() => fetchPortfolioData()} />
+      <EditHotelModal isOpen={!!editingHotelId} hotelId={editingHotelId} onClose={() => setEditingHotelId(null)} onSuccess={() => fetchPortfolioData()} />
+      <EditVipModal isOpen={!!editingVipId} establishmentId={editingVipId} onClose={() => setEditingVipId(null)} onSuccess={() => fetchPortfolioData()} />
     </main>
   );
 }

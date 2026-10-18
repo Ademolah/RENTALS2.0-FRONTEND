@@ -8,7 +8,7 @@ import {
 import { 
   getHostApplications, approveHostApplication, rejectHostApplication,
   getDashboardStats, getEscrowLedger, getAssetOversight, toggleAssetStatus,
-  updateAssetApprovalStatus // 💡 NEW: Imported the approval function we made yesterday
+  updateAssetApprovalStatus
 } from '../api/admin'; 
 
 export default function AdminDashboard() {
@@ -25,9 +25,9 @@ export default function AdminDashboard() {
   const [selectedApp, setSelectedApp] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
 
-  // 💡 NEW STATE: For Property Reviews and Media Viewing
+  // Property Reviews and Media Viewing
   const [selectedListing, setSelectedListing] = useState(null);
-  const [mediaViewer, setMediaViewer] = useState(null); // stores { url: string, type: 'image' | 'video' }
+  const [mediaViewer, setMediaViewer] = useState(null);
 
   // --- ROUTER EFFECT ---
   useEffect(() => {
@@ -137,18 +137,16 @@ export default function AdminDashboard() {
     }
   };
 
-  // 💡 NEW ACTION: Approve or Reject Property Listings
   const handleListingApproval = async (type, id, status) => {
     setActionLoading(true);
     try {
       await updateAssetApprovalStatus(type, id, status);
-      // Immediately update local state so it disappears from the pending list
       setAssets(prev => ({
         ...prev,
         properties: prev.properties.map(p => p._id === id ? { ...p, status } : p),
         cars: prev.cars.map(c => c._id === id ? { ...c, status } : c)
       }));
-      setSelectedListing(null); // Close the modal
+      setSelectedListing(null); 
     } catch (error) {
       console.error("Failed to update listing status", error);
     } finally {
@@ -159,13 +157,12 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
     { id: 'applications', label: 'Host Applications', icon: Users },
-    { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks }, // 💡 NEW TAB
+    { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
     { id: 'assets', label: 'Asset Oversight', icon: Building },
     { id: 'escrow', label: 'Escrow Ledger', icon: Wallet },
     { id: 'settings', label: 'Platform Settings', icon: Settings },
   ];
 
-  // Derive pending listings
   const pendingListings = [
     ...assets.properties.filter(p => p.status === 'PENDING'),
     ...assets.cars.filter(c => c.status === 'PENDING')
@@ -208,7 +205,6 @@ export default function AdminDashboard() {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
             
-            // Dynamic Badges
             let badgeCount = 0;
             if (item.id === 'applications') badgeCount = applications.length;
             if (item.id === 'pending-assets') badgeCount = pendingListings.length;
@@ -307,7 +303,6 @@ export default function AdminDashboard() {
                       <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Vehicles</div>
                     </div>
                   </div>
-                  {/* Show pending assets count if it exists in stats */}
                   {stats.assets.pendingAssets > 0 && (
                      <div className="mt-4 pt-4 border-t border-gray-100 text-center">
                        <span className="text-xs font-bold text-amber-500">{stats.assets.pendingAssets} Assets Pending Review</span>
@@ -370,14 +365,32 @@ export default function AdminDashboard() {
                   ) : (
                     applications.map((app) => {
                       const name = app.user ? `${app.user.firstName || ''} ${app.user.lastName || ''}`.trim() : (app.firstName || 'Unknown');
+                      
+                      // Dynamic Icon and Status Color Logic for Applications
+                      const currentStatus = app.status || 'PENDING'; 
+                      let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
+                      let StatusIcon = CheckCircle2; 
+
+                      if (currentStatus === 'APPROVED') {
+                        statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                        StatusIcon = CheckCircle2;
+                      } else if (currentStatus === 'PENDING') {
+                        statusColor = 'bg-amber-50 text-amber-600 border border-amber-200';
+                        StatusIcon = Clock;
+                      } else if (currentStatus === 'REJECTED') {
+                        statusColor = 'bg-red-50 text-red-600 border border-red-200';
+                        StatusIcon = XCircle;
+                      }
+
                       return (
                         <tr key={app._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
                           <td className="p-4 font-bold text-gray-900 whitespace-nowrap">{name}</td>
                           <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{app.nin || 'N/A'}</td>
                           <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{app.city}, {app.state}</td>
                           <td className="p-4 whitespace-nowrap">
-                            <span className="flex items-center space-x-1 text-[10px] font-bold px-2.5 py-1 bg-amber-50 text-amber-600 rounded-full border border-amber-200 w-fit">
-                              <Clock className="w-3 h-3 mr-1" /> {app.status}
+                            <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
+                              <StatusIcon className="w-3.5 h-3.5" />
+                              <span>{currentStatus}</span>
                             </span>
                           </td>
                           <td className="p-4 text-right whitespace-nowrap">
@@ -398,7 +411,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- 💡 NEW TAB 3: PENDING LISTINGS (APPROVAL WORKFLOW) --- */}
+        {/* --- TAB 3: PENDING LISTINGS (APPROVAL WORKFLOW) --- */}
         {activeTab === 'pending-assets' && (
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
             <div className="min-w-[800px]">
@@ -471,13 +484,26 @@ export default function AdminDashboard() {
                      [...assets.properties, ...assets.cars].map((asset) => {
                        const isCar = !!asset.make;
                        const typeStr = isCar ? 'CAR' : asset.category;
-                       const title = isCar ? `${asset.make} ${asset.model}` : asset.title;
                        
-                       let statusColor = 'bg-gray-100 text-gray-600';
-                       if (asset.status === 'APPROVED') statusColor = 'bg-emerald-50 text-emerald-600';
-                       if (asset.status === 'PENDING') statusColor = 'bg-amber-50 text-amber-600';
-                       if (asset.status === 'REJECTED') statusColor = 'bg-red-50 text-red-600';
- 
+                       // Safely pick carModel if it exists to match pending-assets list
+                       const title = isCar ? `${asset.make} ${asset.carModel || asset.model}` : asset.title;
+                       
+                       // Dynamic Icon and Status Color Logic for Assets
+                       const currentStatus = asset.status || 'APPROVED'; 
+                       let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
+                       let StatusIcon = CheckCircle2; 
+
+                       if (currentStatus === 'APPROVED') {
+                         statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                         StatusIcon = CheckCircle2;
+                       } else if (currentStatus === 'PENDING') {
+                         statusColor = 'bg-amber-50 text-amber-600 border border-amber-200';
+                         StatusIcon = Clock;
+                       } else if (currentStatus === 'REJECTED') {
+                         statusColor = 'bg-red-50 text-red-600 border border-red-200';
+                         StatusIcon = XCircle;
+                       }
+
                        return (
                          <tr key={asset._id} className="border-b border-gray-50 hover:bg-gray-50/50">
                            <td className="p-4 font-bold text-gray-900 text-sm flex items-center space-x-2 whitespace-nowrap">
@@ -486,8 +512,9 @@ export default function AdminDashboard() {
                            </td>
                            <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">{typeStr}</td>
                            <td className="p-4 whitespace-nowrap">
-                             <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
-                               {asset.status || 'APPROVED'} {/* Fallback for older listings */}
+                             <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
+                               <StatusIcon className="w-3.5 h-3.5" />
+                               <span>{currentStatus}</span>
                              </span>
                            </td>
                            <td className="p-4 text-center whitespace-nowrap">
@@ -543,9 +570,17 @@ export default function AdminDashboard() {
                        const amount = (record.totalAmount || 0).toLocaleString();
                        const eStatus = record.escrowStatus || record.payoutStatus || 'PROCESSING';
                        
-                       let statusColor = 'bg-gray-100 text-gray-600';
-                       if (eStatus === 'HELD' || eStatus === 'HELD_IN_ESCROW') statusColor = 'bg-amber-50 text-amber-600 border border-amber-200';
-                       if (eStatus === 'RELEASED' || eStatus === 'RELEASED_TO_LANDLORD') statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                       // Dynamic Icon and Status Color Logic for Escrow Ledger
+                       let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
+                       let StatusIcon = Clock; 
+
+                       if (eStatus === 'HELD' || eStatus === 'HELD_IN_ESCROW') {
+                         statusColor = 'bg-amber-50 text-amber-600 border border-amber-200';
+                         StatusIcon = Clock;
+                       } else if (eStatus === 'RELEASED' || eStatus === 'RELEASED_TO_LANDLORD') {
+                         statusColor = 'bg-emerald-50 text-emerald-600 border border-emerald-200';
+                         StatusIcon = CheckCircle2;
+                       }
  
                        return (
                          <tr key={record._id} className="border-b border-gray-50 hover:bg-gray-50/50">
@@ -554,8 +589,9 @@ export default function AdminDashboard() {
                            <td className="p-4 text-sm text-gray-600 truncate max-w-[200px]">{assetTitle}</td>
                            <td className="p-4 text-sm font-extrabold text-gray-900 whitespace-nowrap">₦{amount}</td>
                            <td className="p-4 whitespace-nowrap">
-                             <span className={`text-[10px] font-bold px-2 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
-                               {eStatus.replace(/_/g, ' ')}
+                             <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
+                               <StatusIcon className="w-3.5 h-3.5" />
+                               <span>{eStatus.replace(/_/g, ' ')}</span>
                              </span>
                            </td>
                          </tr>
@@ -622,7 +658,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* --- 💡 NEW: LISTING REVIEW MODAL (ASSETS) --- */}
+      {/* --- LISTING REVIEW MODAL (ASSETS) --- */}
       {selectedListing && (
         <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
@@ -701,7 +737,7 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* --- 💡 NEW: FULL SCREEN MEDIA VIEWER --- */}
+      {/* --- FULL SCREEN MEDIA VIEWER --- */}
       {mediaViewer && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/95 p-4 backdrop-blur-md animate-in zoom-in duration-200">
           <button 

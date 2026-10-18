@@ -1,4 +1,4 @@
-import { MapPin, Clock, ChevronRight, Gem, CalendarDays } from 'lucide-react';
+import { MapPin, Clock, ChevronRight, Gem } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export default function VipCard({ establishment }) {
@@ -6,20 +6,29 @@ export default function VipCard({ establishment }) {
     _id,
     title,
     establishmentType,
+    category,
     address,
     images,
     openHours,
     services,
-    pricePerNight // Using pricePerNight as the deposit fallback based on the backend schema workaround
+    pricePerNight, 
+    pricePerDay 
   } = establishment;
 
+  // 💡 NEW: Distinguish if this is a Venue or a Service
+  const isService = category === 'VIP_SERVICE';
+  const linkUrl = isService ? `/vip/services/${_id}` : `/vip/${_id}`;
+
   const mainImage = images?.[0] || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?auto=format&fit=crop&w=800&q=80';
-  const formattedType = establishmentType?.replace('_', ' ') || 'VIP VENUE';
-  const deposit = pricePerNight || 0;
+  const formattedType = establishmentType?.replace('_', ' ') || (isService ? 'VIP SERVICE' : 'VIP VENUE');
+  
+  // Services use pricePerDay, Venues use pricePerNight as the deposit fallback
+  const displayedPrice = pricePerDay || pricePerNight || 0;
+  const priceLabel = isService ? 'Price Per Day' : 'Required Deposit';
 
   return (
     <Link 
-      to={`/vip/${_id}`}
+      to={linkUrl}
       className="group block relative w-full rounded-3xl overflow-hidden bg-black aspect-[3/4] md:aspect-square lg:aspect-[4/5] shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer"
     >
       {/* Background Image & Overlay */}
@@ -37,14 +46,16 @@ export default function VipCard({ establishment }) {
           <span>{formattedType}</span>
         </div>
         
-        {/* Days Open Indicator */}
-        <div className="flex flex-col items-end gap-1">
-          {openHours?.daysOpen?.slice(0, 3).map(day => (
-            <span key={day} className="bg-white/10 backdrop-blur-md text-white text-[8px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
-              {day.substring(0, 3)}
-            </span>
-          ))}
-        </div>
+        {/* Days Open Indicator (Only highly relevant for Venues) */}
+        {!isService && openHours?.daysOpen && (
+          <div className="flex flex-col items-end gap-1">
+            {openHours.daysOpen.slice(0, 3).map(day => (
+              <span key={day} className="bg-white/10 backdrop-blur-md text-white text-[8px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
+                {day.substring(0, 3)}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Main Content Area (Bottom) */}
@@ -58,16 +69,18 @@ export default function VipCard({ establishment }) {
           <div className="flex flex-col space-y-1.5 text-xs font-medium text-gray-300">
             <span className="flex items-center">
               <MapPin className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> 
-              {address?.street}, {address?.city}
+              {address?.street && `${address.street}, `}{address?.city}
             </span>
-            <span className="flex items-center">
-              <Clock className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> 
-              {openHours?.open} - {openHours?.close}
-            </span>
+            {!isService && openHours?.open && (
+              <span className="flex items-center">
+                <Clock className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> 
+                {openHours.open} - {openHours.close}
+              </span>
+            )}
           </div>
         </div>
 
-        {/* Services Scrolling Row */}
+        {/* Services / Inclusions Scrolling Row */}
         {services && services.length > 0 && (
           <div className="flex overflow-x-auto space-x-2 mb-6 pb-2 snap-x [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none] border-b border-white/10">
             {services.map((service, idx) => (
@@ -81,15 +94,15 @@ export default function VipCard({ establishment }) {
           </div>
         )}
 
-        {/* Glassmorphism Deposit Footer */}
+        {/* Glassmorphism Deposit/Price Footer */}
         <div className="flex items-center justify-between bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-2xl">
           <div>
             <span className="block text-[9px] font-black uppercase tracking-widest text-amber-400/80 mb-0.5">
-              Required Deposit
+              {priceLabel}
             </span>
             <div className="flex items-baseline space-x-1">
               <span className="font-extrabold text-white text-lg md:text-xl tracking-tight">
-                ₦{deposit.toLocaleString()}
+                ₦{displayedPrice.toLocaleString()}
               </span>
             </div>
           </div>

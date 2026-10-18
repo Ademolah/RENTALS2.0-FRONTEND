@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
   Home, CarFront, Hotel, Crown, ShieldCheck, 
   MapPin, Calendar, Clock, Loader2, CheckCircle, 
-  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star, Sparkles,
+  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star,
   Settings, User, Phone, Trash2, X
 } from 'lucide-react';
 
@@ -15,7 +15,7 @@ import { executePayout } from '../api/payouts';
 
 import { getMyFavoritesApi, toggleFavoriteApi, getMyProfileApi, updateMyProfileApi, deleteMyAccountApi } from '../api/user';
 import HostUpgradeModal from '../components/HostUpgradeModal';
-import { useAuth } from '../context/AuthContext';// Ensure this path matches your context
+import { useAuth } from '../context/AuthContext';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
 const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
@@ -32,10 +32,12 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
   const isCar = booking.type === 'CAR';
   const isHotel = booking.type === 'HOTEL';
   const isVip = booking.type === 'VIP'; 
+  const isVipService = booking.type === 'VIP_SERVICE'; // 💡 NEW: Identify VIP Service
+  const isVipAsset = isVip || isVipService;
 
   const title = isCar 
     ? `${booking.carId?.make} ${booking.carId?.carModel} ${booking.carId?.year}`
-    : booking.propertyId?.title || (isHotel ? 'Luxury Hotel' : isVip ? 'Exclusive Venue' : 'Luxury Shortlet');
+    : booking.propertyId?.title || (isHotel ? 'Luxury Hotel' : isVipService ? 'VIP Service' : isVip ? 'Exclusive Venue' : 'Luxury Shortlet');
   
   const image = isCar 
     ? booking.carId?.images?.[0] 
@@ -43,20 +45,22 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
 
   const hasHostConfirmed = isCar 
     ? booking.ownerConfirmedHandover 
-    : (booking.checkInConfirmedByHost || booking.checkInConfirmedByLandlord);
+    : (booking.checkInConfirmedByHost || booking.checkInConfirmedByLandlord || booking.ownerConfirmedDelivery);
 
   const location = isCar 
     ? `${booking.carId?.location?.city || ''}, ${booking.carId?.location?.state || ''}`.replace(/(^,\s*)|(,\s*$)/g, '')
     : booking.propertyId?.address?.city || 'Location unavailable';
 
-  const startDate = new Date(isCar ? booking.pickupTime : booking.checkInDate);
-  const endDate = new Date(isCar ? booking.dropoffTime : booking.checkOutDate);
+  const startDate = new Date(booking.startDate || booking.pickupTime || booking.checkInDate);
+  const endDate = new Date(booking.endDate || booking.dropoffTime || booking.checkOutDate);
 
-  const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
+  const hasGuestConfirmed = isCar 
+    ? booking.guestConfirmedPickup 
+    : (booking.checkInConfirmedByGuest || booking.guestConfirmedDelivery);
+    
   const escrowStatus = isCar ? booking.escrowStatus : booking.payoutStatus;
   const isReleased = isCar ? escrowStatus === 'RELEASED' : escrowStatus === 'RELEASED_TO_LANDLORD';
   
-  // NEW: Cancellation logic checks
   const isCancelled = booking.reservationStatus === 'CANCELLED';
   const canCancel = !hasGuestConfirmed && !isReleased && !isCancelled && booking.reservationStatus !== 'COMPLETED';
 
@@ -68,6 +72,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
       } else if (isHotel) {
         await confirmHotelGuestCheckIn(booking._id);
       } else {
+        // 💡 Both VIP Venues and VIP Services utilize the base property confirmation engine
         await confirmPropertyCheckIn(booking._id);
       }
 
@@ -110,7 +115,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
   return (
     <div className={`bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden transition-all flex flex-col md:flex-row group relative ${isCancelled ? 'opacity-75 grayscale-[0.3]' : 'hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)]'}`}>
       
-      {isVip && !isCancelled && <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>}
+      {isVipAsset && !isCancelled && <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>}
 
       <div className="relative h-56 md:h-auto md:w-72 bg-gray-100 overflow-hidden shrink-0">
         <img 
@@ -120,12 +125,11 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
         />
         
         <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5
-          ${isVip ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-gray-900'}
+          ${isVipAsset ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-gray-900'}
         `}>
-          <span>{isVip ? 'VIP Concierge' : isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}</span>
+          <span>{isVipService ? 'VIP Service' : isVip ? 'VIP Venue' : isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}</span>
         </div>
 
-        {/* Dynamic Secured/Cancelled Badges */}
         {isCancelled ? (
           <div className="absolute top-4 right-4 px-3 py-1 bg-red-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-full shadow-sm">
             Cancelled
@@ -171,16 +175,16 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
               </div>
             </div>
           ) : isReleased ? (
-            <div className={`flex items-center space-x-3 px-5 py-4 rounded-2xl border ${isVip ? 'bg-amber-50/50 text-amber-900 border-amber-100' : 'bg-green-50/50 text-green-700 border-green-100'}`}>
-              <div className={`rounded-full p-1 shadow-sm ${isVip ? 'bg-amber-500 text-black' : 'bg-green-500 text-white'}`}>
+            <div className={`flex items-center space-x-3 px-5 py-4 rounded-2xl border ${isVipAsset ? 'bg-amber-50/50 text-amber-900 border-amber-100' : 'bg-green-50/50 text-green-700 border-green-100'}`}>
+              <div className={`rounded-full p-1 shadow-sm ${isVipAsset ? 'bg-amber-500 text-black' : 'bg-green-500 text-white'}`}>
                 <CheckCircle className="w-4 h-4" />
               </div>
               <div>
                 <div className="text-sm font-bold">
-                  {isCar ? 'Pickup Confirmed & Active' : isVip ? 'Arrival Confirmed' : 'Checked-in & Secured'}
+                  {isCar ? 'Pickup Confirmed & Active' : isVipService ? 'Service Delivered' : isVip ? 'Arrival Confirmed' : 'Checked-in & Secured'}
                 </div>
-                <div className={`text-xs font-medium mt-0.5 ${isVip ? 'text-amber-700' : 'text-green-600'}`}>
-                  Funds released to venue. Enjoy your {isCar ? 'ride' : 'experience'}.
+                <div className={`text-xs font-medium mt-0.5 ${isVipAsset ? 'text-amber-700' : 'text-green-600'}`}>
+                  Funds released to {isVipService ? 'provider' : 'venue'}. Enjoy your {isCar ? 'ride' : 'experience'}.
                 </div>
               </div>
             </div>
@@ -190,28 +194,28 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
                 <Clock className="w-3.5 h-3.5 text-white" />
               </div>
               <div>
-                <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : isVip ? 'Concierge' : 'Host'}</div>
+                <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'}</div>
                 <div className="text-xs font-medium text-gray-500 mt-0.5">
-                  You've confirmed. Escrow will release once the venue acknowledges.
+                  You've confirmed. Escrow will release once the provider acknowledges.
                 </div>
               </div>
             </div>
           ) : (
             <div className={`flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-5 rounded-2xl border ${
               hasHostConfirmed 
-                ? isVip ? 'bg-amber-50/50 border-amber-200' : 'bg-blue-50/50 border-blue-200' 
+                ? isVipAsset ? 'bg-amber-50/50 border-amber-200' : 'bg-blue-50/50 border-blue-200' 
                 : 'bg-gray-50/50 border-gray-100'
             }`}>
               <div className="flex items-start space-x-3">
-                <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVip ? 'text-amber-600' : 'text-blue-600' : 'text-gray-900'}`} />
+                <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-600' : 'text-blue-600' : 'text-gray-900'}`} />
                 <div>
-                  <div className={`text-sm font-bold ${hasHostConfirmed ? isVip ? 'text-amber-900' : 'text-blue-900' : 'text-gray-900'}`}>
-                    {hasHostConfirmed ? `${isCar ? 'Owner' : isVip ? 'Concierge' : 'Host'} Confirmed ${isVip ? 'Arrival' : 'Handover'}` : 'Deposit Escrowed'}
+                  <div className={`text-sm font-bold ${hasHostConfirmed ? isVipAsset ? 'text-amber-900' : 'text-blue-900' : 'text-gray-900'}`}>
+                    {hasHostConfirmed ? `${isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'} Confirmed ${isVipService ? 'Delivery' : isVip ? 'Arrival' : 'Handover'}` : 'Deposit Escrowed'}
                   </div>
-                  <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVip ? 'text-amber-700' : 'text-blue-700' : 'text-gray-500'}`}>
+                  <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-700' : 'text-blue-700' : 'text-gray-500'}`}>
                     {hasHostConfirmed 
-                      ? 'Please tap confirm to release the deposit to the venue.' 
-                      : `Venue is unpaid until you confirm your ${isCar ? 'pickup' : 'arrival'}.`}
+                      ? `Please tap confirm to release the deposit to the ${isVipService ? 'provider' : 'venue'}.` 
+                      : `Provider is unpaid until you confirm your ${isVipService ? 'delivery' : isCar ? 'pickup' : 'arrival'}.`}
                   </div>
                 </div>
               </div>
@@ -230,14 +234,14 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
                   disabled={isConfirming}
                   className={`w-full sm:w-auto px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
                     hasHostConfirmed 
-                      ? isVip ? 'bg-amber-500 hover:bg-amber-400 text-black' : 'bg-blue-600 hover:bg-blue-700 text-white' 
+                      ? isVipAsset ? 'bg-amber-500 hover:bg-amber-400 text-black' : 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'bg-gray-900 hover:bg-black text-white'
                   }`}
                 >
                   {isConfirming ? (
                     <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
                   ) : (
-                    `Confirm ${isCar ? 'Pickup' : isVip ? 'Arrival' : 'Check-In'}`
+                    `Confirm ${isCar ? 'Pickup' : isVipService ? 'Delivery' : isVip ? 'Arrival' : 'Check-In'}`
                   )}
                 </button>
               </div>
@@ -292,7 +296,6 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
     </div>
   );
 };
-
 
 // --- SUB-COMPONENT: Favorite Property Card ---
 const FavoriteCard = ({ property, onRemove }) => {
@@ -367,7 +370,6 @@ export default function GuestDashboard() {
   const [bookings, setBookings] = useState([]);
   const [favorites, setFavorites] = useState([]);
   
-  // NEW: Settings State
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
@@ -377,13 +379,13 @@ export default function GuestDashboard() {
   const [toastMessage, setToastMessage] = useState('');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
-  // NEW: Added SETTINGS to Tabs
+  // 💡 NEW: Renamed VIP Tab to encompass Assets
   const TABS = [
     { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
     { id: 'SHORTLET', label: 'Shortlets', icon: Home },
     { id: 'CAR', label: 'Car Rentals', icon: CarFront },
     { id: 'HOTEL', label: 'Hotels', icon: Hotel },
-    { id: 'VIP', label: 'VIP Venues', icon: Crown }, 
+    { id: 'VIP', label: 'VIP Assets', icon: Crown }, 
     { id: 'FAVORITES', label: 'Saved Stays', icon: Heart },
     { id: 'SETTINGS', label: 'Account Settings', icon: Settings },
   ];
@@ -397,16 +399,19 @@ export default function GuestDashboard() {
           getMyCarBookings(),
           getMyHotelBookings(),
           getMyFavoritesApi(),
-          getMyProfileApi() // NEW: Fetch profile
+          getMyProfileApi()
         ]);
 
         let unifiedBookings = [];
 
         if (propertyRes.status === 'fulfilled' && propertyRes.value.data?.bookings) {
+          // 💡 NEW: Map raw properties to distinguish VIP_SERVICE
           const reservations = propertyRes.value.data.bookings.map(b => {
             let trueType = 'SHORTLET';
             if (b.propertyId?.category === 'HOTEL' || b.type === 'HOTEL') {
               trueType = 'HOTEL';
+            } else if (b.propertyId?.category === 'VIP_SERVICE') {
+              trueType = 'VIP_SERVICE';
             } else if (b.propertyId?.category === 'VIP RESERVATION' || b.propertyId?.category === 'VIP' || b.type === 'VIP') {
               trueType = 'VIP';
             } else if (b.carId || b.type === 'CAR') {
@@ -471,7 +476,6 @@ export default function GuestDashboard() {
     }));
   };
 
-  // NEW: Update state when a booking is cancelled
   const handleCancelSuccess = (reservationId) => {
     setBookings(prev => prev.map(booking => 
       booking._id === reservationId ? { ...booking, reservationStatus: 'CANCELLED', payoutStatus: 'REFUND_PENDING' } : booking
@@ -484,7 +488,6 @@ export default function GuestDashboard() {
     setTimeout(() => setToastMessage(''), 2500);
   };
 
-  // NEW: Profile Update Handler
   const handleProfileUpdate = async (e) => {
     e.preventDefault();
     setIsUpdatingProfile(true);
@@ -501,13 +504,12 @@ export default function GuestDashboard() {
     }
   };
 
-  // NEW: Account Deletion Handler
   const handleDeleteAccount = async () => {
     setIsDeletingAccount(true);
     try {
       await deleteMyAccountApi();
-      logout(); // Clear local storage/state
-      navigate('/'); // Kick them out to homepage
+      logout(); 
+      navigate('/'); 
     } catch (error) {
       console.error(error);
       setToastMessage("Failed to delete account. Please ensure all active bookings are closed.");
@@ -517,7 +519,12 @@ export default function GuestDashboard() {
     }
   };
 
-  const filteredBookings = bookings.filter(b => activeTab === 'ALL' || b.type === activeTab);
+  // 💡 NEW: Ensure VIP tab renders both Venues and Services
+  const filteredBookings = bookings.filter(b => {
+    if (activeTab === 'ALL') return true;
+    if (activeTab === 'VIP') return b.type === 'VIP' || b.type === 'VIP_SERVICE';
+    return b.type === activeTab;
+  });
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
@@ -589,7 +596,6 @@ export default function GuestDashboard() {
               <p className="font-medium text-lg">Loading your dashboard...</p>
             </div>
           ) : activeTab === 'SETTINGS' ? (
-            // NEW: Account Settings Panel
             <div className="max-w-2xl animate-in fade-in duration-300">
               <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-6">
                 <h2 className="text-2xl font-black text-gray-900 mb-6">Profile Settings</h2>

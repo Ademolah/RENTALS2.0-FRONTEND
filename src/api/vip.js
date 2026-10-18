@@ -1,6 +1,9 @@
 import axios from 'axios';
 import { apiClient } from './client';
 
+// ==========================================
+// VIP VENUES 
+// ==========================================
 
 export const createVipEstablishment = async (formData) => {
   const token = localStorage.getItem('rentals_token');
@@ -40,7 +43,6 @@ export const updateVipEstablishment = async (id, formData) => {
   });
 };
 
-// Add this to your src/api/vip.js
 export const initiateVipReservation = async (reservationData) => {
   const token = localStorage.getItem('rentals_token');
   return apiClient.post(`/vip/reserve`, reservationData, {
@@ -54,4 +56,32 @@ export const deleteVipEstablishment = async (id) => {
     headers: { Authorization: `Bearer ${token}` }
   });
   return response.data;
+};
+
+// ==========================================
+// VIP SERVICES (New Module)
+// ==========================================
+
+export const getVipServices = async () => {
+  const response = await apiClient.get(`/vip/services`);
+  return response.data;
+};
+
+export const getVipServiceById = async (id) => {
+  const response = await apiClient.get(`/vip/services/${id}`);
+  return response.data;
+};
+
+export const initiateVipServiceReservation = async (reservationData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/vip/services/reserve`, reservationData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
+
+export const createVipService = async (formData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/vip/services`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
+  });
 };

@@ -3,7 +3,7 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
   Loader2, ShieldCheck, Calendar as CalendarIcon, 
-  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X
+  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X, Video
 } from 'lucide-react';
 import { getCarById, createCarReservation, checkCarAvailability, getCars } from '../api/car'; 
 import { useAuth } from '../context/AuthContext';
@@ -114,18 +114,11 @@ export default function CarDetails() {
     if (car) fetchSimilar();
   }, [car]);
 
-  const scrollGallery = (ref, direction) => {
-    if (ref.current) {
-      const scrollAmount = direction === 'left' ? -ref.current.offsetWidth : ref.current.offsetWidth;
-      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   const pricing = useMemo(() => {
     if (!car) return null;
     
     const baseRate = car.pricePer12Hours || 0;
-    const chauffeurRate = needsChauffeur ? 25000 * Math.ceil(durationSlots / 2) : 0; // Chauffeur charged per day (every 2 slots)
+    const chauffeurRate = needsChauffeur ? 25000 * Math.ceil(durationSlots / 2) : 0; 
     
     const rentalTotal = baseRate * durationSlots;
     const subtotal = rentalTotal + chauffeurRate;
@@ -134,6 +127,31 @@ export default function CarDetails() {
 
     return { baseRate, rentalTotal, chauffeurRate, subtotal, platformFee, grandTotal };
   }, [car, durationSlots, needsChauffeur]);
+
+  // 💡 FIX: Safely derive images BEFORE the early returns so hooks never change order
+  const images = car?.images?.length > 0 ? car.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'];
+
+  // 💡 FIX: Moved Keyboard Navigation useEffect safely ABOVE the early returns
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (lightboxIndex === null) return;
+      if (e.key === 'ArrowRight') setLightboxIndex((prev) => (prev + 1) % images.length);
+      if (e.key === 'ArrowLeft') setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+      if (e.key === 'Escape') setLightboxIndex(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightboxIndex, images.length]);
+
+  // Button Handlers for UI
+  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % images.length);
+  const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
+  const scrollGallery = (ref, direction) => {
+    if (ref.current) {
+      const scrollAmount = direction === 'left' ? -ref.current.offsetWidth : ref.current.offsetWidth;
+      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   const handleCheckAvailability = async () => {
     if (!pickupDate || !pickupTime) {
@@ -191,7 +209,6 @@ export default function CarDetails() {
 
     setBookingLoading(true);
 
-    // INTERCEPTOR: Auto-check availability if bypassed
     if (availabilityStatus !== 'available') {
       const isAvailable = await handleCheckAvailability();
       if (!isAvailable) {
@@ -231,7 +248,6 @@ export default function CarDetails() {
   const handleWhatsAppClick = (e) => {
     e.preventDefault();
     
-    // GUARD: Ensure date is selected
     if (!pickupDate || !pickupTime) {
       setBookingError('Please select your pickup date and time before contacting the concierge.');
       setShowCalendar(true);
@@ -263,6 +279,7 @@ export default function CarDetails() {
     window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank');
   };
 
+  // --- EARLY RETURNS (MUST BE AFTER ALL HOOKS) ---
   if (loading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
@@ -280,51 +297,52 @@ export default function CarDetails() {
     );
   }
 
-  const images = car.images?.length > 0 ? car.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'];
-
-  // Lightbox Handlers
-  const nextImage = () => setLightboxIndex((prev) => (prev + 1) % images.length);
-  const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
 
       {/* FULL SCREEN LIGHTBOX */}
       {lightboxIndex !== null && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
-          <button 
-            onClick={() => setLightboxIndex(null)} 
-            className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
-          >
-            <X className="w-8 h-8" />
-          </button>
-          
-          {images.length > 1 && (
+        <div 
+          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200"
+          onClick={() => setLightboxIndex(null)}
+        >
+          <div className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
+            <div className="text-white font-bold text-sm bg-black/50 px-4 py-2 rounded-full">
+              {lightboxIndex + 1} / {images.length}
+            </div>
             <button 
-              onClick={(e) => { e.stopPropagation(); prevImage(); }} 
-              className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+              onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }} 
+              className="text-white hover:bg-white/20 bg-white/10 rounded-full p-2.5 transition-colors"
             >
-              <ChevronLeft className="w-10 h-10" />
+              <X className="w-6 h-6" />
             </button>
-          )}
+          </div>
 
-          <img 
-            src={images[lightboxIndex]} 
-            alt="Expanded view" 
-            className="max-h-[90vh] max-w-[90vw] object-contain select-none"
-          />
+          <div className="relative w-full max-w-7xl px-4 flex items-center justify-center">
+            {images.length > 1 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); prevImage(); }} 
+                className="absolute left-4 md:left-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+              >
+                <ChevronLeft className="w-8 h-8" />
+              </button>
+            )}
 
-          {images.length > 1 && (
-            <button 
-              onClick={(e) => { e.stopPropagation(); nextImage(); }} 
-              className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
-            >
-              <ChevronRight className="w-10 h-10" />
-            </button>
-          )}
-          
-          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
-            {lightboxIndex + 1} / {images.length}
+            <img 
+              src={images[lightboxIndex]} 
+              alt="Expanded view" 
+              className="max-h-[85vh] max-w-full object-contain select-none rounded-xl shadow-2xl" 
+              onClick={(e) => e.stopPropagation()} 
+            />
+
+            {images.length > 1 && (
+              <button 
+                onClick={(e) => { e.stopPropagation(); nextImage(); }} 
+                className="absolute right-4 md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+              >
+                <ChevronRight className="w-8 h-8" />
+              </button>
+            )}
           </div>
         </div>
       )}
@@ -341,7 +359,7 @@ export default function CarDetails() {
       <div className="mb-6">
         <div className="flex items-center space-x-2 text-xs font-bold tracking-widest text-brand-primary uppercase mb-2">
           <span>{car.category || 'Premium Vehicle'}</span>
-          <span className="text-gray-300">•</span>
+          <span className="text-gray-300">|</span>
           <span className="text-gray-500 flex items-center"><MapPin className="w-3 h-3 mr-1"/> {car.location?.city}, {car.location?.state}</span>
         </div>
         <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
@@ -484,6 +502,25 @@ export default function CarDetails() {
                     <span className="text-gray-700 font-medium text-sm">{feature}</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {/* Cinematic Video Tour Section */}
+          {car.video && (
+            <div className="pt-4 pb-8">
+              <div className="flex items-center space-x-2 mb-4">
+                <Video className="w-5 h-5 text-gray-900" />
+                <h3 className="text-xl font-bold text-gray-900">Cinematic Tour</h3>
+              </div>
+              <div className="w-full relative rounded-2xl overflow-hidden bg-black shadow-lg group">
+                <video 
+                  src={car.video} 
+                  controls 
+                  preload="metadata"
+                  className="w-full h-auto max-h-[450px] object-contain"
+                  poster={images[0]} 
+                />
               </div>
             </div>
           )}
