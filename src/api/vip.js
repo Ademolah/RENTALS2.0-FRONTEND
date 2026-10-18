@@ -85,3 +85,10 @@ export const createVipService = async (formData) => {
     headers: { 'Content-Type': 'multipart/form-data', Authorization: `Bearer ${token}` }
   });
 };
+
+export const logWhatsappIntent = async (intentData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/vip/whatsapp-intent`, intentData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

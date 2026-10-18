@@ -70,3 +70,10 @@ export const deleteCar = async (id) => {
   });
   return response.data;
 };
+
+export const logCarWhatsappIntent = async (intentData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/cars/whatsapp-intent`, intentData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

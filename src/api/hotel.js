@@ -56,3 +56,10 @@ export const confirmHotelGuestCheckIn = async (id) => {
   const response = await apiClient.patch(`/hotels/guest/bookings/${id}/confirm`, {});
   return response.data;
 };
+
+export const logHotelWhatsappIntent = async (intentData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/hotels/whatsapp-intent`, intentData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};

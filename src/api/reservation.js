@@ -20,3 +20,7 @@ export const cancelBookingApi = async (reservationId) => {
   const response = await apiClient.post(`/reservations/${reservationId}/cancel`);
   return response.data;
 };
+
+export const logUnifiedWhatsappIntent = async (intentData) => {
+  return apiClient.post(`/reservations/whatsapp-intent`, intentData);
+};

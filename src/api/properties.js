@@ -59,3 +59,10 @@ export const deleteProperty = async (id) => {
   });
   return response.data;
 };
+
+export const logPropertyWhatsappIntent = async (intentData) => {
+  const token = localStorage.getItem('rentals_token');
+  return apiClient.post(`/properties/whatsapp-intent`, intentData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+};
