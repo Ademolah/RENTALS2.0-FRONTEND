@@ -6,6 +6,7 @@ import {
   Wine, Loader2, AlertCircle, X
 } from 'lucide-react';
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
+import FloatingPriceTag from '../components/FloatingPriceTag';
 
 export default function VipDetails() {
   const { id } = useParams();
@@ -465,6 +466,7 @@ export default function VipDetails() {
         </div>
 
       </div>
+      <FloatingPriceTag />
     </main>
   );
 }

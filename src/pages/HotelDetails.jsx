@@ -11,6 +11,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
+import FloatingPriceTag from '../components/FloatingPriceTag';
 
 // PRESET_AMENITIES Match
 const getAmenityIcon = (amenity) => {
@@ -766,6 +767,8 @@ export default function HotelDetails() {
           isLoggedIn={isLoggedIn}
         />
       )}
+
+      <FloatingPriceTag />
     </main>
   );
 }

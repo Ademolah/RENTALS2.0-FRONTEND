@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { getCarById, createCarReservation, checkCarAvailability, getCars } from '../api/car'; 
 import { useAuth } from '../context/AuthContext';
+import FloatingPriceTag from '../components/FloatingPriceTag';
 
 export default function CarDetails() {
   const { id } = useParams();
@@ -824,6 +825,8 @@ export default function CarDetails() {
           </div>
         </div>
       )}
+
+      <FloatingPriceTag />
     </main>
   );
 }

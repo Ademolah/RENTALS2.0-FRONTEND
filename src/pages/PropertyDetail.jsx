@@ -10,6 +10,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
 import { getPropertyReviewsApi, createPropertyReviewApi } from "../api/reviews";
 import { useAuth } from '../context/AuthContext'; 
+import FloatingPriceTag from '../components/FloatingPriceTag';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -613,6 +614,7 @@ export default function PropertyDetail() {
         </div>
 
       </div>
+      <FloatingPriceTag />
 
     </main>
   );
