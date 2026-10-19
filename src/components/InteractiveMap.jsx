@@ -1,94 +1,122 @@
 import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, useMap, ZoomControl } from 'react-leaflet';
 import L from 'leaflet';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Star, MapPin, ExternalLink } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import 'leaflet/dist/leaflet.css';
 
-// --- DYNAMIC PIN GENERATORS ---
-const createHotelPin = () => {
+// --- PRICE FORMATTING ENGINE ---
+const formatMapPrice = (rawPrice) => {
+  const price = Number(rawPrice) || 0;
+  if (price <= 0) return '₦0';
+  
+  if (price >= 1000000) {
+    return `₦${(price / 1000000).toFixed(1)}M`;
+  }
+  if (price >= 1000) {
+    return `₦${(price / 1000).toFixed(0)}k`;
+  }
+  return `₦${price.toLocaleString()}`;
+};
+
+// --- AIRBNB-STYLE DYNAMIC PRICE PILL PIN ---
+const createAirbnbPricePin = (price, isSelected = false) => {
+  const formattedPrice = formatMapPrice(price);
+
   return L.divIcon({
-    className: 'custom-hotel-pin',
+    className: 'custom-airbnb-marker', 
     html: `
-      <div class="w-8 h-8 bg-[#D32F2F] rounded-full flex items-center justify-center shadow-lg border-2 border-white">
-        <div class="w-2.5 h-2.5 bg-white rounded-full"></div>
+      <div class="airbnb-price-pill ${isSelected ? 'selected' : ''}">
+        <span class="price-text">${formattedPrice}</span>
       </div>
     `,
-    iconSize: [32, 32],
-    iconAnchor: [16, 32],
+    iconSize: [60, 32],
+    iconAnchor: [30, 16],
+    popupAnchor: [0, -18]
   });
 };
 
-const createPricePin = (price, isSelected) => {
+// --- HOTEL / VIP VENUE PIN ---
+const createHotelPin = (isSelected = false) => {
   return L.divIcon({
-    className: 'custom-price-pin',
+    className: 'custom-airbnb-marker',
     html: `
-      <div class="flex items-center justify-center px-3 py-1.5 rounded-full font-bold text-sm shadow-md transition-all duration-300 ${
-        isSelected 
-          ? 'bg-gray-900 text-white z-50 scale-110 shadow-xl' 
-          : 'bg-white text-gray-900 border border-gray-200 hover:border-gray-400 hover:scale-105'
-      }">
-        ₦${(price / 1000).toFixed(0)}k
+      <div class="hotel-pin-badge ${isSelected ? 'selected' : ''}">
+        <div class="inner-dot"></div>
       </div>
     `,
-    iconSize: null,
-    iconAnchor: [25, 15],
+    iconSize: [36, 36],
+    iconAnchor: [18, 18],
+    popupAnchor: [0, -18]
   });
 };
 
-// React-Leaflet doesn't auto-recenter when coordinates change, this forces it.
+// --- MAP RE-CENTERING CONTROLLER ---
 const MapUpdater = ({ center }) => {
   const map = useMap();
   useEffect(() => {
-    if (center[0] && center[1]) {
-      map.setView(center, map.getZoom());
+    if (center && center[0] && center[1]) {
+      map.setView(center, map.getZoom(), { animate: true });
     }
   }, [center, map]);
   return null;
 };
 
-// --- MAIN COMPONENT ---
 export default function InteractiveMap({ 
   address, 
-  type = 'HOTEL', // 'HOTEL' or 'SHORTLET'
+  type = 'SHORTLET', 
   price = 0,
+  title = '',
+  image = '',
+  rating = 5.0,
+  reviewsCount = 0,
+  assetId = '',
   nearbyProperties = [] 
 }) {
   const [coordinates, setCoordinates] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [geoError, setGeoError] = useState(false);
+  const [activePinId, setActivePinId] = useState(null);
 
+  // --- GEOCODING RESOLVER ---
   useEffect(() => {
     const fetchCoordinates = async () => {
-      if (!address || !address.city) {
+      if (!address || (!address.city && !address.street)) {
         setIsLoading(false);
         setGeoError(true);
         return;
       }
 
+      if (address.coordinates?.lat && address.coordinates?.lng) {
+        setCoordinates([address.coordinates.lat, address.coordinates.lng]);
+        setIsLoading(false);
+        return;
+      }
+
       try {
         setIsLoading(true);
-        // Ping free OpenStreetMap Nominatim API to convert address text to coordinates
-        const query = `${address.street || ''}, ${address.city}, ${address.state || ''}, Nigeria`;
+        setGeoError(false);
+
+        const query = `${address.street || ''}, ${address.city || ''}, ${address.state || ''}, Nigeria`;
         const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`);
         const data = await response.json();
 
         if (data && data.length > 0) {
           setCoordinates([parseFloat(data[0].lat), parseFloat(data[0].lon)]);
         } else {
-          // Fallback to city center if specific street isn't found
-          const cityQuery = `${address.city}, ${address.state || ''}, Nigeria`;
+          const cityQuery = `${address.city || 'Lagos'}, ${address.state || 'Lagos'}, Nigeria`;
           const cityResponse = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(cityQuery)}`);
           const cityData = await cityResponse.json();
           
           if (cityData && cityData.length > 0) {
-             setCoordinates([parseFloat(cityData[0].lat), parseFloat(cityData[0].lon)]);
+            setCoordinates([parseFloat(cityData[0].lat), parseFloat(cityData[0].lon)]);
           } else {
-             setGeoError(true);
+            setCoordinates([6.5244, 3.3792]);
           }
         }
       } catch (error) {
         console.error("Geocoding error:", error);
-        setGeoError(true);
+        setCoordinates([6.5244, 3.3792]); 
       } finally {
         setIsLoading(false);
       }
@@ -99,55 +127,228 @@ export default function InteractiveMap({
 
   if (isLoading) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-2xl border border-gray-200">
-         <Loader2 className="w-8 h-8 animate-spin text-gray-900 mb-2" />
-         <span className="text-sm font-medium animate-pulse">Detecting location...</span>
+      <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center text-gray-500 bg-gray-100 rounded-3xl border border-gray-200">
+        <Loader2 className="w-8 h-8 animate-spin text-gray-900 mb-2" />
+        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Rendering Map...</span>
       </div>
     );
   }
 
   if (geoError || !coordinates) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-gray-50 rounded-2xl border border-gray-200">
-         <span className="text-sm font-medium">Map location unavailable for this address.</span>
+      <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded-3xl border border-gray-200 p-6 text-center">
+        <MapPin className="w-8 h-8 mb-2 text-gray-300" />
+        <span className="text-sm font-bold text-gray-600">Map location preview unavailable for this address.</span>
       </div>
     );
   }
 
   return (
-    <div className="w-full h-full bg-gray-100 rounded-2xl overflow-hidden shadow-inner relative z-0">
+    <div className="w-full h-full min-h-[300px] rounded-3xl overflow-hidden shadow-sm border border-gray-200 relative z-0 group">
+      
+      <style>{`
+        /* 💡 THE FIX: This filter transforms standard OSM into the muted Airbnb vector look */
+        .leaflet-tile-pane {
+          filter: saturate(0.35) brightness(1.08) contrast(0.95) sepia(0.08) !important;
+        }
+
+        /* Reset Leaflet marker wrapper */
+        .custom-airbnb-marker {
+          background: transparent !important;
+          border: none !important;
+        }
+
+        /* Airbnb Price Badge Styling */
+        .airbnb-price-pill {
+          background-color: #ffffff;
+          color: #222222;
+          font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          font-weight: 800;
+          font-size: 13px;
+          padding: 6px 12px;
+          border-radius: 20px;
+          box-shadow: 0 3px 12px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.12);
+          border: 1px solid rgba(0,0,0,0.08);
+          transition: all 0.2s cubic-bezier(0.2, 0, 0, 1);
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          white-space: nowrap;
+          user-select: none;
+        }
+
+        .airbnb-price-pill:hover {
+          transform: scale(1.08);
+          z-index: 999;
+          box-shadow: 0 6px 16px rgba(0,0,0,0.22);
+        }
+
+        .airbnb-price-pill.selected {
+          background-color: #111827 !important;
+          color: #ffffff !important;
+          transform: scale(1.12);
+          z-index: 1000;
+          box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+
+        /* Hotel Badge Pin */
+        .hotel-pin-badge {
+          width: 32px;
+          height: 32px;
+          background-color: #111827;
+          border: 3px solid #ffffff;
+          border-radius: 50%;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          transition: transform 0.2s ease;
+        }
+
+        .hotel-pin-badge .inner-dot {
+          width: 8px;
+          height: 8px;
+          background-color: #ffffff;
+          border-radius: 50%;
+        }
+
+        /* Leaflet Popup Airbnb Card Reset */
+        .leaflet-popup-content-wrapper {
+          padding: 0 !important;
+          border-radius: 18px !important;
+          overflow: hidden !important;
+          box-shadow: 0 12px 28px rgba(0,0,0,0.18) !important;
+          border: 1px solid rgba(0,0,0,0.06) !important;
+        }
+        .leaflet-popup-content {
+          margin: 0 !important;
+          line-height: 1.4 !important;
+        }
+        .leaflet-container a.leaflet-popup-close-button {
+          top: 8px !important;
+          right: 8px !important;
+          background: rgba(0,0,0,0.5) !important;
+          color: #ffffff !important;
+          border-radius: 50% !important;
+          width: 22px !important;
+          height: 22px !important;
+          font-size: 14px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          backdrop-filter: blur(4px);
+        }
+      `}</style>
+
       <MapContainer 
         center={coordinates} 
-        zoom={15} 
+        zoom={14} 
+        zoomControl={false}
         scrollWheelZoom={false} 
         className="w-full h-full z-0"
       >
-        {/* COMPLETELY FREE TILE LAYER - NO API KEY REQUIRED */}
+        {/* 100% FREE TILE LAYER - NO API KEY REQUIRED */}
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" 
+          maxZoom={19}
         />
+
+        <ZoomControl position="bottomright" />
         <MapUpdater center={coordinates} />
         
-        {/* MAIN TARGET PIN */}
+        {/* MAIN LISTING PIN */}
         <Marker 
           position={coordinates} 
-          icon={type === 'HOTEL' ? createHotelPin() : createPricePin(price, true)}
+          icon={type === 'HOTEL' ? createHotelPin(true) : createAirbnbPricePin(price, activePinId === assetId)}
+          eventHandlers={{
+            click: () => setActivePinId(assetId)
+          }}
         >
-          {type === 'HOTEL' && (
-            <Popup className="rounded-xl border-none shadow-xl">
-              <div className="font-sans font-bold text-gray-900 text-center px-4 py-2">
-                Exact Location
+          {/* AIRBNB POPUP CARD */}
+          <Popup className="airbnb-popup">
+            <div className="w-[240px] bg-white overflow-hidden font-sans">
+              {image && (
+                <div className="relative h-32 w-full bg-gray-100 overflow-hidden">
+                  <img src={image} alt={title} className="w-full h-full object-cover" />
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black text-white uppercase tracking-wider">
+                    {type}
+                  </div>
+                </div>
+              )}
+              
+              <div className="p-3">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="font-extrabold text-gray-900 text-sm truncate max-w-[160px]">
+                    {title || 'Selected Property'}
+                  </span>
+                  {rating > 0 && (
+                    <div className="flex items-center text-xs font-bold text-gray-900">
+                      <Star className="w-3 h-3 fill-gray-900 mr-0.5" />
+                      <span>{Number(rating).toFixed(1)}</span>
+                    </div>
+                  )}
+                </div>
+
+                <p className="text-xs text-gray-500 font-medium truncate mb-2">
+                  {address.street ? `${address.street}, ` : ''}{address.city}
+                </p>
+
+                <div className="flex items-baseline justify-between pt-2 border-t border-gray-100">
+                  <div>
+                    <span className="font-black text-gray-900 text-sm">{formatMapPrice(price)}</span>
+                    <span className="text-[10px] text-gray-500 font-medium"> / night</span>
+                  </div>
+                </div>
               </div>
-            </Popup>
-          )}
+            </div>
+          </Popup>
         </Marker>
 
-        {/* NEARBY SHORTLET PINS (Skipped for Hotels) */}
-        {type === 'SHORTLET' && nearbyProperties.map((prop) => {
-          // You would implement similar geocoding logic for nearby properties if they also lack coordinates
-          return null; 
+        {/* NEARBY PROPERTY PINS (For search map grids) */}
+        {nearbyProperties.map((item) => {
+          if (!item.location?.coordinates?.lat || !item.location?.coordinates?.lng) return null;
+          
+          const itemPos = [item.location.coordinates.lat, item.location.coordinates.lng];
+          const isSelected = activePinId === item._id;
+
+          return (
+            <Marker 
+              key={item._id}
+              position={itemPos}
+              icon={createAirbnbPricePin(item.pricePerNight || item.pricePer12Hours || item.startingPrice, isSelected)}
+              eventHandlers={{
+                click: () => setActivePinId(item._id)
+              }}
+            >
+              <Popup className="airbnb-popup">
+                <div className="w-[220px] bg-white overflow-hidden font-sans">
+                  {item.images?.[0] && (
+                    <div className="relative h-28 w-full bg-gray-100">
+                      <img src={item.images[0]} alt={item.title} className="w-full h-full object-cover" />
+                    </div>
+                  )}
+                  <div className="p-3">
+                    <h4 className="font-extrabold text-sm text-gray-900 truncate mb-1">{item.title}</h4>
+                    <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
+                      <div className="font-black text-gray-900 text-sm">
+                        {formatMapPrice(item.pricePerNight || item.pricePer12Hours || item.startingPrice)}
+                      </div>
+                      <Link 
+                        to={`/${type.toLowerCase() === 'car' ? 'cars' : 'properties'}/${item._id}`}
+                        className="text-[10px] font-bold text-brand-primary hover:underline flex items-center"
+                      >
+                        View <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              </Popup>
+            </Marker>
+          );
         })}
+
       </MapContainer>
     </div>
   );
