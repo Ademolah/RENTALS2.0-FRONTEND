@@ -3,13 +3,15 @@ import {
   LayoutDashboard, Users, Building, Wallet, 
   Settings, CheckCircle2, XCircle, Eye, Loader2, 
   X, ShieldCheck, Mail, Phone, Clock,
-  Home, Car, Menu, ListChecks, PlayCircle
+  Home, Car, Menu, ListChecks, PlayCircle,
+  MessageSquare, Link as LinkIcon, Copy // 💡 NEW
 } from 'lucide-react';
 import { 
   getHostApplications, approveHostApplication, rejectHostApplication,
   getDashboardStats, getEscrowLedger, getAssetOversight, toggleAssetStatus,
-  updateAssetApprovalStatus
-} from '../api/admin'; 
+  updateAssetApprovalStatus,
+  getPendingConciergeDrafts, generateConciergeCheckoutUrl // 💡 NEW
+} from '../api/admin';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('applications');
@@ -28,6 +30,69 @@ export default function AdminDashboard() {
   // Property Reviews and Media Viewing
   const [selectedListing, setSelectedListing] = useState(null);
   const [mediaViewer, setMediaViewer] = useState(null);
+
+  // 💡 NEW: Concierge State
+  const [conciergeDrafts, setConciergeDrafts] = useState([]);
+  const [draftPrices, setDraftPrices] = useState({});
+  const [generatedLinks, setGeneratedLinks] = useState({});
+  const [linkLoading, setLinkLoading] = useState({});
+
+  // 💡 NEW: Add the fetch trigger to your useEffect
+  useEffect(() => {
+    if (activeTab === 'applications') fetchApplications();
+    if (activeTab === 'overview') fetchStats();
+    if (activeTab === 'escrow') fetchLedger();
+    if (activeTab === 'assets' || activeTab === 'pending-assets') fetchAssets();
+    if (activeTab === 'concierge') fetchConciergeDrafts(); // <-- ADD THIS
+  }, [activeTab]);
+
+  // 💡 NEW: The Fetcher Function
+  const fetchConciergeDrafts = async () => {
+    setLoading(true);
+    try {
+      const res = await getPendingConciergeDrafts();
+      // 💡 SURGICAL FIX: Checks multiple levels to prevent the nested 'data.data' Axios bug
+      const fetchedDrafts = res.data?.data?.drafts || res.data?.drafts || res?.drafts || [];
+      setConciergeDrafts(fetchedDrafts);
+    } catch (error) {
+      console.error("Failed to fetch drafts:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 💡 NEW: The Link Generator Action
+  const handleGenerateLink = async (referenceCode, draftId) => {
+    const finalAmount = draftPrices[draftId];
+    if (!finalAmount || finalAmount <= 0) {
+      alert('Please enter a valid negotiated price.');
+      return;
+    }
+
+    setLinkLoading(prev => ({ ...prev, [draftId]: true }));
+    try {
+      const res = await generateConciergeCheckoutUrl({ referenceCode, finalAmount });
+      
+      // 💡 SURGICAL FIX: Dig into the nested Axios data object
+      const checkoutUrl = res.data?.data?.checkoutUrl || res.data?.checkoutUrl || res?.checkoutUrl;
+      
+      if (checkoutUrl) {
+        setGeneratedLinks(prev => ({ ...prev, [draftId]: checkoutUrl }));
+      } else {
+        alert("Payment gateway did not return a valid link.");
+      }
+    } catch (error) {
+      console.error(error);
+      alert(error.response?.data?.message || 'Failed to generate link.');
+    } finally {
+      setLinkLoading(prev => ({ ...prev, [draftId]: false }));
+    }
+  };
+
+  const copyToClipboard = (text) => {
+    navigator.clipboard.writeText(text);
+    alert('Payment link copied! You can now paste this to the guest on WhatsApp.');
+  };
 
   // --- ROUTER EFFECT ---
   useEffect(() => {
@@ -156,6 +221,7 @@ export default function AdminDashboard() {
 
   const navItems = [
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
+    { id: 'concierge', label: 'Concierge Queue', icon: MessageSquare },
     { id: 'applications', label: 'Host Applications', icon: Users },
     { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
     { id: 'assets', label: 'Asset Oversight', icon: Building },
@@ -208,6 +274,7 @@ export default function AdminDashboard() {
             let badgeCount = 0;
             if (item.id === 'applications') badgeCount = applications.length;
             if (item.id === 'pending-assets') badgeCount = pendingListings.length;
+            if (item.id === 'concierge') badgeCount = conciergeDrafts.length;
 
             return (
               <button
@@ -342,6 +409,99 @@ export default function AdminDashboard() {
             )}
           </div>
         )}
+
+        {/* --- TAB 6: CONCIERGE QUEUE (WHATSAPP DRAFTS) --- */}
+        {activeTab === 'concierge' && (
+           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
+             <div className="min-w-[900px]">
+               <table className="w-full text-left border-collapse">
+                 <thead>
+                   <tr className="bg-gray-50/50 border-b border-gray-100">
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Reference</th>
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Guest</th>
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset Requested</th>
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Negotiated Price (₦)</th>
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Generate Link</th>
+                   </tr>
+                 </thead>
+                 <tbody>
+                   {loading ? (
+                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                   ) : conciergeDrafts.length === 0 ? (
+                     <tr><td colSpan="5" className="p-8 text-center text-gray-500">No pending WhatsApp reservations.</td></tr>
+                   ) : (
+                     conciergeDrafts.map((draft) => {
+                       const isCar = !!draft.carId;
+                       const assetTitle = isCar ? `${draft.carId?.make} ${draft.carId?.model}` : draft.propertyId?.title;
+                       const guestName = draft.userId ? `${draft.userId.firstName || ''} ${draft.userId.lastName || ''}`.trim() : 'Unknown';
+                       const refCode = draft.paystackReference; // Temporary holding the WA-XXXXXX code
+                       const link = generatedLinks[draft._id];
+
+                       return (
+                         <tr key={draft._id} className="border-b border-gray-50 hover:bg-gray-50/50">
+                           <td className="p-4 whitespace-nowrap">
+                             <button 
+                               onClick={() => {
+                                 navigator.clipboard.writeText(refCode);
+                                 alert(`Reference ${refCode} copied to clipboard!`);
+                               }}
+                               className="group flex items-center space-x-2 bg-brand-primary/10 hover:bg-brand-primary/20 text-gray-900 border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
+                               title="Copy Reference Code"
+                             >
+                               <span className="text-xs font-black tracking-widest">{refCode}</span>
+                               <Copy className="w-3.5 h-3.5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                             </button>
+                           </td>
+                           <td className="p-4 text-sm font-bold text-gray-900 whitespace-nowrap">{guestName}</td>
+                           <td className="p-4 text-sm text-gray-600 truncate max-w-[200px]">{assetTitle}</td>
+                           
+                           <td className="p-4 text-center">
+                             <input 
+                               type="number"
+                               placeholder="e.g. 450000"
+                               disabled={!!link} // Lock input if link is already generated
+                               value={draftPrices[draft._id] || ''}
+                               onChange={(e) => setDraftPrices(prev => ({ ...prev, [draft._id]: e.target.value }))}
+                               className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-gray-400"
+                             />
+                           </td>
+                           
+                           <td className="p-4 text-right whitespace-nowrap">
+                             {link ? (
+                               <div className="flex items-center justify-end space-x-2 animate-in fade-in zoom-in duration-300">
+                                 <input 
+                                   type="text" 
+                                   readOnly 
+                                   value={link} 
+                                   className="w-32 px-2 py-1.5 text-[10px] text-gray-500 bg-gray-50 border border-gray-200 rounded outline-none truncate"
+                                 />
+                                 <button 
+                                   onClick={() => copyToClipboard(link)}
+                                   className="inline-flex items-center space-x-1.5 text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-lg shadow-sm hover:bg-emerald-100 transition-colors"
+                                 >
+                                   <Copy className="w-3.5 h-3.5" /><span>Copy</span>
+                                 </button>
+                               </div>
+                             ) : (
+                               <button 
+                                 onClick={() => handleGenerateLink(refCode, draft._id)}
+                                 disabled={linkLoading[draft._id]}
+                                 className="inline-flex items-center space-x-2 text-xs font-bold text-white bg-gray-900 hover:bg-black transition-colors px-4 py-2 rounded-lg shadow-sm disabled:opacity-50"
+                               >
+                                 {linkLoading[draft._id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LinkIcon className="w-3.5 h-3.5" />}
+                                 <span>Generate</span>
+                               </button>
+                             )}
+                           </td>
+                         </tr>
+                       );
+                     })
+                   )}
+                 </tbody>
+               </table>
+             </div>
+           </div>
+         )}
 
         {/* --- TAB 2: HOST APPLICATIONS --- */}
         {activeTab === 'applications' && (

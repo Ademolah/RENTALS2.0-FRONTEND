@@ -60,3 +60,13 @@ export const rejectHostApplication = async (id, reason) => {
   });
   return response.data;
 };
+
+export const generateConciergeCheckoutUrl = async (payload) => {
+  // payload expects: { referenceCode: "WA-XXXXXX", finalAmount: 450000 }
+  return apiClient.post(`/reservations/generate-checkout`, payload);
+};
+
+
+export const getPendingConciergeDrafts = async () => {
+  return apiClient.get(`/reservations/whatsapp-pending`);
+};
