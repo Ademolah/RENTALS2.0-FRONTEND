@@ -11,6 +11,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
+import { logUnifiedWhatsappIntent } from '../api/reservation';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 
 // PRESET_AMENITIES Match
@@ -48,6 +49,8 @@ export default function HotelDetails() {
   const [checkOutDate, setCheckOutDate] = useState('');
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
+  const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
+  const CONCIERGE_WHATSAPP = "2347087937649";
 
   // --- LIGHTBOX STATE ---
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -103,6 +106,62 @@ export default function HotelDetails() {
   const showToast = (message) => {
     setToastMessage(message);
     setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const handleWhatsAppClick = async (e) => {
+    e.preventDefault();
+
+    if (!isLoggedIn) {
+      if (setShowAuthModal) setShowAuthModal(true);
+      else showToast("Please log in or register to secure a reservation.");
+      return;
+    }
+
+    if (!checkInDate || !checkOutDate) {
+      showToast("Please select your check-in and check-out dates first.");
+      openCalendar('checkIn');
+      return;
+    }
+
+    if (user?.role !== 'USER') {
+      showToast('Only guest accounts can make reservations.');
+      return;
+    }
+
+    setIsWhatsappLoading(true);
+
+    try {
+      // 1. Fire intent to database
+      const response = await logUnifiedWhatsappIntent({
+        assetId: hotel._id || hotel.id,
+        assetType: 'HOTEL',
+        startDate: new Date(checkInDate).toISOString(),
+        endDate: new Date(checkOutDate).toISOString(),
+        extraData: { 
+          roomId: selectedRoom,
+          guests: activeRoomData?.capacity?.adults || 2
+        }
+      });
+
+      // 2. Retrieve secure reference
+      const reference = response.data?.reference || 'REQ-H-' + Math.floor(Math.random() * 100000);
+
+      // 3. Inject reference into the message
+      const message = `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
+                      `🏨 Hotel: ${hotel.title}\n` +
+                      `🛏️ Suite: ${activeRoomData?.name || 'Suite'}\n` +
+                      `📅 Check-in: ${new Date(checkInDate).toLocaleDateString()}\n` +
+                      `📅 Check-out: ${new Date(checkOutDate).toLocaleDateString()}\n` +
+                      `🔒 Reference: ${reference}\n\n` +
+                      `Could you please assist me with this reservation?`;
+      
+      const encodedMessage = encodeURIComponent(message);
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank');
+    } catch (err) {
+      showToast("Failed to initialize secure chat. Please try again.");
+    } finally {
+      setIsWhatsappLoading(false);
+    }
   };
 
   const handleBookClick = () => {
@@ -715,12 +774,29 @@ export default function HotelDetails() {
                 </div>
               </div>
 
-              <button 
-                onClick={handleBookClick}
-                className="w-full bg-brand-primary text-white font-bold text-base py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20"
-              >
-                {isLoggedIn ? "Reserve Now" : "Login to Reserve"}
-              </button>
+              <div className="space-y-3 relative z-0">
+                <button 
+                  onClick={handleBookClick}
+                  className="w-full bg-brand-primary text-white font-bold text-base py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20"
+                >
+                  {isLoggedIn ? "Reserve Now" : "Login to Reserve"}
+                </button>
+                
+                <button 
+                  onClick={handleWhatsAppClick}
+                  disabled={isWhatsappLoading}
+                  className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-[#25D366] font-bold text-sm py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
+                >
+                  {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                    <>
+                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                      </svg>
+                      Book via WhatsApp
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
 
@@ -729,16 +805,35 @@ export default function HotelDetails() {
 
       {/* MOBILE BOTTOM BOOKING BAR */}
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-[60] flex justify-between items-center">
-        <div className="flex flex-col">
-          <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1">Taxes incl.</span>
-          <span className="text-xl font-black text-gray-900 tracking-tight">₦{totalPrice.toLocaleString()}<span className="text-xs font-medium text-gray-500 ml-1">total</span></span>
+        {/* MOBILE BOTTOM BOOKING BAR */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-[60] flex justify-between items-center">
+        <div className="flex flex-col max-w-[40%]">
+          <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1 truncate">Taxes incl.</span>
+          <span className="text-lg sm:text-xl font-black text-gray-900 tracking-tight truncate">
+            ₦{totalPrice.toLocaleString()}
+          </span>
         </div>
-        <button 
-          onClick={handleBookClick}
-          className="bg-brand-primary text-white text-sm font-bold px-8 py-3.5 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-brand-primary/20"
-        >
-          {isLoggedIn ? "Reserve" : "Login"}
-        </button>
+        
+        <div className="flex gap-2 w-[60%] justify-end">
+          <button 
+            onClick={handleWhatsAppClick}
+            disabled={isWhatsappLoading}
+            className="bg-[#25D366] text-white p-3 sm:px-4 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-[#25D366]/20 flex items-center justify-center disabled:opacity-70"
+          >
+            {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+              </svg>
+            )}
+          </button>
+          <button 
+            onClick={handleBookClick}
+            className="bg-brand-primary text-white text-sm font-bold px-4 sm:px-6 py-3.5 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-brand-primary/20 flex-1 whitespace-nowrap"
+          >
+            {isLoggedIn ? "Reserve" : "Login"}
+          </button>
+        </div>
+      </div>
       </div>
 
       {/* PREMIUM TOAST NOTIFICATION */}
