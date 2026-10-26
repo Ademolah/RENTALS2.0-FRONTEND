@@ -1,17 +1,21 @@
 import { useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
+import { useGoogleLogin } from '@react-oauth/google'; // 💡 INJECTED
 import { useAuth } from '../context/AuthContext';
 import { registerUser as registerUserApi } from '../api/auth';
+import axios from 'axios'; // For the Google API call
 import ForgotPasswordModal from './ForgotPasswordModal';
 import { VerifyEmailModal } from './VerifyEmailModal';
+// Remove: import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 
 export default function AuthModal({ isOpen, onClose }) {
   const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false); // 💡 INJECTED
   const [error, setError] = useState('');
   
-  // 💡 FIX 1: Removed 'register' from useAuth so it doesn't crash expecting a token
   const { login } = useAuth(); 
 
   const [dialCode, setDialCode] = useState('+234');
@@ -28,6 +32,42 @@ export default function AuthModal({ isOpen, onClose }) {
   const [formData, setFormData] = useState({
     email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber:'', role: 'USER' 
   });
+
+  // ==========================================
+  // 💡 INJECTED: GOOGLE SIGN-IN LOGIC
+  // ==========================================
+  const handleGoogleSuccess = async (tokenResponse) => {
+    try {
+      setGoogleLoading(true);
+      setError('');
+      
+      // Send the token to your new backend endpoint
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/google`, {
+        idToken: tokenResponse.credential, // This is the JWT from Google
+      });
+
+      // Handle success exactly like your VerifyEmailModal does
+      const { token, data } = res.data;
+      localStorage.setItem('rentals_token', token);
+      localStorage.setItem('rentals_user', JSON.stringify(data.user));
+      
+      onClose();
+      
+      if (data.user.role === 'LANDLORD') {
+        window.location.href = '/dashboard/landlord'; 
+      } else {
+        window.location.href = '/dashboard/guest'; 
+      }
+
+    } catch (err) {
+      setError(err.response?.data?.message || 'Google Sign-In failed. Please try again.');
+    } finally {
+      setGoogleLoading(false);
+    }
+  };
+
+  
+  // ==========================================
 
   if (!isOpen) return null;
 
@@ -54,11 +94,9 @@ export default function AuthModal({ isOpen, onClose }) {
         }}
         email={registeredEmail}
         onSuccess={(token, user) => {
-          // 1. Store the token and user data safely
           localStorage.setItem('rentals_token', token);
           localStorage.setItem('rentals_user', JSON.stringify(user));
           
-          // 2. Close the modals cleanly
           setShowVerifyEmail(false);
           onClose();
 
@@ -70,13 +108,13 @@ export default function AuthModal({ isOpen, onClose }) {
         }}
         onResend={async () => {
           const { confirmPassword, ...apiData } = formData;
-          // 💡 FIX 2: Use the raw API function here for resending OTP
           await registerUserApi(apiData);
         }}
       />
     );
   }
 
+  // ... (handleLocalPhoneChange, handleDialCodeChange, handleChange, handleSubmit, toggleMode remain exactly the same)
   const handleLocalPhoneChange = (e) => {
     let val = e.target.value.replace(/\D/g, ''); 
     if (val.startsWith('0')) val = val.substring(1);
@@ -112,7 +150,6 @@ export default function AuthModal({ isOpen, onClose }) {
         onClose();
       } else {
         const { confirmPassword, ...apiData } = formData;
-        // 💡 FIX 3: Use the raw API function here so it accepts the 'pending' status
         await registerUserApi(apiData);
         setRegisteredEmail(formData.email);
         setShowVerifyEmail(true);
@@ -129,6 +166,7 @@ export default function AuthModal({ isOpen, onClose }) {
     setError('');
     setFormData({ ...formData, password: '', confirmPassword: '' });
   };
+
 
   return createPortal(
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -156,7 +194,26 @@ export default function AuthModal({ isOpen, onClose }) {
           </div>
         )}
 
+        {/* 💡 INJECTED: Google Sign-In Button Component */}
+<div className="mb-4 flex justify-center">
+  <GoogleLogin
+    onSuccess={handleGoogleSuccess}
+    onError={() => setError('Google Sign-In failed.')}
+    shape="pill"
+    size="large"
+    width="400"
+    text="continue_with"
+  />
+</div>
+
+        <div className="flex items-center my-4">
+          <div className="flex-grow border-t border-gray-200"></div>
+          <span className="mx-4 text-xs font-bold text-gray-400 uppercase tracking-wider">or</span>
+          <div className="flex-grow border-t border-gray-200"></div>
+        </div>
+
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* ... The rest of your exact form continues here ... */}
           {!isLogin && (
             <>
               <div>
@@ -246,7 +303,7 @@ export default function AuthModal({ isOpen, onClose }) {
             </div>
           )}
 
-          <button type="submit" disabled={loading} className="w-full py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-gray-900/20 flex items-center justify-center mt-2 active:scale-[0.98]">
+          <button type="submit" disabled={loading || googleLoading} className="w-full py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-gray-900/20 flex items-center justify-center mt-2 active:scale-[0.98]">
             {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : (isLogin ? 'Sign In' : 'Create Account')}
           </button>
         </form>
