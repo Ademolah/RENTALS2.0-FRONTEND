@@ -1,4 +1,3 @@
-import axios from 'axios';
 import { apiClient } from './client';
 
 export const getCars = async (filters = {}) => {
@@ -12,22 +11,13 @@ export const getCarById = async (id) => {
   return response.data;
 };
 
-// --- NEW AVAILABILITY CHECK ---
 export const checkCarAvailability = async (id, dates) => {
   const response = await apiClient.post(`/cars/${id}/availability`, dates);
   return response.data;
 };
 
 export const createCar = async (formData) => {
-  const token = localStorage.getItem('rentals_token');
-
-  const baseURL = import.meta.env.VITE_API_URL
-
-  const response = await axios.post(`${baseURL}/cars`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    },
-  });
+  const response = await apiClient.post('/cars', formData);
   return response.data;
 };
 
@@ -52,28 +42,16 @@ export const getLandlordCarBookings = async () => {
 };
 
 export const updateCar = async (id, updateData) => {
-  const token = localStorage.getItem('rentals_token');
-  const baseURL = import.meta.env.VITE_API_URL;
-  
-  const response = await axios.patch(`${baseURL}/cars/${id}`, updateData, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await apiClient.patch(`/cars/${id}`, updateData);
   return response.data;
 };
 
 export const deleteCar = async (id) => {
-  const token = localStorage.getItem('rentals_token');
-  const baseURL = import.meta.env.VITE_API_URL;
-  
-  const response = await axios.delete(`${baseURL}/cars/${id}`, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await apiClient.delete(`/cars/${id}`);
   return response.data;
 };
 
 export const logCarWhatsappIntent = async (intentData) => {
-  const token = localStorage.getItem('rentals_token');
-  return apiClient.post(`/cars/whatsapp-intent`, intentData, {
-    headers: { Authorization: `Bearer ${token}` }
-  });
+  const response = await apiClient.post(`/cars/whatsapp-intent`, intentData);
+  return response.data;
 };

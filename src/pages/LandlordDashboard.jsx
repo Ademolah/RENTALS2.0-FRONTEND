@@ -145,7 +145,11 @@ export default function LandlordDashboard() {
         guest: { firstName: b.userId?.firstName || 'Guest', lastName: b.userId?.lastName || '', phone: b.userId?.phoneNumber || 'N/A' },
         asset: { 
           title: b.carId ? `${b.carId.make} ${b.carId.carModel} ${b.carId.year}` : 'Vehicle', 
-          location: b.carId?.location?.city ? `${b.carId.location.city}, ${b.carId.location.state}` : 'Platform Pickup',
+          location: b.carId?.location
+        ? [b.carId.location.address, b.carId.location.city, b.carId.location.state]
+            .filter(Boolean) 
+            .join(', ')
+        : 'Platform Pickup',
           image: b.carId?.images?.[0] || 'https://images.unsplash.com/photo-1503376760302-83f0453a4574?auto=format&fit=crop&w=800&q=80'
         },
         createdAt: new Date(b.createdAt)
