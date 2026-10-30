@@ -126,3 +126,33 @@ export async function fetchHostReviews(listings) {
   );
   return results.flat().sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
 }
+
+// Lagos calendar day (YYYY-MM-DD) for "arriving today" checks.
+export const lagosToday = () => new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' });
+export const dayOf = (v) => {
+  const t = v ? new Date(v) : null;
+  return t && !Number.isNaN(t.getTime()) ? t.toLocaleDateString('en-CA', { timeZone: 'Africa/Lagos' }) : '';
+};
+
+// Median nightly rate of similar live listings (same kind, same state, similar size).
+export async function fetchSuggestedPrice({ category, state, area, bedrooms }) {
+  const hotels = category === 'hotels';
+  const res = await apiClient.get(hotels ? '/hotels?limit=100' : '/properties?limit=100');
+  const list = pick(res.data, hotels ? 'hotels' : 'properties');
+  const live = list.filter((l) => {
+    const cat = str(l.category).toUpperCase();
+    if (!hotels && ['HOTEL', 'VIP', 'VIP RESERVATION', 'VIP_SERVICE'].includes(cat)) return false;
+    const price = Number(hotels ? (l.startingPrice ?? l.pricePerNight) : l.pricePerNight);
+    return price > 0 && l.isAvailable !== false && str(l.address?.state).toLowerCase() === state.toLowerCase();
+  });
+  const priceOf = (l) => Number(hotels ? (l.startingPrice ?? l.pricePerNight) : l.pricePerNight);
+  const near = (l) => hotels || bedrooms === undefined || Math.abs(Number(l.capacity?.bedrooms ?? l.bedrooms ?? bedrooms) - bedrooms) <= 1;
+  const wanted = str(area).trim().toLowerCase();
+  const inArea = wanted ? live.filter((l) => near(l) && `${str(l.address?.city)} ${str(l.address?.street)}`.toLowerCase().includes(wanted)) : [];
+  const pool = inArea.length >= 2 ? inArea : live.filter(near);
+  if (pool.length < 2) return { price: null, count: pool.length, scope: '' };
+  const sorted = pool.map(priceOf).sort((a, b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+  return { price: Math.round(median / 1000) * 1000, count: pool.length, scope: inArea.length >= 2 ? area : state };
+}

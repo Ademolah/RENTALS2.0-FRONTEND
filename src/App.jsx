@@ -22,6 +22,9 @@ import Trips from './pages/Trips';
 import Saved from './pages/Saved';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
+import Reviews from './pages/Reviews';
+import Checkout from './pages/Checkout';
+import ErrorBoundary from './components/ErrorBoundary';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
@@ -89,7 +92,7 @@ function App() {
       </div>
 
       <div className="flex-grow">
-        <Routes>
+        <ErrorBoundary><Routes>
           <Route 
             path="/" 
             element={
@@ -118,12 +121,14 @@ function App() {
           <Route path="/saved" element={<Saved />} />
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/reviews/:id" element={<Reviews />} />
+          <Route path="/checkout" element={<Checkout />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/sitemap" element={<Sitemap />} />
           <Route path='/vip/services/:id' element={<VipServiceDetails/>} />
           <Route path="/reset-password" element={<ResetPassword />} />
-        </Routes>
+        </Routes></ErrorBoundary>
       </div>
 
       {/* Conditionally hide the Footer on Dashboards */}

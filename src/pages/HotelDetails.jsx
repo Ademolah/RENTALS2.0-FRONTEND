@@ -10,7 +10,11 @@ import { useNavigate, useParams } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
-import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
+import { createPropertyReviewApi } from '../api/reviews';
+import { useToast } from '../components/Toast';
+import { WhatsAppIcon } from '../components/ui';
+import ReviewsSection from '../components/detail/ReviewsSection';
+import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
 import FloatingPriceTag from '../components/FloatingPriceTag';
@@ -40,6 +44,7 @@ export default function HotelDetails() {
   const { id } = useParams(); 
   const navigate = useNavigate();
   const galleryRef = useRef(null);
+  const swipe = useSwipe((dir) => setLightboxIndex((i) => (i === null ? i : (i - dir + (hotel?.images?.length || 1)) % (hotel?.images?.length || 1))));
   
   const { user, setShowAuthModal } = useAuth();
   const isLoggedIn = Boolean(user);
@@ -52,7 +57,7 @@ export default function HotelDetails() {
   const [checkInDate, setCheckInDate] = useState('');
   const [checkOutDate, setCheckOutDate] = useState('');
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
-  const [toastMessage, setToastMessage] = useState(null);
+  const toast = useToast();
   const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
   const CONCIERGE_WHATSAPP = "2347063688222";
   useDocumentMeta(hotel?.title, hotel?.description?.slice(0, 160));
@@ -61,8 +66,7 @@ export default function HotelDetails() {
   const [lightboxIndex, setLightboxIndex] = useState(null);
 
   // --- REVIEWS STATE ---
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const [reviewsKey, setReviewsKey] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -85,19 +89,6 @@ export default function HotelDetails() {
         if (data.roomTypes && data.roomTypes.length > 0) {
           setSelectedRoom(data.roomTypes[0]._id);
         }
-
-        // Fetch Reviews
-        setReviewsLoading(true);
-        try {
-          const revResponse = await getPropertyReviewsApi(data._id);
-          if (revResponse?.success) {
-            setReviews(revResponse.reviews);
-          }
-        } catch (revErr) {
-          console.error("Failed to load hotel reviews:", revErr);
-        } finally {
-          setReviewsLoading(false);
-        }
       } catch (err) {
         console.error("Failed to load hotel:", err);
         setError("Unable to load hotel details.");
@@ -108,10 +99,7 @@ export default function HotelDetails() {
     if (id) fetchHotelAndReviews();
   }, [id]);
 
-  const showToast = (message) => {
-    setToastMessage(message);
-    setTimeout(() => setToastMessage(null), 3500);
-  };
+  const showToast = (message) => toast.show(message);
 
   const handleWhatsAppClick = async (e) => {
     e.preventDefault();
@@ -213,17 +201,7 @@ export default function HotelDetails() {
       const res = await createPropertyReviewApi(hotel._id, reviewForm, token);
       
       if (res.success) {
-        setReviews([{
-          _id: res.review._id,
-          rating: res.review.rating,
-          comment: res.review.comment,
-          createdAt: res.review.createdAt,
-          user: {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profilePicture: user.profilePicture
-          }
-        }, ...reviews]);
+        setReviewsKey((k) => k + 1);
         
         setHotel(prev => ({
           ...prev,
@@ -322,6 +300,7 @@ export default function HotelDetails() {
     );
   }
 
+  const ownListing = isOwnListing(user, hotel.ownerId?._id || hotel.ownerId || hotel.landlordId?._id || hotel.landlordId);
   const activeRoomData = hotel.roomTypes?.find(r => r._id === selectedRoom);
   const nights = calculateNights();
   const basePricePerNight = activeRoomData?.pricePerNight || hotel.startingPrice || 0;
@@ -401,7 +380,7 @@ export default function HotelDetails() {
 
       {/* RESTORED LIGHTBOX */}
       {lightboxIndex !== null && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200" onClick={() => setLightboxIndex(null)} {...swipe}>
           <button 
             onClick={() => setLightboxIndex(null)} 
             className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
@@ -422,6 +401,7 @@ export default function HotelDetails() {
             src={hotel.images[lightboxIndex]} 
             alt="Expanded view" 
             className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+            onClick={(e) => e.stopPropagation()}
           />
 
           {hotel.images.length > 1 && (
@@ -433,7 +413,7 @@ export default function HotelDetails() {
             </button>
           )}
           
-          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
+          <div className="absolute bottom-8 left-0 w-full text-center text-white/70 font-semibold tracking-wide text-base">
             {lightboxIndex + 1} / {hotel.images.length}
           </div>
         </div>
@@ -454,6 +434,11 @@ export default function HotelDetails() {
           <ChevronRight className="w-8 h-8" />
         </button>
         
+        {hotel.images?.length > 0 && (
+          <button onClick={() => setLightboxIndex(0)} className="absolute bottom-6 right-6 z-20 bg-white text-brand-dark font-semibold text-base px-5 py-3 rounded-xl shadow-elevated hover:bg-gray-50">
+            View all {hotel.images.length} photo{hotel.images.length !== 1 ? 's' : ''}
+          </button>
+        )}
         <div ref={galleryRef} className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar h-[40vh] md:h-[60vh] scroll-smooth">
           {hotel.images?.map((img, index) => (
             <div 
@@ -492,6 +477,7 @@ export default function HotelDetails() {
                 <MapPin className="w-5 h-5 mr-2 text-brand-primary shrink-0" />
                 <span className="text-lg">{hotel.address?.street}, {hotel.address?.city}, {hotel.address?.state}</span>
               </div>
+              <DirectionsLink {...coordsOf(hotel.address?.coordinates || hotel.location?.coordinates)} address={[hotel.address?.street, hotel.address?.city, hotel.address?.state].filter(Boolean).join(', ')} />
             </div>
 
             <hr className="border-gray-200" />
@@ -502,6 +488,8 @@ export default function HotelDetails() {
                 {hotel.description}
               </p>
             </div>
+
+            <StayFacts checkInTime={hotel.checkInTime} checkOutTime={hotel.checkOutTime} price={hotel.startingPrice} />
 
             {hotel.amenities && hotel.amenities.length > 0 && (
               <div>
@@ -674,77 +662,18 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
-            {/* 💡 REVIEWS SECTION */}
-            <div id="reviews-section" className="pt-4 pb-8">
-              <div className="flex items-center justify-between mb-8">
-                <div className="flex items-center space-x-3">
-                  <Star className="w-6 h-6 fill-gray-900 text-brand-dark" />
-                  <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight">
-                    {hotel.reviewsCount === 0 || !hotel.reviewsCount ? 'No reviews yet' : `${hotel.rating?.toFixed(1) || '5.0'} | ${hotel.reviewsCount} review${hotel.reviewsCount !== 1 ? 's' : ''}`}
-                  </h3>
-                </div>
-                
-                <button 
-                  onClick={() => {
-                    if (!isLoggedIn) {
-                      if (setShowAuthModal) setShowAuthModal(true);
-                      else showToast('Please log in to submit a review.');
-                    } else if (user?.role === 'USER') {
-                      setShowReviewModal(true);
-                    } else {
-                      showToast('Only guest accounts can submit reviews.');
-                    }
-                  }}
-                  className="px-6 py-3 bg-white border border-gray-200 text-brand-dark hover:border-brand-dark rounded-xl text-base font-bold transition-colors shadow-sm"
-                >
-                  Write a Review
-                </button>
-              </div>
-
-              {reviewsLoading ? (
-                <div className="flex items-center space-x-2 text-brand-text-secondary font-medium text-sm">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Loading guest feedback...</span>
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 flex flex-col items-center text-center">
-                  <MessageSquare className="w-8 h-8 text-gray-300 mb-3" />
-                  <h4 className="text-brand-dark font-bold mb-1">Be the first to review</h4>
-                  <p className="text-sm font-medium text-brand-text-secondary max-w-sm">Share your experience to help other travelers make informed decisions.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                  {reviews.map((review) => (
-                    <div key={review._id} className="space-y-4">
-                      <div className="flex items-center space-x-4">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                          {review.user?.profilePicture ? (
-                            <img src={review.user.profilePicture} alt="User" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-bold text-lg uppercase">
-                              {review.user?.firstName?.charAt(0) || 'G'}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="font-bold text-base text-brand-dark">{review.user?.firstName}</div>
-                          <div className="text-xs font-medium text-brand-text-secondary">
-                            {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex space-x-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className={`w-4 h-4 ${review.rating >= star ? 'fill-gray-900 text-brand-dark' : 'fill-transparent text-gray-300'}`} />
-                        ))}
-                      </div>
-                      <p className="text-brand-text-secondary text-base leading-relaxed">
-                        {review.comment}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-              )}
+            {/* REVIEWS */}
+            <div id="reviews-section" className="pt-4">
+              <ReviewsSection
+                listingId={hotel._id || hotel.id}
+                fallback={{ rating: hotel.rating, count: hotel.reviewsCount }}
+                refreshKey={reviewsKey}
+                onWrite={() => {
+                  if (!isLoggedIn) setShowAuthModal?.(true);
+                  else if (user?.role === 'USER') setShowReviewModal(true);
+                  else showToast('Only guest accounts can submit reviews.');
+                }}
+              />
             </div>
 
             <hr className="border-gray-200" />
@@ -759,6 +688,9 @@ export default function HotelDetails() {
 
           {/* RIGHT COLUMN: Sticky Booking Sidebar (Desktop Only) */}
           <div className="hidden lg:block w-1/3 relative">
+            {ownListing ? (
+              <div className="sticky top-28"><ManageListingCard status={String(hotel.status || '').toLowerCase()} /></div>
+            ) : (
             <div className="sticky top-28 bg-white border border-gray-100 rounded-3xl p-7 shadow-elevated">
               
               <div className="mb-6 flex flex-col items-start border-b border-gray-100 pb-6">
@@ -803,21 +735,21 @@ export default function HotelDetails() {
                 >
                   {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                     <>
-                      <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                      </svg>
+                      <WhatsAppIcon className="w-5 h-5" />
                       Book via WhatsApp instead
                     </>
                   )}
                 </button>
               </div>
             </div>
+            )}
           </div>
 
         </div>
       </div>
 
       {/* MOBILE BOTTOM BOOKING BAR */}
+      {!ownListing && (
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-[60] flex justify-between items-center">
         <div className="flex flex-col max-w-[40%]">
           <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1 truncate">Taxes incl.</span>
@@ -833,9 +765,7 @@ export default function HotelDetails() {
             className="bg-[#25D366] text-white p-3 sm:px-4 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-[#25D366]/20 flex items-center justify-center disabled:opacity-70"
           >
             {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current" xmlns="http://www.w3.org/2000/svg">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-              </svg>
+              <WhatsAppIcon className="w-5 h-5" />
             )}
           </button>
           <button 
@@ -846,15 +776,9 @@ export default function HotelDetails() {
           </button>
         </div>
       </div>
-
-      {/* PREMIUM TOAST NOTIFICATION */}
-      {toastMessage && (
-        <div className="fixed bottom-28 lg:bottom-10 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom-8 fade-in duration-300">
-          <div className="bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-elevated flex items-center space-x-3">
-            <AlertCircle className="w-5 h-5 text-brand-primary shrink-0" />
-            <span className="font-medium text-base tracking-wide">{toastMessage}</span>
-          </div>
-        </div>
+      )}
+      {ownListing && (
+        <div className="lg:hidden px-4 mt-6"><ManageListingCard status={String(hotel.status || '').toLowerCase()} /></div>
       )}
 
       <style>{`

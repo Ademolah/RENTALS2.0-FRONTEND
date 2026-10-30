@@ -1,14 +1,30 @@
 import { useState, useMemo, useEffect } from 'react';
 import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, CheckCircle2, XCircle, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
-import { initiateBooking, logUnifiedWhatsappIntent } from '../api/reservation';
-import { checkPropertyAvailability } from '../api/properties';
+import { useNavigate } from 'react-router-dom';
+import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';
+import { checkPropertyAvailability, getPropertyById } from '../api/properties';
 import { useAuth } from '../context/AuthContext';
 import AvailabilityNotice from './AvailabilityNotice';
 import { CONCIERGE_WHATSAPP } from '../lib/config';
+import { isNightBooked, rangeBooked } from '../lib/availability';
 
 export default function BookingWidget({ property }) {
   const { user, setShowAuthModal } = useAuth();
-  
+  const navigate = useNavigate();
+  const [bookedDates, setBookedDates] = useState(property?.bookedDates || []);
+
+  useEffect(() => {
+    if (property?.bookedDates?.length || !property?.id) return undefined;
+    let active = true;
+    getPropertyById(property.id)
+      .then((res) => {
+        const p = res?.data?.property || res?.property || res;
+        if (active && Array.isArray(p?.bookedDates)) setBookedDates(p.bookedDates);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [property?.id, property?.bookedDates]);
+
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
@@ -151,28 +167,31 @@ export default function BookingWidget({ property }) {
       }
     }
 
-    try {
-      const response = await initiateBooking({
+    const fmt = (d) => new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+    saveCheckoutDraft({
+      kind: 'property',
+      tag: 'Shortlet',
+      title: property.title,
+      subtitle: property.location,
+      image: property.images?.[0] || property.image,
+      backTo: `/property/${property.id}`,
+      details: [
+        { label: 'Check-in', value: fmt(checkIn) },
+        { label: 'Check-out', value: fmt(checkOut) },
+        { label: 'Guests', value: String(guests) },
+      ],
+      lines: [{ label: `₦${Number(property.price).toLocaleString()} x ${pricingDetails.nights} night${pricingDetails.nights > 1 ? 's' : ''}`, amount: pricingDetails.baseTotal }],
+      total: pricingDetails.grandTotal,
+      payload: {
         propertyId: property.id,
         checkInDate: checkIn,
         checkOutDate: checkOut,
         guestsCount: guests,
         totalAmount: pricingDetails.grandTotal,
-        callbackUrl: `${window.location.origin}/trips`
-      });
-
-      const checkoutUrl = response.checkoutUrl || response.data?.checkoutUrl || response.authorization_url;
-
-      if (checkoutUrl) {
-        window.location.href = checkoutUrl;
-      } else {
-        setError('Reservation secured, but payment gateway failed to load.');
-      }
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to secure reservation. Please try again.');
-    } finally {
-      setLoading(false);
-    }
+      },
+    });
+    setLoading(false);
+    navigate('/checkout');
   };
 
   const handleWhatsAppClick = async (e) => {
@@ -344,10 +363,14 @@ export default function BookingWidget({ property }) {
                   const isBetween = checkIn && checkOut && dateStr > checkIn && dateStr < checkOut;
                   
                   const isDisabledForCheckOut = calendarMode === 'checkOut' && checkIn && dateStr <= checkIn;
-                  const disabled = isPast || isDisabledForCheckOut;
+                  const isTaken = calendarMode === 'checkOut' && checkIn
+                    ? rangeBooked(bookedDates, checkIn, dateStr)
+                    : isNightBooked(bookedDates, dateStr);
+                  const disabled = isPast || isDisabledForCheckOut || isTaken;
 
                   let bgClass = 'hover:bg-gray-100 text-brand-dark';
                   if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
+                  if (isTaken && !isPast) bgClass = 'text-gray-400 line-through cursor-not-allowed bg-gray-50';
                   if (isBetween) bgClass = 'bg-gray-100 text-brand-dark';
                   if (isSelectedIn || isSelectedOut) bgClass = 'bg-brand-primary text-white shadow-md';
 
@@ -367,6 +390,7 @@ export default function BookingWidget({ property }) {
               <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
                 <span className="text-xs font-bold text-brand-text-muted uppercase tracking-widest">
                   Selecting: {calendarMode === 'checkIn' ? 'Check-in' : 'Check-out'}
+                  {bookedDates.length > 0 && <span className="ml-3 normal-case tracking-normal font-medium line-through">Booked</span>}
                 </span>
                 <button 
                   onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
@@ -390,7 +414,7 @@ export default function BookingWidget({ property }) {
           <AvailabilityNotice
             start={checkIn}
             end={checkOut}
-            bookedDates={property?.bookedDates}
+            bookedDates={bookedDates}
             isFree={async (s, e) => (await checkPropertyAvailability(property.id, { startDate: s, endDate: e })).available !== false}
             onPick={(s, e) => { setCheckIn(s); setCheckOut(e); }}
           />

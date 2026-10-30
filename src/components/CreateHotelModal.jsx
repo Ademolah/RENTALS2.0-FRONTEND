@@ -6,6 +6,11 @@ import {
   ChevronRight, ChevronLeft, AlertCircle
 } from 'lucide-react';
 import { createHotel } from '../api/hotel';
+import { useToast } from './Toast';
+import { useDraft } from './host/useDraft';
+import DraftBar from './host/DraftBar';
+import ArrivalGuideFields from './host/ArrivalGuideFields';
+import SuggestedPrice from './host/SuggestedPrice';
 
 const PRESET_AMENITIES = [
   { name: 'Free Wifi', icon: Wifi },
@@ -17,6 +22,19 @@ const PRESET_AMENITIES = [
   { name: 'Valet Parking', icon: Car },
   { name: 'Room Service', icon: Coffee }
 ];
+
+const newRoom = () => ({ name: '', pricePerNight: '', capacity: { adults: 2, children: 0 }, totalInventory: 1, amenities: [], description: '' });
+
+const freshForm = () => ({
+  title: '',
+  description: '',
+  hasBreakfast: false,
+  category: 'HOTEL',
+  address: { street: '', city: '', state: '', country: 'Nigeria' },
+  amenities: [],
+  images: [],
+  roomTypes: [newRoom()],
+});
 
 const INITIAL_ROOM_STATE = {
   name: '',
@@ -30,6 +48,9 @@ const INITIAL_ROOM_STATE = {
 export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [arrivalNotes, setArrivalNotes] = useState('');
+  const [arrivalPhotos, setArrivalPhotos] = useState([]);
+  const toastApi = useToast();
 
   // Form State mapped exactly to your Mongoose schema
   const [formData, setFormData] = useState({
@@ -40,15 +61,30 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
     address: { street: '', city: '', state: '', country: 'Nigeria' },
     amenities: [],
     images: [], 
-    roomTypes: [ { ...INITIAL_ROOM_STATE } ] 
+    roomTypes: [ newRoom() ] 
   });
 
-  const [toast, setToast] = useState({ visible: false, message: '', type: 'success' });
+  const showToast = (message, type = 'error') => (type === 'success' ? toastApi.success(message) : toastApi.error(message));
 
-  const showToast = (message, type = 'error') => {
-    setToast({ visible: true, message, type });
-    setTimeout(() => setToast({ visible: false, message: '', type: 'success' }), 4000);
-  };
+  const { savedAt, clearDraft } = useDraft(
+    'rentals_draft_hotel',
+    isOpen,
+    {
+      form: {
+        title: formData.title,
+        description: formData.description,
+        hasBreakfast: formData.hasBreakfast,
+        address: formData.address,
+        amenities: formData.amenities,
+        roomTypes: formData.roomTypes,
+      },
+      arrivalNotes,
+    },
+    (v) => {
+      setFormData((prev) => ({ ...prev, ...v.form }));
+      setArrivalNotes(v.arrivalNotes || '');
+    }
+  );
 
   if (!isOpen) return null;
 
@@ -108,7 +144,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
   const addRoomType = () => {
     setFormData(prev => ({
       ...prev,
-      roomTypes: [...prev.roomTypes, { ...INITIAL_ROOM_STATE }]
+      roomTypes: [...prev.roomTypes, newRoom()]
     }));
   };
 
@@ -132,7 +168,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
       submitData.append('state', formData.address.state);
       submitData.append('country', formData.address.country);
 
-      formData.amenities.forEach(amenity => submitData.append('amenities', amenity));
+      submitData.append('amenities', JSON.stringify(formData.amenities));
       submitData.append('roomTypes', JSON.stringify(formData.roomTypes));
 
       // Calculate starting price dynamically from the lowest room price (fallback to 0)
@@ -145,9 +181,13 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
         formData.images.forEach(file => submitData.append('images', file));
       }
 
+      if (arrivalNotes.trim()) submitData.append('arrivalNotes', arrivalNotes.trim());
+      arrivalPhotos.slice(0, 5).forEach(file => submitData.append('arrivalPhotos', file));
+
       const data = await createHotel(submitData);
       
-      showToast("Hotel profile published successfully!", "success");
+      showToast("Hotel published. It goes live after approval.", "success");
+      clearDraft();
       
       setTimeout(() => {
         onSuccess && onSuccess(data.data);
@@ -230,6 +270,8 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
           </select>
         </div>
       </div>
+
+      <ArrivalGuideFields notes={arrivalNotes} onNotes={setArrivalNotes} photos={arrivalPhotos} onPhotos={setArrivalPhotos} label="Arrival guide" />
     </div>
   );
 
@@ -258,7 +300,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
                   </div>
                 )}
                 <Icon className={`w-6 h-6 mb-2 ${isSelected ? 'text-brand-primary' : 'text-gray-400'}`} />
-                <span className="text-[10px] font-bold uppercase tracking-wider text-center">{amenity.name}</span>
+                <span className="text-xs font-bold uppercase tracking-wider text-center">{amenity.name}</span>
               </button>
             );
           })}
@@ -320,6 +362,8 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
         </span>
       </div>
 
+      <SuggestedPrice category="hotels" state={formData.address.state} area={formData.address.city} onUse={(price) => handleRoomChange(0, 'pricePerNight', price)} />
+
       <div className="space-y-6 max-h-[50vh] overflow-y-auto pr-2 custom-scrollbar">
         {formData.roomTypes.map((room, index) => (
           <div key={index} className="bg-white border-2 border-gray-100 rounded-2xl p-5 shadow-sm relative group">
@@ -343,50 +387,50 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
                 value={room.name}
                 onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
                 placeholder="Room Name (e.g. Deluxe King Suite)"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:outline-none focus:border-brand-primary"
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-brand-primary"
               />
               
               <div className="flex gap-4">
                 <div className="w-1/2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Price / Night (₦)</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Price / Night (₦)</label>
                   <input 
                     type="number" 
                     value={room.pricePerNight}
                     onChange={(e) => handleRoomChange(index, 'pricePerNight', Number(e.target.value))}
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-primary"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-brand-primary"
                   />
                 </div>
                 <div className="w-1/2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Total Inventory</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Total Inventory</label>
                   <input 
                     type="number" 
                     value={room.totalInventory}
                     onChange={(e) => handleRoomChange(index, 'totalInventory', Number(e.target.value))}
                     min="1"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-primary"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-brand-primary"
                   />
                 </div>
               </div>
 
               <div className="flex gap-4">
                 <div className="w-1/2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Max Adults</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Max Adults</label>
                   <input 
                     type="number" 
                     value={room.capacity.adults}
                     onChange={(e) => handleRoomChange(index, 'capacity.adults', Number(e.target.value))}
                     min="1"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-primary"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-brand-primary"
                   />
                 </div>
                 <div className="w-1/2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase mb-1">Max Children</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Max Children</label>
                   <input 
                     type="number" 
                     value={room.capacity.children}
                     onChange={(e) => handleRoomChange(index, 'capacity.children', Number(e.target.value))}
                     min="0"
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-brand-primary"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base focus:outline-none focus:border-brand-primary"
                   />
                 </div>
               </div>
@@ -436,6 +480,9 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
 
         {/* SCROLLABLE FORM CONTENT */}
         <div className="overflow-y-auto p-6 flex-grow">
+          <div className="mb-5">
+            <DraftBar savedAt={savedAt} onExit={onClose} onDiscard={() => { clearDraft(); setFormData(freshForm()); setArrivalNotes(''); setArrivalPhotos([]); setStep(1); }} />
+          </div>
           {step === 1 && renderStep1()}
           {step === 2 && renderStep2()}
           {step === 3 && renderStep3()}
@@ -471,21 +518,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
           )}
         </div>
 
-        {/* MAJESTIC TOAST NOTIFICATION */}
-        <div className={`absolute top-6 left-1/2 -translate-x-1/2 z-[300] transition-all duration-500 ease-out ${toast.visible ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-4 scale-95 pointer-events-none'}`}>
-          <div className={`flex items-center space-x-3 px-6 py-4 rounded-2xl shadow-2xl border backdrop-blur-md ${
-            toast.type === 'success' 
-              ? 'bg-green-900/95 border-green-700/50 text-white shadow-green-900/20' 
-              : 'bg-red-900/95 border-red-700/50 text-white shadow-red-900/20'
-          }`}>
-            {toast.type === 'success' ? (
-              <CheckCircle2 className="w-5 h-5 text-green-400 shrink-0" />
-            ) : (
-              <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
-            )}
-            <span className="font-bold text-sm tracking-wide">{toast.message}</span>
-          </div>
-        </div>
+        
 
       </div>
     </div>

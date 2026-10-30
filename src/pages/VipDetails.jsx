@@ -10,6 +10,9 @@ import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
+import { WhatsAppIcon } from '../components/ui';
+import ReviewsSection from '../components/detail/ReviewsSection';
+import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
 
@@ -34,6 +37,7 @@ export default function VipDetails() {
 
   // Image Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const swipe = useSwipe((dir) => setLightboxIndex((i) => (i === null ? i : (i - dir + (establishment?.images?.length || 1)) % (establishment?.images?.length || 1))));
 
   // Custom Calendar State
   const [showCalendar, setShowCalendar] = useState(false);
@@ -186,6 +190,7 @@ export default function VipDetails() {
   }
 
   const images = establishment.images || [];
+  const ownListing = isOwnListing(user, establishment.ownerId?._id || establishment.ownerId || establishment.landlordId?._id || establishment.landlordId);
   const depositAmount = establishment.depositAmount || establishment.pricePerNight || 0;
   const platformFee = 0;
   const grandTotal = depositAmount + platformFee;
@@ -198,7 +203,7 @@ export default function VipDetails() {
       
       {/* FULL SCREEN LIGHTBOX */}
       {lightboxIndex !== null && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200" onClick={() => setLightboxIndex(null)} {...swipe}>
           <button onClick={() => setLightboxIndex(null)} className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors">
             <X className="w-8 h-8" />
           </button>
@@ -213,6 +218,7 @@ export default function VipDetails() {
             src={images[lightboxIndex]} 
             alt="Expanded view" 
             className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+            onClick={(e) => e.stopPropagation()}
           />
 
           {images.length > 1 && (
@@ -221,7 +227,7 @@ export default function VipDetails() {
             </button>
           )}
           
-          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
+          <div className="absolute bottom-8 left-0 w-full text-center text-white/70 font-semibold tracking-wide text-base">
             {lightboxIndex + 1} / {images.length}
           </div>
         </div>
@@ -238,7 +244,12 @@ export default function VipDetails() {
       </div>
 
       {/* DYNAMIC IMAGE GRID */}
-      <div className="w-full h-[50vh] md:h-[70vh] flex overflow-hidden">
+      <div className="w-full h-[50vh] md:h-[70vh] flex overflow-hidden relative">
+        {images.length > 1 && (
+          <button onClick={() => setLightboxIndex(0)} className="absolute bottom-6 right-6 z-20 bg-white text-black font-semibold text-base px-5 py-3 rounded-xl shadow-elevated hover:bg-gray-100">
+            View all {images.length} photos
+          </button>
+        )}
         {images.length > 0 ? (
           <div className={`w-full h-full flex ${images.length === 1 ? '' : 'gap-1 md:gap-2'} overflow-x-auto snap-x snap-mandatory md:overflow-hidden`}>
             
@@ -318,6 +329,7 @@ export default function VipDetails() {
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {establishment.address?.street}, {establishment.address?.city}, {establishment.address?.state}
             </div>
+            <DirectionsLink className="mt-3 !text-amber-400 hover:!text-amber-300" {...coordsOf(establishment.address?.coordinates || establishment.location?.coordinates)} address={[establishment.address?.street, establishment.address?.city, establishment.address?.state].filter(Boolean).join(', ')} />
           </div>
 
           <hr className="border-white/10" />
@@ -355,10 +367,15 @@ export default function VipDetails() {
               </div>
             </div>
           )}
+
+          <div className="bg-white rounded-3xl p-6 md:p-8 text-brand-text [&>section]:border-0 [&>section]:pb-0">
+            <ReviewsSection listingId={establishment._id || id} fallback={{ rating: establishment.rating, count: establishment.numReviews }} />
+          </div>
         </div>
 
         {/* RIGHT COLUMN: STICKY ESCROW CARD */}
         <div className="w-full lg:w-[420px] shrink-0">
+          {ownListing ? <ManageListingCard status={String(establishment.status || '').toLowerCase()} /> : (
           <div className="sticky top-32 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 shadow-elevated relative overflow-visible">
             
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-[60px] rounded-full pointer-events-none"></div>
@@ -489,13 +506,7 @@ export default function VipDetails() {
                 >
                   {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                     <>
-                      <svg 
-                        viewBox="0 0 24 24" 
-                        className="w-5 h-5 mr-2 fill-current"
-                        xmlns="http://www.w3.org/2000/svg"
-                      >
-                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                      </svg>
+                      <WhatsAppIcon className="w-5 h-5 mr-2" />
                       Book via WhatsApp
                     </>
                   )}
@@ -509,6 +520,7 @@ export default function VipDetails() {
 
             </div>
           </div>
+          )}
         </div>
 
       </div>

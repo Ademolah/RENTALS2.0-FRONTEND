@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { X, ShieldCheck, Printer, Star, Loader2, AlertCircle, CheckCircle, MapPin } from 'lucide-react';
+import { X, ShieldCheck, Printer, Star, Loader2, MapPin, Navigation } from 'lucide-react';
 import { Button } from '../ui';
+import { useToast } from '../Toast';
 import { statusBadge } from './BookingCard';
 import { getArrivalGuide, confirmArrival, cancelBookingApi, submitReview, errorText } from '../../api/trips';
 
@@ -12,7 +13,7 @@ const ARRIVE_LABEL = { CAR: 'Confirm pickup', VIP: 'Confirm arrival', VIP_SERVIC
 export default function BookingDetail({ booking, onClose, onChange }) {
   const [guide, setGuide] = useState(undefined);
   const [busy, setBusy] = useState('');
-  const [notice, setNotice] = useState(null);
+  const toast = useToast();
   const [cancelling, setCancelling] = useState(false);
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState('');
@@ -35,12 +36,11 @@ export default function BookingDetail({ booking, onClose, onChange }) {
 
   const run = async (key, fn, okText) => {
     setBusy(key);
-    setNotice(null);
     try {
       await fn();
-      setNotice({ ok: true, text: okText });
+      toast.success(okText);
     } catch (e) {
-      setNotice({ ok: false, text: errorText(e, 'That did not work. Please try again.') });
+      toast.error(errorText(e, 'That did not work. Please try again.'));
     } finally {
       setBusy('');
     }
@@ -90,6 +90,14 @@ export default function BookingDetail({ booking, onClose, onChange }) {
               {statusBadge(booking)}
             </div>
             <p className="flex items-center gap-1.5 text-base text-brand-text-secondary mt-2"><MapPin className="w-4 h-4" />{booking.location}</p>
+            <a
+              href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${booking.title} ${booking.location}`)}`}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-2 mt-3 px-4 py-2 rounded-xl border border-gray-200 text-base font-semibold text-brand-dark hover:border-brand-dark transition-colors print:hidden"
+            >
+              <Navigation className="w-4 h-4" /> Get directions
+            </a>
           </div>
 
           <dl className="grid grid-cols-2 gap-5 text-base">
@@ -126,13 +134,6 @@ export default function BookingDetail({ booking, onClose, onChange }) {
                 </div>
               )}
             </section>
-          )}
-
-          {notice && (
-            <div className={`flex items-start gap-3 p-4 rounded-xl text-base ${notice.ok ? 'bg-status-available-soft text-status-available' : 'bg-red-50 text-red-700'}`}>
-              {notice.ok ? <CheckCircle className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
-              <span>{notice.text}</span>
-            </div>
           )}
 
           {canReview && (

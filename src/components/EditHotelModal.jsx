@@ -183,7 +183,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900">Manage Hotel</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Profile & Inventory</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Update Profile & Inventory</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
@@ -206,7 +206,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Hotel Name</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Hotel Name</label>
                   <input 
                     type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
@@ -215,7 +215,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
                 <div className="flex items-center justify-between bg-gray-50 border border-gray-200 p-3 rounded-xl mt-6 md:mt-0">
                   <div>
                     <h4 className="font-bold text-gray-900 text-sm">Free Breakfast</h4>
-                    <p className="text-[10px] text-gray-500">Included for all guests</p>
+                    <p className="text-xs text-gray-500">Included for all guests</p>
                   </div>
                   <button 
                     type="button" onClick={() => setFormData({ ...formData, hasBreakfast: !formData.hasBreakfast })}
@@ -227,7 +227,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
               </div>
 
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
                 <textarea 
                   rows="3" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-primary/50 outline-none resize-none"
@@ -236,14 +236,14 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="md:col-span-2">
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Street Address</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Street Address</label>
                   <input 
                     type="text" value={formData.address.street} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, street: e.target.value } })}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                   />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">State</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">State</label>
                   <select 
                     value={formData.address.state} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, state: e.target.value } })}
                     className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none appearance-none"
@@ -272,7 +272,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
                     >
                       {isSelected && <div className="absolute top-2 right-2 bg-brand-primary text-white rounded-full p-0.5"><CheckCircle2 className="w-3.5 h-3.5" /></div>}
                       <Icon className="w-5 h-5 mb-2" />
-                      <span className="text-[10px] font-bold uppercase tracking-wider">{amenity.name}</span>
+                      <span className="text-xs font-bold uppercase tracking-wider">{amenity.name}</span>
                     </button>
                   );
                 })}
@@ -292,16 +292,16 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
                     )}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Room Name</label>
+                        <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Room Name</label>
                         <input type="text" value={room.name} onChange={(e) => handleRoomChange(index, 'name', e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" />
                       </div>
                       <div className="flex gap-4">
                         <div className="w-1/2">
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Rate (₦)</label>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Rate (₦)</label>
                           <input type="number" value={room.pricePerNight} onChange={(e) => handleRoomChange(index, 'pricePerNight', e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" />
                         </div>
                         <div className="w-1/2">
-                          <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-1">Total Rooms</label>
+                          <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-1">Total Rooms</label>
                           <input type="number" value={room.totalInventory} onChange={(e) => handleRoomChange(index, 'totalInventory', e.target.value)} className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold" />
                         </div>
                       </div>
@@ -336,7 +336,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
                 ))}
                 <label className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors">
                   <ImageIcon className="w-6 h-6 text-gray-400 mb-1" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Upload</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase">Upload</span>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>

@@ -36,6 +36,18 @@ export function listingTag(item, kind) {
 
 export const kindLabel = (kind) => ({ hotel: 'Hotel', car: 'Car', shortlet: 'Shortlet', vip: 'VIP', 'vip-service': 'VIP Security' }[kind] || 'Stay');
 
+export function matchesQuery(item, query) {
+  const q = String(query || '').trim().toLowerCase();
+  if (!q) return true;
+  const a = item.address || item.location || {};
+  const hay = [
+    item.title, item.make, item.carModel, item.name, item.description, item.establishmentType, item.serviceType,
+    a.street, a.city, a.state,
+    ...(Array.isArray(item.amenities) ? item.amenities : []),
+  ].map(str).join(' ');
+  return q.split(/\s+/).every((word) => hay.includes(word));
+}
+
 export const naira = (n) => `₦${Number(n || 0).toLocaleString()}`;
 
 export function itemCity(item) {
@@ -63,6 +75,8 @@ export function applyFilters(items, f, extra = {}) {
     if (f.minPrice && price < f.minPrice) return false;
     if (f.maxPrice && price > f.maxPrice) return false;
     if (f.bedrooms && Number(item.bedrooms || item.capacity?.bedrooms || 0) < f.bedrooms) return false;
+    if (f.bathrooms && Number(item.bathrooms || item.capacity?.bathrooms || 0) < f.bathrooms) return false;
+    if (f.ptypes?.length && !f.ptypes.includes(listingTag(item, 'shortlet'))) return false;
     if (f.minRating && Number(item.rating || 0) < f.minRating) return false;
     if (f.seats && Number(item.seatNumber || 0) < f.seats) return false;
     if (f.classes?.length && !f.classes.includes(String(item.category || '').toUpperCase())) return false;
@@ -75,6 +89,7 @@ export function applyFilters(items, f, extra = {}) {
       const have = amenityList(item);
       if (!f.amenities.every((a) => have.some((h) => h.includes(a.toLowerCase())))) return false;
     }
+    if (f.query && !matchesQuery(item, f.query)) return false;
     if (extra.custom && !extra.custom(item, f)) return false;
     return true;
   });
@@ -90,12 +105,15 @@ export function sortItems(items, sort) {
 
 export function filterChips(f, labels = {}) {
   const chips = [];
+  if (f.query) chips.push({ key: 'query', label: `"${f.query}"` });
   if (f.city) chips.push({ key: 'city', label: f.city });
   if (f.minPrice || f.maxPrice) {
     chips.push({ key: 'price', label: `${naira(f.minPrice || 0)} – ${f.maxPrice ? naira(f.maxPrice) : 'any'}` });
   }
   if (f.breakfast) chips.push({ key: 'breakfast', label: 'Breakfast included' });
   if (f.bedrooms) chips.push({ key: 'bedrooms', label: `${f.bedrooms}+ bedrooms` });
+  if (f.bathrooms) chips.push({ key: 'bathrooms', label: `${f.bathrooms}+ bathrooms` });
+  (f.ptypes || []).forEach((t) => chips.push({ key: 'ptypes', value: t, label: t }));
   if (f.minRating) chips.push({ key: 'minRating', label: `${f.minRating}+ rating` });
   if (f.seats) chips.push({ key: 'seats', label: `${f.seats}+ seats` });
   if (f.transmission) chips.push({ key: 'transmission', label: f.transmission });

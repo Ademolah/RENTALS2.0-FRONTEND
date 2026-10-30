@@ -4,17 +4,17 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import { 
   MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
   Loader2, ShieldCheck, Calendar as CalendarIcon, 
-  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X, Video
+  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X, Video, Truck
 } from 'lucide-react';
-import { getCarById, createCarReservation, checkCarAvailability, getCars } from '../api/car'; 
+import { getCarById, checkCarAvailability, getCars } from '../api/car';
 import { useAuth } from '../context/AuthContext';
 import FloatingPriceTag from '../components/FloatingPriceTag';
-import { logUnifiedWhatsappIntent } from '../api/reservation';
+import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';
 import AvailabilityNotice from '../components/AvailabilityNotice';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
 import { CONCIERGE_WHATSAPP } from '../lib/config';
-import { addDays } from '../lib/availability';
+import { addDays, isDayBooked } from '../lib/availability';
 
 const to24 = (t) => {
   const m = /(\d+):(\d+)\s*(AM|PM)?/i.exec(t || '10:00 AM') || ['', '10', '00'];
@@ -52,6 +52,8 @@ export default function CarDetails() {
   const [durationSlots, setDurationSlots] = useState(1); 
   const [needsChauffeur, setNeedsChauffeur] = useState(false);
   const [licenseAck, setLicenseAck] = useState(false);
+  const [needsDelivery, setNeedsDelivery] = useState(false);
+  const [deliveryAddress, setDeliveryAddress] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -152,13 +154,14 @@ export default function CarDetails() {
     const baseRate = car.pricePer12Hours || 0;
     const chauffeurRate = needsChauffeur && !chauffeurIncluded ? 25000 * durationSlots : 0;
     
+    const deliveryRate = needsDelivery && car.deliveryAvailable ? Number(car.deliveryFee || 0) : 0;
     const rentalTotal = baseRate * durationSlots;
-    const subtotal = rentalTotal + chauffeurRate;
+    const subtotal = rentalTotal + chauffeurRate + deliveryRate;
     const platformFee = 0;
     const grandTotal = subtotal + platformFee;
 
-    return { baseRate, rentalTotal, chauffeurRate, subtotal, platformFee, grandTotal };
-  }, [car, durationSlots, needsChauffeur, chauffeurIncluded]);
+    return { baseRate, rentalTotal, chauffeurRate, deliveryRate, subtotal, platformFee, grandTotal };
+  }, [car, durationSlots, needsChauffeur, chauffeurIncluded, needsDelivery]);
 
   // 💡 FIX: Safely derive images BEFORE the early returns so hooks never change order
   const images = car?.images?.length > 0 ? car.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'];
@@ -237,6 +240,11 @@ export default function CarDetails() {
       return;
     }
 
+    if (needsDelivery && car.deliveryAvailable && deliveryAddress.trim().length < 4) {
+      setBookingError('Please enter the address where we should deliver the car.');
+      return;
+    }
+
     if (availabilityStatus === 'booked') {
       setBookingError('These dates have been booked.');
       return;
@@ -252,33 +260,40 @@ export default function CarDetails() {
       }
     }
 
-    try {
-      const { start: pickupDateTime, end: dropoffDateTime } = slotRange(pickupDate, pickupTime, durationSlots);
+    const { start: pickupDateTime, end: dropoffDateTime } = slotRange(pickupDate, pickupTime, durationSlots);
+    const fmt = (d) => d.toLocaleString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true, timeZone: 'Africa/Lagos' });
+    const lines = [{ label: `₦${pricing.baseRate.toLocaleString()} x ${durationSlots} x 12 hrs`, amount: pricing.rentalTotal }];
+    if (pricing.chauffeurRate) lines.push({ label: 'Chauffeur', amount: pricing.chauffeurRate });
+    if (pricing.deliveryRate) lines.push({ label: 'Delivery', amount: pricing.deliveryRate });
+    const details = [
+      { label: 'Pick-up', value: fmt(pickupDateTime) },
+      { label: 'Return', value: fmt(dropoffDateTime) },
+      { label: 'Duration', value: `${durationSlots * 12} hours` },
+      { label: 'Chauffeur', value: chauffeurIncluded ? 'Included' : needsChauffeur ? 'Yes' : 'No' },
+    ];
+    if (needsDelivery && car.deliveryAvailable) details.push({ label: 'Delivery address', value: deliveryAddress.trim() });
 
-      const payload = {
+    saveCheckoutDraft({
+      kind: 'car',
+      tag: car.category || 'Car rental',
+      title: `${car.make} ${car.carModel || car.model || ''} ${car.year || ''}`.trim(),
+      subtitle: [car.location?.city, car.location?.state].filter(Boolean).join(', '),
+      image: images[0],
+      backTo: `/cars/${car._id || car.id}`,
+      details,
+      lines,
+      total: pricing.grandTotal,
+      payload: {
         carId: car._id || car.id,
         pickupTime: lagosIso(pickupDateTime),
         dropoffTime: lagosIso(dropoffDateTime),
         totalAmount: pricing.grandTotal,
         withChauffeur: needsChauffeur && !chauffeurIncluded,
         licenseAck: true,
-        callbackUrl: `${window.location.origin}/trips`
-      };
-
-      const response = await createCarReservation(payload);
-      
-      setBookingLoading(false);
-      setIsRedirecting(true);
-
-      setTimeout(() => {
-        window.location.href = response.data.checkoutUrl; 
-      }, 800);
-
-    } catch (err) {
-      setBookingError(err.response?.data?.message || err.message || 'Failed to initiate reservation.');
-      setBookingLoading(false);
-      setIsRedirecting(false);
-    }
+      },
+    });
+    setBookingLoading(false);
+    navigate('/checkout');
   };
 
  const handleWhatsAppClick = async (e) => {
@@ -330,6 +345,7 @@ export default function CarDetails() {
         `📅 Pickup: ${pickupDate} at ${pickupTime}\n` +
         `⏱ Duration: ${durationSlots * 12} hours\n` +
         `👨‍✈️ Chauffeur: ${needsChauffeur ? 'Yes' : 'No'}\n` +
+        (needsDelivery && car.deliveryAvailable ? `🚚 Delivery to: ${deliveryAddress.trim() || 'to be confirmed'}\n` : '') +
         `🔒 Reference: ${reference}\n\n` +
         `Could you please assist me with this reservation?`
       );
@@ -547,6 +563,15 @@ export default function CarDetails() {
                 <span className="text-lg font-display font-bold text-brand-dark capitalize">{car.category || 'Luxury'}</span>
               </div>
             </div>
+            {car.deliveryAvailable && (
+              <div className="flex items-center space-x-3 bg-brand-accent-soft px-5 py-4 rounded-2xl flex-1 min-w-[190px]">
+                <Truck className="w-5 h-5 text-brand-text-secondary" />
+                <div className="flex flex-col">
+                  <span className="text-xs font-bold text-brand-text-muted uppercase tracking-wider">Delivery</span>
+                  <span className="text-lg font-display font-bold text-brand-dark">Available · ₦{Number(car.deliveryFee || 0).toLocaleString()}</span>
+                </div>
+              </div>
+            )}
           </div>
 
           <div>
@@ -650,15 +675,17 @@ export default function CarDetails() {
                           const dateStr = toLocalISO(dateObj);
                           const isPast = dateObj < todayDateObj;
                           const isSelected = dateStr === pickupDate;
+                          const isTaken = isDayBooked(car.bookedDates, dateStr);
                           
                           let bgClass = 'hover:bg-gray-100 text-brand-dark';
                           if (isPast) bgClass = 'text-gray-300 cursor-not-allowed';
+                          if (isTaken && !isPast) bgClass = 'text-gray-400 line-through cursor-not-allowed bg-gray-50';
                           if (isSelected) bgClass = 'bg-gray-900 text-white shadow-md';
 
                           return (
                             <button
                               key={i}
-                              disabled={isPast}
+                              disabled={isPast || isTaken}
                               onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
                               className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
                             >
@@ -744,6 +771,34 @@ export default function CarDetails() {
                   {needsChauffeur && <div className="w-2 h-2 bg-brand-primary rounded-full"></div>}
                 </div>
               </div>
+              )}
+
+              {car.deliveryAvailable && (
+                <div className={`p-3.5 rounded-2xl border-2 transition-all ${needsDelivery ? 'border-brand-primary bg-brand-primary/5' : 'border-gray-100 bg-white'}`}>
+                  <div onClick={() => setNeedsDelivery(!needsDelivery)} className="flex items-center justify-between cursor-pointer">
+                    <div className="flex items-center space-x-3">
+                      <div className={`p-2 rounded-full ${needsDelivery ? 'bg-brand-primary text-white' : 'bg-gray-100 text-brand-text-muted'}`}>
+                        <Truck className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <div className="text-base font-bold text-brand-dark">Deliver to me</div>
+                        <div className="text-sm text-brand-text-secondary font-medium">₦{Number(car.deliveryFee || 0).toLocaleString()} delivery fee</div>
+                      </div>
+                    </div>
+                    <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${needsDelivery ? 'border-brand-primary' : 'border-gray-300'}`}>
+                      {needsDelivery && <div className="w-2 h-2 bg-brand-primary rounded-full"></div>}
+                    </div>
+                  </div>
+                  {needsDelivery && (
+                    <input
+                      type="text"
+                      value={deliveryAddress}
+                      onChange={(e) => setDeliveryAddress(e.target.value)}
+                      placeholder="Where should we bring it?"
+                      className="mt-3 w-full px-4 py-3 rounded-xl border border-gray-200 text-base text-brand-dark outline-none focus:border-brand-dark"
+                    />
+                  )}
+                </div>
               )}
 
               <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-gray-100 cursor-pointer">
@@ -848,6 +903,13 @@ export default function CarDetails() {
                   </div>
                 )}
                 
+                {pricing.deliveryRate > 0 && (
+                  <div className="flex justify-between text-gray-600 text-sm">
+                    <span className="underline decoration-gray-300 underline-offset-4">Delivery fee</span>
+                    <span className="font-bold text-brand-dark">₦{pricing.deliveryRate.toLocaleString()}</span>
+                  </div>
+                )}
+
                 <div className="flex justify-between font-display font-bold text-brand-dark text-base pt-3 border-t border-gray-200 mt-2">
                   <span>Total</span>
                   <span>₦{pricing.grandTotal.toLocaleString()}</span>

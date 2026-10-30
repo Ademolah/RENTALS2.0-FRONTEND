@@ -4,7 +4,8 @@ import {
   CalendarDays, BedDouble, MapPin, CheckCircle2 
 } from 'lucide-react';
 import { checkHotelRoomAvailability } from '../api/hotel';
-import { initiateBooking, logUnifiedWhatsappIntent } from '../api/reservation';
+import { useNavigate } from 'react-router-dom';
+import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';
 import { CONCIERGE_WHATSAPP } from '../lib/config';
 import AvailabilityNotice from './AvailabilityNotice';
 
@@ -19,6 +20,7 @@ export default function BookModal({
   onDatesChange,
   onSignIn
 }) {
+  const navigate = useNavigate();
   const [timeLeft, setTimeLeft] = useState(1200);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
@@ -111,24 +113,35 @@ Please assist me with this reservation.`;
     setIsProcessing(true);
     try {
       if (!(await ensureAvailable())) return;
-      const response = await initiateBooking({
-        propertyId: hotelData._id,
-        roomId: roomData._id,
-        checkInDate: checkIn,
-        checkOutDate: checkOut,
-        guestsCount: roomData.capacity?.adults || 1,
-        totalAmount: totalPrice,
-        bookingType: 'HOTEL',
-        callbackUrl: `${window.location.origin}/trips`
+      const fmt = (d) => new Date(`${d}T00:00:00`).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+      saveCheckoutDraft({
+        kind: 'hotel',
+        tag: 'Hotel',
+        title: `${roomData.name} · ${hotelData.title}`,
+        subtitle: [hotelData.address?.city, hotelData.address?.state].filter(Boolean).join(', ') || hotelData.location,
+        image: roomData.image || hotelData.images?.[0],
+        backTo: `/hotel/${hotelData._id}`,
+        details: [
+          { label: 'Check-in', value: fmt(checkIn) },
+          { label: 'Check-out', value: fmt(checkOut) },
+          { label: 'Guests', value: String(roomData.capacity?.adults || 1) },
+        ],
+        lines: [{ label: `₦${Number(roomData.pricePerNight).toLocaleString()} x ${nights} night${nights > 1 ? 's' : ''}`, amount: totalPrice }],
+        total: totalPrice,
+        payload: {
+          propertyId: hotelData._id,
+          roomId: roomData._id,
+          checkInDate: checkIn,
+          checkOutDate: checkOut,
+          guestsCount: roomData.capacity?.adults || 1,
+          totalAmount: totalPrice,
+          bookingType: 'HOTEL',
+        },
       });
-      const url = response?.data?.checkoutUrl || response?.checkoutUrl;
-      if (url) {
-        window.location.href = url;
-        return;
-      }
-      setError(response?.message || 'Could not open the payment page. Please try again.');
-    } catch (err) {
-      setError(err.response?.data?.message || 'Could not complete your booking. Please try again.');
+      onClose?.();
+      navigate('/checkout');
+    } catch {
+      setError('Could not continue to checkout. Please try again.');
     } finally {
       setIsProcessing(false);
     }
@@ -232,7 +245,7 @@ Please assist me with this reservation.`;
                 className="w-full flex items-center justify-center bg-brand-primary text-white font-semibold text-lg py-4 rounded-xl hover:bg-brand-hover transition-all shadow-glow active:scale-[0.98] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <CreditCard className="w-5 h-5 mr-2" />
-                {isProcessing ? "Processing..." : `Pay ₦${totalPrice.toLocaleString()} Instantly`}
+                {isProcessing ? "Checking availability..." : `Continue to checkout · ₦${totalPrice.toLocaleString()}`}
               </button>
               
               <button 

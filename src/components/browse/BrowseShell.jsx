@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { SlidersHorizontal, X, Minus, Plus, ArrowUpDown } from 'lucide-react';
+import { SlidersHorizontal, X, Minus, Plus, ArrowUpDown, LayoutGrid, Map as MapIcon } from 'lucide-react';
 import { CITIES, MAX_PRICE, SORT_OPTIONS, filterChips, removeChip, naira } from './meta';
 
 function Chip({ selected, onClick, children }) {
@@ -166,6 +166,8 @@ export default function BrowseShell({
   total,
   noun = 'results',
   chipLabels,
+  view,
+  setView,
   children,
 }) {
   const [open, setOpen] = useState(false);
@@ -199,6 +201,23 @@ export default function BrowseShell({
             <span className="font-bold text-brand-dark">{total}</span> {total === 1 ? noun.replace(/s$/, '') : noun}
           </p>
           <div className="flex items-center gap-3">
+            {setView && (
+              <div role="group" aria-label="View" className="inline-flex rounded-xl border border-gray-200 p-1 bg-white">
+                {[['list', 'List', LayoutGrid], ['map', 'Map', MapIcon]].map(([key, label, Icon]) => (
+                  <button
+                    key={key}
+                    type="button"
+                    aria-pressed={view === key}
+                    onClick={() => setView(key)}
+                    className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-base font-semibold transition-colors ${
+                      view === key ? 'bg-brand-dark text-white' : 'text-brand-text-secondary hover:text-brand-dark'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" /> {label}
+                  </button>
+                ))}
+              </div>
+            )}
             <button
               onClick={() => setOpen(true)}
               className="lg:hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-base font-semibold text-brand-dark hover:border-brand-dark"

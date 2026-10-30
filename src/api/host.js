@@ -28,5 +28,11 @@ export const HostService = {
   processApplication: async (id, data) => {
     const response = await apiClient.patch(`/hosts/requests/${id}`, data);
     return response.data;
+  },
+
+  // Cancels any kind of reservation; the payment goes to Rentals Africa for review and refund.
+  cancelReservation: async (id) => {
+    const response = await apiClient.post(`/reservations/${id}/cancel`);
+    return response.data;
   }
 };

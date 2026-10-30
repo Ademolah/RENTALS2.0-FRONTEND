@@ -1,9 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  Building, Car, Hotel, Crown, Plus, ShieldCheck, 
-  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp, BarChart3,
-  Star, Receipt, MessageSquare, Eye, EyeOff
-} from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Building, Car, Hotel, Crown, Plus, ShieldCheck, CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp, BarChart3, Star, Receipt, MessageSquare, Eye, EyeOff, Banknote, Ban, ExternalLink, Hash, CalendarCheck, BedDouble } from 'lucide-react';
 
 import { HostService } from '../api/host';
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
@@ -11,9 +8,11 @@ import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 import { getLandlordHotelBookings, confirmHotelCheckIn } from '../api/hotel'; 
 import { confirmVipArrival } from '../api/vip'; 
 import { useAuth } from '../context/AuthContext';
-import { fetchMyListings, setListingAvailable, fetchHostReviews } from '../components/host/hostApi';
+import { fetchMyListings, setListingAvailable, fetchHostReviews, lagosToday, dayOf } from '../components/host/hostApi';
 
-import { Button, Badge, Card, Container, SectionTitle, EmptyState } from '../components/ui';
+import { Button, Badge, Card, Container, SectionTitle, EmptyState, ConfirmDialog, CityBackdrop, Skeleton } from '../components/ui';
+import { useToast } from '../components/Toast';
+import PayoutActionCard from '../components/PayoutActionCard';
 import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddCarModal from '../components/AddCarModal';
@@ -30,7 +29,12 @@ export default function LandlordDashboard() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
-  const [notice, setNotice] = useState(null);
+  const [cancelTarget, setCancelTarget] = useState(null);
+  const [cancelling, setCancelling] = useState(false);
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [codeValue, setCodeValue] = useState('');
+  const [codeConfirm, setCodeConfirm] = useState(null);
+  const toast = useToast();
   const [analytics, setAnalytics] = useState(null);
   const [analyticsState, setAnalyticsState] = useState('idle');
   const { user } = useAuth();
@@ -40,10 +44,7 @@ export default function LandlordDashboard() {
   const [reviews, setReviews] = useState([]);
   const [reviewsState, setReviewsState] = useState('idle');
 
-  const notify = (message, type = 'error') => {
-    setNotice({ message, type });
-    setTimeout(() => setNotice(null), 6000);
-  };
+  const notify = (message, type = 'error') => (type === 'success' ? toast.success(message) : toast.error(message));
 
   const loadAnalytics = async () => {
     setAnalyticsState('loading');
@@ -152,6 +153,11 @@ export default function LandlordDashboard() {
       const carData = carResponse?.data?.bookings || [];
       const hotelData = hotelResponse?.data?.bookings || [];
       
+      const flagsOf = (b) => ({
+        paid: String(b.paymentStatus || '').toUpperCase() === 'SUCCESS',
+        dead: /CANCEL|FAIL|REFUND|EXPIRE/.test(`${b.reservationStatus || ''} ${b.paymentStatus || ''}`.toUpperCase()),
+      });
+
       const normalizeLocation = (addr) => {
         return addr 
           ? (typeof addr === 'object' 
@@ -181,6 +187,9 @@ export default function LandlordDashboard() {
         return {
           _id: b._id,
           assetId: b.propertyId?._id,
+          ...flagsOf(b),
+          startDay: dayOf(b.startDate || b.checkInDate),
+          endDay: dayOf(b.endDate || b.checkOutDate),
           type: trueType,
           reservationStatus: b.reservationStatus,
           escrowStatus: b.escrowStatus,
@@ -199,6 +208,10 @@ export default function LandlordDashboard() {
 
       const normalizedHotels = hotelData.map(b => ({
         _id: b._id,
+        assetId: b.propertyId?._id,
+        ...flagsOf(b),
+        startDay: dayOf(b.checkInDate),
+        endDay: dayOf(b.checkOutDate),
         type: 'HOTEL',
         reservationStatus: b.reservationStatus,
         escrowStatus: b.escrowStatus,
@@ -216,6 +229,9 @@ export default function LandlordDashboard() {
       const normalizedCars = carData.map(b => ({
         _id: b._id,
         assetId: b.carId?._id,
+        ...flagsOf(b),
+        startDay: dayOf(b.pickupTime),
+        endDay: dayOf(b.dropoffTime),
         type: 'CAR',
         reservationStatus: b.reservationStatus,
         escrowStatus: b.escrowStatus,
@@ -322,12 +338,51 @@ export default function LandlordDashboard() {
   const refOf = (b) => String(b._id).slice(-6).toUpperCase();
   const ledgerEntries = bookings;
 
-  const totalClearedEarnings = ledgerEntries.reduce((sum, b) => b.escrowStatus === 'RELEASED' ? sum + b.payoutAmount : sum, 0);
-  const pendingEscrow = ledgerEntries.reduce((sum, b) => b.escrowStatus !== 'RELEASED' ? sum + b.payoutAmount : sum, 0);
+  const today = lagosToday();
+  const net = (n) => Math.round((Number(n) || 0) * 0.95);
+  const hostDone = (b) => (b.type === 'CAR' ? b.ownerConfirmedHandover : b.checkInConfirmedByHost);
+  const guestDone = (b) => (b.type === 'CAR' ? b.guestConfirmedPickup : b.checkInConfirmedByGuest);
+  const totalClearedEarnings = ledgerEntries.reduce((sum, b) => (!b.dead && b.escrowStatus === 'RELEASED' ? sum + net(b.payoutAmount) : sum), 0);
+  const pendingEscrow = ledgerEntries.reduce((sum, b) => (b.paid && !b.dead && b.escrowStatus !== 'RELEASED' ? sum + net(b.payoutAmount) : sum), 0);
+  const arrivingToday = ledgerEntries.filter((b) => b.paid && !b.dead && b.escrowStatus !== 'RELEASED' && !hostDone(b) && b.startDay && b.startDay <= today && b.endDay >= today);
+  const payoutRows = ledgerEntries.filter((b) => b.paid && !b.dead);
+  const canCancel = (b) => b.paid && !b.dead && b.escrowStatus !== 'RELEASED' && !hostDone(b) && !guestDone(b) && b.startDay && b.startDay > today;
+  const statsFor = (listingId) => {
+    const mine = ledgerEntries.filter((b) => b.assetId === listingId && b.paid && !b.dead);
+    return { count: mine.length, earned: mine.reduce((sum, b) => (b.escrowStatus === 'RELEASED' ? sum + net(b.payoutAmount) : sum), 0) };
+  };
+  const viewAsGuestPath = (l) => (l.type === 'CAR' ? `/cars/${l.id}` : l.type === 'HOTEL' ? `/hotel/${l.id}` : l.type === 'VIP' ? `/vip/${l.id}` : l.type === 'VIP_SERVICE' ? `/vip/services/${l.id}` : `/property/${l.id}`);
+
+  const handleCancelReservation = async () => {
+    if (!cancelTarget) return;
+    setCancelling(true);
+    try {
+      await HostService.cancelReservation(cancelTarget._id);
+      setBookings((prev) => prev.map((b) => (b._id === cancelTarget._id ? { ...b, dead: true, reservationStatus: 'CANCELLED' } : b)));
+      notify('Reservation cancelled. The payment goes to Rentals Africa for review.', 'success');
+    } catch (e) {
+      notify(e?.response?.data?.message || 'The reservation could not be cancelled. Please try again.');
+    } finally {
+      setCancelling(false);
+      setCancelTarget(null);
+    }
+  };
+
+  const findByCode = () => {
+    const code = codeValue.replace('#', '').trim().toUpperCase();
+    const match = ledgerEntries.find((b) => refOf(b) === code);
+    if (!match) return notify('No booking found with that code.');
+    if (match.dead || !match.paid) return notify('That booking is not active.');
+    if (match.escrowStatus === 'RELEASED' || hostDone(match)) return notify('You have already confirmed this booking.', 'success');
+    setCodeOpen(false);
+    setCodeValue('');
+    setCodeConfirm(match);
+  };
 
   const NAV_ITEMS = [
     { id: 'ACTION_FEED', label: 'Ledger & Actions', icon: ShieldCheck },
     { id: 'BOOKINGS', label: 'Bookings', icon: Receipt },
+    { id: 'PAYOUTS', label: 'Payouts', icon: Banknote },
     { id: 'EARNINGS', label: 'Earnings', icon: BarChart3 },
     { id: 'REVIEWS', label: 'Reviews', icon: MessageSquare },
     { id: 'SHORTLETS', label: 'My Shortlets', icon: Building },
@@ -415,38 +470,50 @@ export default function LandlordDashboard() {
       </div>
 
       <Container className="mt-8">
-        {notice && (
-          <div role="alert" className={`mb-6 px-5 py-4 rounded-xl text-base font-semibold border ${notice.type === 'success' ? 'bg-status-available-soft text-status-available border-status-available/20' : 'bg-red-50 text-red-700 border-red-200'}`}>
-            {notice.message}
+        {/* EARNINGS HERO */}
+        <section className="relative overflow-hidden rounded-3xl bg-brand-dark text-white mb-8 p-8 md:p-10 shadow-elevated">
+          <CityBackdrop seed="host-earnings" />
+          <div className="relative flex flex-col lg:flex-row lg:items-end justify-between gap-8">
+            <div>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/70">Released to your bank</p>
+              <p className="text-5xl md:text-6xl font-display font-bold tracking-tight mt-2 leading-tight">₦{totalClearedEarnings.toLocaleString()}</p>
+              <p className="text-base text-white/70 mt-2">After the 5% platform commission.</p>
+            </div>
+            <div className="lg:text-right">
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/70">In escrow</p>
+              <p className="text-3xl md:text-4xl font-display font-bold mt-1">₦{pendingEscrow.toLocaleString()}</p>
+              <p className="text-base text-white/70 mt-1">Released once check-in is confirmed.</p>
+            </div>
           </div>
-        )}
+          <div className="relative mt-8 flex flex-wrap gap-3">
+            <Button variant="primary" onClick={() => setIsListMenuOpen(true)}><Plus className="w-5 h-5" /> Add asset</Button>
+            <Button variant="outline" onClick={() => setIsBankModalOpen(true)}><Landmark className="w-5 h-5" /> Payout account</Button>
+            <Button variant="outline" onClick={() => setActiveTab('EARNINGS')}><BarChart3 className="w-5 h-5" /> Analytics</Button>
+            <Button variant="outline" onClick={() => setCodeOpen(true)}><Hash className="w-5 h-5" /> Enter booking code</Button>
+          </div>
+        </section>
+
         {/* STAT TILES */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-status-available-soft rounded-2xl flex items-center justify-center">
-              <Wallet className="w-7 h-7 text-status-available" />
-            </div>
+            <div className="w-14 h-14 bg-brand-accent-soft rounded-2xl flex items-center justify-center"><Building className="w-7 h-7 text-brand-accent" /></div>
             <div>
-              <p className="text-sm font-semibold text-brand-text-secondary">Cleared earnings</p>
-              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">₦{totalClearedEarnings.toLocaleString()}</h3>
+              <p className="text-sm font-semibold text-brand-text-secondary">Your listings</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{listings.length}</h3>
             </div>
           </Card>
           <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-brand-warning-soft rounded-2xl flex items-center justify-center">
-              <TrendingUp className="w-7 h-7 text-brand-warning" />
-            </div>
+            <div className="w-14 h-14 bg-status-available-soft rounded-2xl flex items-center justify-center"><Wallet className="w-7 h-7 text-status-available" /></div>
             <div>
-              <p className="text-sm font-semibold text-brand-text-secondary">Pending in escrow</p>
-              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">₦{pendingEscrow.toLocaleString()}</h3>
+              <p className="text-sm font-semibold text-brand-text-secondary">Paid reservations</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{payoutRows.length}</h3>
             </div>
           </Card>
           <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-brand-accent-soft rounded-2xl flex items-center justify-center">
-              <Building className="w-7 h-7 text-brand-accent" />
-            </div>
+            <div className="w-14 h-14 bg-brand-warning-soft rounded-2xl flex items-center justify-center"><CalendarCheck className="w-7 h-7 text-brand-warning" /></div>
             <div>
-              <p className="text-sm font-semibold text-brand-text-secondary">Reservations</p>
-              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{ledgerEntries.length}</h3>
+              <p className="text-sm font-semibold text-brand-text-secondary">Arriving today</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{arrivingToday.length}</h3>
             </div>
           </Card>
         </div>
@@ -476,10 +543,34 @@ export default function LandlordDashboard() {
 
           {/* CONTENT AREA */}
           <section className="flex-1 min-w-0 w-full">
+            {!isLoading && activeTab === 'ACTION_FEED' && arrivingToday.length > 0 && (
+              <div className="mb-10">
+                <div className="flex items-center justify-between gap-4 mb-4">
+                  <SectionTitle title="Arriving today" subtitle="Confirm check-in or handover as guests arrive." className="!mb-0" />
+                  <Badge tone="brand">{arrivingToday.length} to confirm</Badge>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {arrivingToday.map((b) => (
+                    <Card key={b._id} className="p-5 flex items-center gap-4">
+                      <img src={b.asset.image} alt="" className="w-16 h-16 rounded-xl object-cover shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-lg font-bold text-brand-dark truncate">Booking #{refOf(b)}</p>
+                        <p className="text-base text-brand-text-secondary truncate">{b.asset.title}</p>
+                        {guestDone(b) && <Badge tone="green" className="mt-1">Renter confirmed</Badge>}
+                      </div>
+                      <Button variant="dark" size="sm" disabled={processingId === b._id} onClick={() => handleEscrowConfirm(b)}>
+                        {getButtonText(b.type, processingId === b._id)}
+                      </Button>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
             {isLoading ? (
-              <div className="py-32 flex flex-col items-center justify-center">
-                <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
-                <p className="mt-6 text-base font-semibold text-brand-text-muted">Syncing ledger...</p>
+              <div className="space-y-4" aria-busy="true">
+                <Skeleton className="h-10 w-64" />
+                <Skeleton className="h-44" />
+                <Skeleton className="h-44" />
               </div>
             ) : activeTab === 'EARNINGS' ? (
               <div>
@@ -582,6 +673,9 @@ export default function LandlordDashboard() {
                             ) : null}
                           </div>
 
+                          {canCancel(booking) && (
+                            <Button variant="outline" onClick={() => setCancelTarget(booking)} className="w-full sm:w-auto"><Ban className="w-4 h-4" /> Cancel reservation</Button>
+                          )}
                           {!isReleased && (!hasHostConfirmed || (hasGuestConfirmed && !hasHostConfirmed)) && (
                             <Button
                               variant={hasGuestConfirmed ? 'primary' : 'dark'}
@@ -598,6 +692,25 @@ export default function LandlordDashboard() {
                   );
                 })}
               </div>
+            ) : activeTab === 'PAYOUTS' ? (
+              <div>
+                <SectionTitle title="Payouts" subtitle="Your payout is 95% of each booking once check-in is confirmed by both sides." />
+                {payoutRows.length === 0 ? (
+                  <Card><EmptyState icon={Banknote} title="No payouts yet" text="Paid reservations on your listings will appear here." action={<Button variant="dark" onClick={() => setIsBankModalOpen(true)}>Set up payout account</Button>} /></Card>
+                ) : (
+                  <div className="space-y-4">
+                    {payoutRows.map((b) => (
+                      <PayoutActionCard
+                        key={b._id}
+                        booking={b}
+                        typeLabel={typeLabel(b.type)}
+                        onReleased={(id) => setBookings((prev) => prev.map((x) => (x._id === id ? { ...x, escrowStatus: 'RELEASED' } : x)))}
+                        onNeedBank={() => setIsBankModalOpen(true)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
             ) : activeTab === 'BOOKINGS' ? (
               <div>
                 <SectionTitle title="Bookings" subtitle="Every reservation on your listings. Guest details are handled by Rentals Africa." />
@@ -613,6 +726,7 @@ export default function LandlordDashboard() {
                           <th className="px-5 py-4 font-bold">Dates</th>
                           <th className="px-5 py-4 font-bold text-right">Amount</th>
                           <th className="px-5 py-4 font-bold">Status</th>
+                          <th className="px-5 py-4 font-bold text-right">Action</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -629,9 +743,14 @@ export default function LandlordDashboard() {
                             <td className="px-5 py-4 text-brand-text-secondary whitespace-nowrap">{b.dates}</td>
                             <td className="px-5 py-4 text-right font-display font-bold text-brand-dark whitespace-nowrap">₦{(b.payoutAmount || 0).toLocaleString()}</td>
                             <td className="px-5 py-4">
-                              {b.escrowStatus === 'RELEASED'
-                                ? <Badge tone="green">Funds released</Badge>
-                                : <Badge tone="amber">{String(b.reservationStatus || 'Pending').replace(/_/g, ' ')}</Badge>}
+                              {b.dead
+                                ? <Badge tone="gray">Cancelled</Badge>
+                                : b.escrowStatus === 'RELEASED'
+                                  ? <Badge tone="green">Funds released</Badge>
+                                  : <Badge tone="amber">{String(b.reservationStatus || 'Pending').replace(/_/g, ' ')}</Badge>}
+                            </td>
+                            <td className="px-5 py-4 text-right">
+                              {canCancel(b) ? <Button variant="outline" size="sm" onClick={() => setCancelTarget(b)}>Cancel</Button> : null}
                             </td>
                           </tr>
                         ))}
@@ -696,7 +815,19 @@ export default function LandlordDashboard() {
                             <div className="flex items-center text-brand-text-secondary text-base mb-2">
                               <MapPin className="w-4 h-4 mr-1.5 text-brand-text-muted shrink-0" /> <span className="truncate">{l.location}</span>
                             </div>
-                            {l.price > 0 && <p className="text-base font-display font-bold text-brand-dark mb-4">₦{l.price.toLocaleString()}</p>}
+                            {l.price > 0 && <p className="text-base font-display font-bold text-brand-dark mb-1">₦{l.price.toLocaleString()}</p>}
+                            {(() => {
+                              const st2 = statsFor(l.id);
+                              return <p className="text-sm text-brand-text-secondary mb-4">{st2.count} paid booking{st2.count === 1 ? '' : 's'} · ₦{st2.earned.toLocaleString()} earned</p>;
+                            })()}
+                            <div className="flex gap-2 mb-2">
+                              <Link to={viewAsGuestPath(l)} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-brand-dark hover:border-brand-dark transition-colors">
+                                <ExternalLink className="w-4 h-4" /> View as guest
+                              </Link>
+                              {l.type === 'HOTEL' && (
+                                <Button variant="outline" size="sm" onClick={() => setEditingHotelId(l.id)} className="flex-1"><BedDouble className="w-4 h-4" /> Rooms</Button>
+                              )}
+                            </div>
                             <div className="flex gap-2">
                               <Button variant="soft" size="sm" onClick={() => handleManageListing(l)} className="flex-1">Edit</Button>
                               {canToggle && (
@@ -726,9 +857,9 @@ export default function LandlordDashboard() {
       </Container>
 
       {/* MODALS */}
-      <BankSetupModal isOpen={isBankModalOpen} onClose={() => setIsBankModalOpen(false)} onSuccess={() => console.log("Bank saved successfully!")} />
-      <AddPropertyModal isOpen={isPropertyModalOpen} onClose={() => setIsPropertyModalOpen(false)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
-      <AddCarModal isOpen={isCarModalOpen} onClose={() => setIsCarModalOpen(false)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
+      <BankSetupModal isOpen={isBankModalOpen} onClose={() => setIsBankModalOpen(false)} onSuccess={() => notify('Bank account saved. Your payouts are set up.', 'success')} />
+      <AddPropertyModal isOpen={isPropertyModalOpen} onClose={() => setIsPropertyModalOpen(false)} onPropertyAdded={() => { fetchPortfolioData(); loadListings(); }} />
+      <AddCarModal isOpen={isCarModalOpen} onClose={() => setIsCarModalOpen(false)} onCarAdded={() => { fetchPortfolioData(); loadListings(); }} />
       <CreateHotelModal isOpen={isHotelModalOpen} onClose={() => setIsHotelModalOpen(false)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
       <AddVipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} onEstablishmentAdded={() => { fetchPortfolioData(); loadListings(); }} />
 
@@ -736,6 +867,48 @@ export default function LandlordDashboard() {
       <EditPropertyModal isOpen={!!editingPropertyId} propertyId={editingPropertyId} onClose={() => setEditingPropertyId(null)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
       <EditHotelModal isOpen={!!editingHotelId} hotelId={editingHotelId} onClose={() => setEditingHotelId(null)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
       <EditVipModal isOpen={!!editingVipId} establishmentId={editingVipId} onClose={() => setEditingVipId(null)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
+
+      <ConfirmDialog
+        open={!!cancelTarget}
+        danger
+        busy={cancelling}
+        title="Cancel this reservation?"
+        text={cancelTarget ? `Booking #${refOf(cancelTarget)} will be cancelled and the dates freed. The guest's payment goes to Rentals Africa for review and refund. This cannot be undone.` : ''}
+        confirmLabel="Cancel reservation"
+        onConfirm={handleCancelReservation}
+        onCancel={() => !cancelling && setCancelTarget(null)}
+      />
+
+      <ConfirmDialog
+        open={!!codeConfirm}
+        busy={processingId === codeConfirm?._id}
+        title={codeConfirm ? `Confirm ${getButtonText(codeConfirm.type, false).toString().toLowerCase().replace('confirm ', '')}?` : ''}
+        text={codeConfirm ? `Booking #${refOf(codeConfirm)} at ${codeConfirm.asset.title}.` : ''}
+        confirmLabel="Confirm"
+        onConfirm={async () => { const b = codeConfirm; await handleEscrowConfirm(b); setCodeConfirm(null); }}
+        onCancel={() => setCodeConfirm(null)}
+      />
+
+      {codeOpen && (
+        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm" onClick={() => setCodeOpen(false)}>
+          <div className="w-full max-w-md bg-white rounded-3xl shadow-elevated p-8" onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-2xl font-display font-bold text-brand-dark">Enter booking code</h2>
+            <p className="mt-2 text-base text-brand-text-secondary">Ask the guest for the code on their booking (for example #A1B2C3) to confirm their arrival.</p>
+            <input
+              autoFocus
+              value={codeValue}
+              onChange={(e) => setCodeValue(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && findByCode()}
+              placeholder="#A1B2C3"
+              className="mt-5 w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-brand-dark outline-none text-xl font-display font-bold tracking-widest uppercase"
+            />
+            <div className="mt-6 flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => setCodeOpen(false)}>Cancel</Button>
+              <Button variant="dark" onClick={findByCode} disabled={!codeValue.trim()}>Find booking</Button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 }

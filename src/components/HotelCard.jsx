@@ -7,6 +7,7 @@ import { Link } from 'react-router-dom';
 import { getHotels } from '../api/hotel';
 import FavoriteHeart from './browse/FavoriteHeart';
 import BrowseShell from './browse/BrowseShell';
+import ListingsMap from './browse/ListingsMap';
 import { SkeletonGrid, ErrorState, NoResults } from './browse/States';
 import { AMENITY_OPTIONS, applyFilters, sortItems, listingTag } from './browse/meta';
 
@@ -141,12 +142,13 @@ const HOTEL_FILTERS = [
   { kind: 'multi', key: 'amenities', label: 'Amenities', options: AMENITY_OPTIONS.map((a) => ({ value: a, label: a })) },
 ];
 
-export default function HotelListingView({ activeCityContext }) {
+export default function HotelListingView({ activeCityContext, query }) {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [filters, setFilters] = useState({ city: activeCityContext || 'Lagos' });
   const [sort, setSort] = useState('recommended');
+  const [view, setView] = useState('list');
 
   const load = useCallback(async () => {
     try {
@@ -166,20 +168,28 @@ export default function HotelListingView({ activeCityContext }) {
   useEffect(() => { load(); }, [load]);
 
   const visible = useMemo(
-    () => sortItems(applyFilters(hotels, filters, { custom: (h, f) => !f.breakfast || h.hasBreakfast }), sort),
-    [hotels, filters, sort]
+    () => sortItems(applyFilters(hotels, { ...filters, query }, { custom: (h, f) => !f.breakfast || h.hasBreakfast }), sort),
+    [hotels, filters, sort, query]
   );
   const hasFilters = Object.keys(filters).length > 0;
 
   return (
     <div className="w-full">
-      <BrowseShell config={HOTEL_FILTERS} filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} total={visible.length} noun="hotels" chipLabels={{}}>
+      <BrowseShell config={HOTEL_FILTERS} filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} total={visible.length} noun="hotels" chipLabels={{}} view={view} setView={setView}>
         {loading ? (
           <SkeletonGrid count={6} className="xl:grid-cols-3" />
         ) : error ? (
           <ErrorState onRetry={load} message="We couldn't load hotels. Check your connection and try again." />
         ) : visible.length === 0 ? (
           <NoResults hasFilters={hasFilters} onClear={() => setFilters({})} text={hasFilters ? undefined : 'We are expanding our hotel portfolio. Check back soon.'} />
+        ) : view === 'map' ? (
+          <ListingsMap
+            items={visible}
+            hrefFor={(h) => `/hotel/${h._id}`}
+            titleFor={(h) => h.title}
+            imageFor={(h) => h.images?.[0] || 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=80'}
+            subtitleFor={(h) => [h.address?.city, h.address?.state].filter(Boolean).join(', ')}
+          />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-5">
             {visible.map((hotel) => <PremiumHotelCard key={hotel._id} hotel={hotel} />)}

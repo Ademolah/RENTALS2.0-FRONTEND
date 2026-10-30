@@ -212,16 +212,16 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                 <div className="space-y-6">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Establishment Name</label>
-                    <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50" />
+                    <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Description</label>
-                    <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50 resize-none" />
+                    <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 resize-none" />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Category</label>
-                      <select value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50">
+                      <select value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50">
                         <option value="LOUNGE">Premium Lounge</option>
                         <option value="CLUB">Nightclub</option>
                         <option value="FINE_DINING">Fine Dining</option>
@@ -232,7 +232,7 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                     </div>
                     <div>
                       <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Dress Code</label>
-                      <input type="text" required value={dressCode} onChange={(e) => setDressCode(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50" />
+                      <input type="text" required value={dressCode} onChange={(e) => setDressCode(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
                     </div>
                   </div>
                 </div>
@@ -249,18 +249,18 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="md:col-span-2">
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Street Address</label>
-                    <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50" />
+                    <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">State</label>
-                    <select required value={stateName} onChange={handleStateChange} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50 appearance-none">
+                    <select required value={stateName} onChange={handleStateChange} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 appearance-none">
                       <option value="" disabled>Select State</option>
                       {Object.keys(LOCATION_DATA).map(state => <option key={state} value={state}>{state}</option>)}
                     </select>
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">City</label>
-                    <select required value={city} onChange={(e) => setCity(e.target.value)} disabled={!stateName} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50 appearance-none disabled:opacity-50">
+                    <select required value={city} onChange={(e) => setCity(e.target.value)} disabled={!stateName} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 appearance-none disabled:opacity-50">
                       <option value="" disabled>{stateName ? 'Select City' : 'Select State First'}</option>
                       {stateName && LOCATION_DATA[stateName]?.map(loc => <option key={loc} value={loc}>{loc}</option>)}
                     </select>
@@ -279,11 +279,11 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Opening Time</label>
-                    <input type="text" required value={openTime} onChange={(e) => setOpenTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50" />
+                    <input type="text" required value={openTime} onChange={(e) => setOpenTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
                   </div>
                   <div>
                     <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Closing Time</label>
-                    <input type="text" required value={closeTime} onChange={(e) => setCloseTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-sm bg-gray-50/50" />
+                    <input type="text" required value={closeTime} onChange={(e) => setCloseTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
                   </div>
                 </div>
                 <div className="mb-8">
@@ -328,7 +328,7 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                    {previewUrls.map((url, idx) => (
                      <div key={`new-${idx}`} className="relative aspect-square rounded-xl overflow-hidden border border-brand-primary group">
                        <img src={url} className="w-full h-full object-cover" alt="Preview" />
-                       <div className="absolute top-2 left-2 bg-brand-primary text-white text-[9px] font-bold px-2 py-1 rounded">NEW</div>
+                       <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs font-bold px-2 py-1 rounded">NEW</div>
                        <button type="button" onClick={() => removeNewFile(idx)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white"><XCircle className="w-8 h-8" /></button>
                      </div>
                    ))}

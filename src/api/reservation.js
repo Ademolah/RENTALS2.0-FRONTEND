@@ -24,3 +24,29 @@ export const cancelBookingApi = async (reservationId) => {
 export const logUnifiedWhatsappIntent = async (intentData) => {
   return apiClient.post(`/reservations/whatsapp-intent`, intentData);
 };
+
+const DRAFT_KEY = 'rentals_checkout_draft';
+
+export const saveCheckoutDraft = (draft) => {
+  try {
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+  } catch {
+    /* storage unavailable */
+  }
+};
+
+export const loadCheckoutDraft = () => {
+  try {
+    return JSON.parse(sessionStorage.getItem(DRAFT_KEY) || 'null');
+  } catch {
+    return null;
+  }
+};
+
+export const clearCheckoutDraft = () => {
+  try {
+    sessionStorage.removeItem(DRAFT_KEY);
+  } catch {
+    /* storage unavailable */
+  }
+};

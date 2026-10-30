@@ -5,24 +5,12 @@ import {
   Clock, Wine, Tags, ShieldCheck, Building
 } from 'lucide-react';
 import { createVipEstablishment, createVipService } from '../api/vip';
+import { useToast } from './Toast';
+import { useDraft } from './host/useDraft';
+import DraftBar from './host/DraftBar';
+import ArrivalGuideFields from './host/ArrivalGuideFields';
 
 // --- CUSTOM SUCCESS TOAST COMPONENT ---
-const SuccessToast = ({ message, isVisible, onClose }) => {
-  if (!isVisible) return null;
-  return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-      <div className="bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-gray-700">
-        <div className="bg-emerald-500/20 p-1.5 rounded-full">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-        </div>
-        <span className="font-medium text-sm tracking-wide">{message}</span>
-        <button onClick={onClose} className="pl-4 text-gray-400 hover:text-white transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 const COMMON_VENUE_SERVICES = ['Bottle Service', 'Private Cabana', 'Valet Parking', 'VIP Host', 'Private Security', 'Shisha', 'Fine Dining'];
@@ -32,7 +20,9 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showToast, setShowToast] = useState(false);
+  const toast = useToast();
+  const [arrivalNotes, setArrivalNotes] = useState('');
+  const [arrivalPhotos, setArrivalPhotos] = useState([]);
 
   // 💡 NEW: Listing Category Toggle ('VENUE' | 'SERVICE')
   const [listingCategory, setListingCategory] = useState('VENUE');
@@ -95,6 +85,32 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
   useEffect(() => {
     setServices([]);
   }, [listingCategory]);
+
+  const { savedAt, clearDraft } = useDraft(
+    'rentals_draft_vip',
+    isOpen,
+    { listingCategory, title, description, establishmentType, customCategory, dressCode, openTime, closeTime, daysOpen, serviceType, customServiceType, priceAmount, services, street, stateName, city, arrivalNotes },
+    (v) => {
+      setListingCategory(v.listingCategory || 'VENUE');
+      setTitle(v.title || '');
+      setDescription(v.description || '');
+      setEstablishmentType(v.establishmentType || 'LOUNGE');
+      setCustomCategory(v.customCategory || '');
+      setDressCode(v.dressCode || '');
+      setOpenTime(v.openTime || '10:00 PM');
+      setCloseTime(v.closeTime || '04:00 AM');
+      setDaysOpen(Array.isArray(v.daysOpen) ? v.daysOpen : ['Thursday', 'Friday', 'Saturday', 'Sunday']);
+      setServiceType(v.serviceType || 'ARMED_ESCORT');
+      setCustomServiceType(v.customServiceType || '');
+      setPriceAmount(v.priceAmount ?? 150000);
+      setStreet(v.street || '');
+      setStateName(v.stateName || '');
+      setCity(v.city || '');
+      setArrivalNotes(v.arrivalNotes || '');
+      // The category effect clears services when it changes, so restore them afterwards.
+      setTimeout(() => setServices(Array.isArray(v.services) ? v.services : []), 0);
+    }
+  );
 
   if (!isOpen) return null;
 
@@ -180,6 +196,8 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
         formData.append('open', openTime);
         formData.append('close', closeTime);
         formData.append('daysOpen', JSON.stringify(daysOpen));
+        if (arrivalNotes.trim()) formData.append('arrivalNotes', arrivalNotes.trim());
+        arrivalPhotos.slice(0, 5).forEach(file => formData.append('arrivalPhotos', file));
         
         response = await createVipEstablishment(formData);
       } else {
@@ -190,14 +208,14 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
         response = await createVipService(formData);
       }
       
-      setShowToast(true);
+      toast.success(listingCategory === 'VENUE' ? 'Venue published. It goes live after approval.' : 'Service published. It goes live after approval.');
+      clearDraft();
       
       setTimeout(() => {
         if (onEstablishmentAdded) {
           // Send back the newly created doc to immediately render it
           onEstablishmentAdded(response.data?.data?.establishment || response.data?.data?.service);
         }
-        setShowToast(false);
         onClose();
         resetForm();
       }, 2500);
@@ -227,6 +245,8 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
     setStateName('');
     setSelectedFiles([]);
     setPreviewUrls([]);
+    setArrivalNotes('');
+    setArrivalPhotos([]);
     setLoading(false);
   };
 
@@ -239,7 +259,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
           
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex justify-between items-center md:rounded-t-3xl">
             <div>
-              <span className="text-[10px] font-bold tracking-widest text-brand-primary uppercase">Concierge Studio</span>
+              <span className="text-xs font-bold tracking-widest text-brand-primary uppercase">Concierge Studio</span>
               <h2 className="text-2xl font-bold text-gray-900 mt-0.5 tracking-tight">Create VIP Listing</h2>
             </div>
             <button 
@@ -290,6 +310,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
             )}
 
             <form id="vip-form" onSubmit={handleSubmit} className="space-y-12">
+              <DraftBar savedAt={savedAt} onExit={onClose} onDiscard={() => { clearDraft(); resetForm(); }} />
               
               <section>
                 <div className="flex items-center space-x-2 mb-6">
@@ -306,7 +327,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       type="text" required maxLength={70}
                       placeholder={listingCategory === 'VENUE' ? "e.g. The Velvet Room" : "e.g. Elite Armed Escort Convoy"}
                       value={title} onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                     />
                   </div>
 
@@ -316,7 +337,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       required rows={3}
                       placeholder="Describe the exclusive experience, features, and target audience..."
                       value={description} onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white resize-none"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white resize-none"
                     />
                   </div>
 
@@ -328,7 +349,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <>
                           <select 
                             value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)}
-                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
+                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
                           >
                             <option value="LOUNGE">Premium Lounge</option>
                             <option value="CLUB">Nightclub</option>
@@ -342,7 +363,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                               <input 
                                 type="text" placeholder="e.g. Golf Resort" 
                                 value={customCategory} onChange={(e) => setCustomCategory(e.target.value)}
-                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
+                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-white"
                                 required={establishmentType === 'OTHER'}
                               />
                             </div>
@@ -352,7 +373,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <>
                           <select 
                             value={serviceType} onChange={(e) => setServiceType(e.target.value)}
-                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
+                            className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
                           >
                             <option value="ARMED_ESCORT">Armed Escort</option>
                             <option value="CHAUFFEUR">Private Chauffeur</option>
@@ -366,7 +387,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                               <input 
                                 type="text" placeholder="e.g. VIP Event Security" 
                                 value={customServiceType} onChange={(e) => setCustomServiceType(e.target.value)}
-                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-white"
+                                className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-white"
                                 required={serviceType === 'OTHER'}
                               />
                             </div>
@@ -383,7 +404,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                           type="text" required
                           placeholder="e.g. Smart Elegant. No athletic wear."
                           value={dressCode} onChange={(e) => setDressCode(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                         />
                       </div>
                     )}
@@ -406,7 +427,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       type="text" required={listingCategory === 'VENUE'}
                       placeholder={listingCategory === 'VENUE' ? "e.g. 15 Adetokunbo Ademola Street" : "e.g. Dispatch HQ (Optional)"}
                       value={street} onChange={(e) => setStreet(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                     />
                   </div>
 
@@ -416,7 +437,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       required
                       value={stateName} 
                       onChange={handleStateChange}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none"
                     >
                       <option value="" disabled>Select State</option>
                       {Object.keys(LOCATION_DATA).map(state => (
@@ -432,7 +453,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       value={city} 
                       onChange={(e) => setCity(e.target.value)}
                       disabled={!stateName} 
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50"
                     >
                       <option value="" disabled>{stateName ? 'Select City' : 'Select State First'}</option>
                       {stateName && LOCATION_DATA[stateName].map(loc => (
@@ -462,7 +483,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <input 
                           type="text" required placeholder="e.g. 10:00 PM"
                           value={openTime} onChange={(e) => setOpenTime(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                         />
                       </div>
                       <div>
@@ -470,7 +491,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <input 
                           type="text" required placeholder="e.g. 04:00 AM"
                           value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                         />
                       </div>
                     </div>
@@ -534,7 +555,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                       value={customService}
                       onChange={(e) => setCustomService(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && addCustomService(e)}
-                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      className="flex-1 px-4 py-3 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                     />
                     <button 
                       type="button" 
@@ -559,7 +580,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                 </div>
                 
                 <div className="mb-6 p-5 rounded-2xl bg-gray-900 text-white shadow-md border border-gray-800">
-                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-[10px] tracking-widest uppercase mb-2">
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs tracking-widest uppercase mb-2">
                     <span>Rentals Quality Standard</span>
                   </div>
                   <p className="text-sm text-gray-300 leading-relaxed font-medium">
@@ -602,6 +623,13 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
               </section>
 
               <hr className="border-gray-100" />
+
+              {listingCategory === 'VENUE' && (
+                <>
+                  <ArrivalGuideFields notes={arrivalNotes} onNotes={setArrivalNotes} photos={arrivalPhotos} onPhotos={setArrivalPhotos} label="Arrival guide" hint="Only guests with a paid booking see this: entrance, door team, parking, how to ask for their reservation." />
+                  <hr className="border-gray-100" />
+                </>
+              )}
 
               <section className="pb-10">
                 <div className="flex items-center space-x-2 mb-6">
@@ -668,11 +696,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
         </div>
       </div>
       
-      <SuccessToast 
-        message={`VIP ${listingCategory === 'VENUE' ? 'Establishment' : 'Service'} published successfully!`} 
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
-      />
+      
     </>
   );
 }

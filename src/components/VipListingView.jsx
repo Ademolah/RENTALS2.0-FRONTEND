@@ -8,7 +8,7 @@ import BrowseShell from './browse/BrowseShell';
 import { SkeletonGrid, ErrorState, NoResults } from './browse/States';
 import { applyFilters, sortItems } from './browse/meta';
 
-export default function VipListingView({ defaultLocation }) {
+export default function VipListingView({ defaultLocation, query }) {
   const [establishments, setEstablishments] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -65,7 +65,7 @@ export default function VipListingView({ defaultLocation }) {
     { kind: 'price', label: activeTab === 'venues' ? 'Required deposit' : 'Price per day', max: 2000000, step: 25000 },
     ...(typeOptions.length ? [{ kind: 'multi', key: 'types', label: 'Type', options: typeOptions }] : []),
   ];
-  const activeList = useMemo(() => sortItems(applyFilters(baseList, filters), sort), [baseList, filters, sort]);
+  const activeList = useMemo(() => sortItems(applyFilters(baseList, { ...filters, query }), sort), [baseList, filters, sort, query]);
   const hasFilters = Object.keys(filters).length > 0;
 
   if (!selectedLocation) {

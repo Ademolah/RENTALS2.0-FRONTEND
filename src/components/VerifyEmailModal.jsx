@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { verifyEmailApi } from '../api/auth'
+import { verifyEmailApi } from '../api/auth';
+import { useToast } from './Toast';
 
 
 
@@ -9,6 +10,29 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
   const [error, setError] = useState(null);
   const [timeLeft, setTimeLeft] = useState(15 * 60); // 15 minutes in seconds
   const inputRefs = useRef([]);
+  const toast = useToast();
+  const [cooldown, setCooldown] = useState(30);
+  const [resending, setResending] = useState(false);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const t = setTimeout(() => setCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(t);
+  }, [cooldown]);
+
+  const resend = async () => {
+    setResending(true);
+    try {
+      await onResend();
+      setTimeLeft(15 * 60);
+      setCooldown(30);
+      setError(null);
+      toast.success('A new code is on its way to your email.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'We could not resend the code. Please try again.');
+    }
+    setResending(false);
+  };
 
   // 15-Minute Countdown Timer
   useEffect(() => {
@@ -167,23 +191,25 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
           </button>
 
           {/* Footer Timer / Resend Section */}
-          <div className="mt-8 text-center text-base">
-            {timeLeft > 0 ? (
-              <p className="text-brand-text-secondary">
-                Code expires in <span className="font-semibold text-brand-dark">{formattedTime}</span>
-              </p>
-            ) : (
-              <p className="text-brand-text-secondary">
-                Code has expired.{' '}
-                <button
-                  type="button"
-                  onClick={onResend}
-                  className="font-semibold text-brand-primary hover:underline"
-                >
-                  Click here to resend
-                </button>
-              </p>
-            )}
+          <div className="mt-8 text-center text-base space-y-2">
+            <p className="text-brand-text-secondary">
+              {timeLeft > 0 ? (
+                <>Code expires in <span className="font-semibold text-brand-dark">{formattedTime}</span></>
+              ) : (
+                'Your code has expired.'
+              )}
+            </p>
+            <p className="text-brand-text-secondary">
+              Did not get it?{' '}
+              <button
+                type="button"
+                onClick={resend}
+                disabled={cooldown > 0 || resending}
+                className="font-semibold text-brand-primary hover:underline disabled:text-brand-text-muted disabled:no-underline"
+              >
+                {resending ? 'Sending...' : cooldown > 0 ? `Resend code in ${cooldown}s` : 'Resend code'}
+              </button>
+            </p>
           </div>
         </form>
 

@@ -19,6 +19,20 @@ const overlaps = (s, e, booked) =>
     return bs && be && s < be && e > bs;
   });
 
+/** True when the night starting on `dateStr` (YYYY-MM-DD) is inside an existing booking. */
+export const isNightBooked = (booked, dateStr) => overlaps(dateStr, addDays(dateStr, 1), booked);
+
+/** True when any night between `s` and `e` is already booked. */
+export const rangeBooked = (booked, s, e) => overlaps(s, e, booked);
+
+/** True when the calendar day itself falls inside a booking (single-day car rentals). */
+export const isDayBooked = (booked, dateStr) =>
+  (booked || []).some((b) => {
+    const bs = String(b.startDate || b.start || '').slice(0, 10);
+    const be = String(b.endDate || b.end || '').slice(0, 10);
+    return bs && be && dateStr >= bs && dateStr <= be;
+  });
+
 /**
  * Up to `max` free windows of the same length after the chosen start.
  * Uses the listing's bookedDates when present, otherwise asks the server via `isFree`.

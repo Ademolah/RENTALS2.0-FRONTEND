@@ -4,30 +4,21 @@ import {
   Car, Check, MapPin, Settings2, Image as ImageIcon, Video // 💡 NEW: Imported Video icon
 } from 'lucide-react';
 import axios from 'axios';
+import { useToast } from './Toast';
+import { useDraft } from './host/useDraft';
+import DraftBar from './host/DraftBar';
+import ArrivalGuideFields from './host/ArrivalGuideFields';
 
-const BrandSuccessToast = ({ message, isVisible, onClose }) => {
-  if (!isVisible) return null;
-  return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-      <div className="bg-brand-dark text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-brand-primary/30">
-        <div className="bg-brand-primary p-1.5 rounded-full shadow-inner">
-          <CheckCircle2 className="w-5 h-5 text-white" />
-        </div>
-        <span className="font-medium text-sm tracking-wide">{message}</span>
-        <button onClick={onClose} className="pl-4 text-gray-400 hover:text-white transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
+
 
 const API = import.meta.env.VITE_API_URL;
 
 export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [showToast, setShowToast] = useState(false);
+  const toast = useToast();
+  const [arrivalNotes, setArrivalNotes] = useState('');
+  const [arrivalPhotos, setArrivalPhotos] = useState([]);
 
   // Form State
   const [make, setMake] = useState('');
@@ -68,6 +59,26 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
       if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     };
   }, [videoPreviewUrl]);
+
+  const { savedAt, clearDraft } = useDraft(
+    'rentals_draft_car',
+    isOpen,
+    { make, seatNumber, carModel, year, category, transmission, city, stateLocation, pricePer12Hours, selectedFeatures, description, arrivalNotes },
+    (v) => {
+      setMake(v.make || '');
+      setSeatNumber(v.seatNumber ?? 4);
+      setCarModel(v.carModel || '');
+      setYear(v.year ?? new Date().getFullYear());
+      setCategory(v.category || 'LUXURY');
+      setTransmission(v.transmission || 'AUTOMATIC');
+      setCity(v.city || '');
+      setStateLocation(v.stateLocation || 'Lagos');
+      setPricePer12Hours(v.pricePer12Hours ?? 150000);
+      setSelectedFeatures(Array.isArray(v.selectedFeatures) ? v.selectedFeatures : []);
+      setDescription(v.description || '');
+      setArrivalNotes(v.arrivalNotes || '');
+    }
+  );
 
   if (!isOpen) return null;
 
@@ -137,9 +148,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
       formData.append('seatNumber', seatNumber.toString());
       formData.append('transmission', transmission);
       formData.append('pricePer12Hours', pricePer12Hours.toString());
-      selectedFeatures.forEach((feat) => {
-        formData.append('features', feat);
-      });
+      if (selectedFeatures.length) formData.append('features', selectedFeatures.join(', '));
       
       formData.append('location', JSON.stringify({
         city: city,
@@ -155,17 +164,20 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
         formData.append('images', file);
       });
 
+      if (arrivalNotes.trim()) formData.append('arrivalNotes', arrivalNotes.trim());
+      arrivalPhotos.slice(0, 5).forEach((file) => formData.append('arrivalPhotos', file));
+
       const response = await axios.post(`${API}/cars`, formData, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('rentals_token')}`
         }
       });
 
-      setShowToast(true);
+      toast.success('Vehicle added to your fleet. It goes live after approval.');
+      clearDraft();
 
       setTimeout(() => {
         if (onCarAdded) onCarAdded(response.data.data.car);
-        setShowToast(false);
         onClose();
       }, 2000);
 
@@ -206,6 +218,8 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
             </div>
           )}
 
+          <DraftBar savedAt={savedAt} onExit={onClose} onDiscard={() => { clearDraft(); setMake(''); setCarModel(''); setDescription(''); setCity(''); setSelectedFeatures([]); setArrivalNotes(''); setArrivalPhotos([]); setPricePer12Hours(150000); }} />
+
           {/* Vehicle Details */}
           <div className="space-y-4">
             <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Vehicle Details</h3>
@@ -218,7 +232,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="Mercedes-Benz"
                   value={make}
                   onChange={(e) => setMake(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-sm transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors"
                 />
               </div>
 
@@ -230,7 +244,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="G63 AMG"
                   value={carModel}
                   onChange={(e) => setCarModel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-sm transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors"
                 />
               </div>
             </div>
@@ -241,7 +255,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                 <select 
                   value={category} 
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-sm transition-colors bg-white appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors bg-white appearance-none cursor-pointer"
                 >
                   <option value="LUXURY">Luxury</option>
                   <option value="SUV">SUV</option>
@@ -256,7 +270,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                 <select 
                   value={transmission} 
                   onChange={(e) => setTransmission(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-sm transition-colors bg-white appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors bg-white appearance-none cursor-pointer"
                 >
                   <option value="AUTOMATIC">Automatic</option>
                   <option value="MANUAL">Manual</option>
@@ -317,7 +331,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
               <label className="block text-xs font-bold text-gray-700 tracking-wide uppercase">
                 Vehicle Features
               </label>
-              <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">
+              <span className="text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 {selectedFeatures.length} Selected
               </span>
             </div>
@@ -367,7 +381,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                 <select 
                   value={stateLocation} 
                   onChange={(e) => setStateLocation(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-sm transition-colors bg-white appearance-none cursor-pointer"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-base transition-colors bg-white appearance-none cursor-pointer"
                 >
                   <option value="Lagos">Lagos</option>
                   <option value="Abuja">Abuja</option>
@@ -381,7 +395,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="Victoria Island"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-sm transition-colors"
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-base transition-colors"
                 />
               </div>
             </div>
@@ -392,10 +406,10 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
             <div className="flex justify-between items-end border-b border-gray-100 pb-2">
               <h3 className="text-sm font-bold text-gray-900">Vehicle Imagery</h3>
               <div className="flex space-x-2">
-                <span className="text-[10px] font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
+                <span className="text-xs font-bold text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full uppercase tracking-wider">
                   {selectedFiles.length} / 10 PHOTOS
                 </span>
-                <span className={`text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${selectedVideo ? 'bg-brand-primary/10 text-brand-dark' : 'bg-gray-100 text-gray-400'}`}>
+                <span className={`text-xs font-bold px-2.5 py-1 rounded-full uppercase tracking-wider ${selectedVideo ? 'bg-brand-primary/10 text-brand-dark' : 'bg-gray-100 text-gray-400'}`}>
                   {selectedVideo ? '1 / 1 VIDEO' : 'OPTIONAL VIDEO'}
                 </span>
               </div>
@@ -430,7 +444,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   >
                     <X className="w-4 h-4" />
                   </button>
-                  <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm uppercase tracking-wider">
+                  <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-xs font-bold text-gray-900 shadow-sm uppercase tracking-wider">
                     Cinematic Tour
                   </div>
                 </div>
@@ -476,7 +490,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                       />
                       
                       {index === 0 && (
-                        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-[10px] font-bold uppercase tracking-wider text-gray-900 shadow-sm">
+                        <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded-md text-xs font-bold uppercase tracking-wider text-gray-900 shadow-sm">
                           Cover Image
                         </div>
                       )}
@@ -495,6 +509,8 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
               )}
             </div>
           </div>
+
+          <ArrivalGuideFields notes={arrivalNotes} onNotes={setArrivalNotes} photos={arrivalPhotos} onPhotos={setArrivalPhotos} label="Pickup instructions" hint="Only guests with a paid booking see this: where to meet, parking, how the handover works." />
 
           {/* Pricing */}
           <div className="space-y-4 pb-4">
@@ -546,11 +562,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
 
       </div>
 
-      <BrandSuccessToast 
-        message="Vehicle successfully added to your premium fleet!" 
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
-      />
+      
       
     </div>
   );

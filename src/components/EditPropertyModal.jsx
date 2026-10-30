@@ -127,7 +127,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900">Manage Shortlet</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Property Specs</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Update Property Specs</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
@@ -146,14 +146,14 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Property Title</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Property Title</label>
                 <input 
                   type="text" value={formData.title} onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Nightly Rate (₦)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Nightly Rate (₦)</label>
                 <input 
                   type="number" value={formData.pricePerNight} onChange={(e) => setFormData({ ...formData, pricePerNight: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
@@ -163,14 +163,14 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">City</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">City</label>
                 <input 
                   type="text" value={formData.address.city} onChange={(e) => setFormData({ ...formData, address: { ...formData.address, city: e.target.value } })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Bedrooms</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Bedrooms</label>
                 <input 
                   type="number" value={formData.capacity.bedrooms} onChange={(e) => setFormData({ ...formData, capacity: { ...formData.capacity, bedrooms: e.target.value } })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
@@ -179,7 +179,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
             </div>
 
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
               <textarea 
                 rows="3" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-primary/50 outline-none resize-none"
@@ -188,7 +188,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
 
             {/* Images */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Property Images</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Property Images</label>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 {formData.existingImages.map((img, idx) => (
                   <div key={`old-${idx}`} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200">
@@ -210,7 +210,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
 
                 <label className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer group transition-colors">
                   <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-brand-primary mb-2" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Add Photos</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase">Add Photos</span>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>
@@ -219,7 +219,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
             <div className="flex items-center justify-between bg-gray-50 border border-gray-200 p-5 rounded-xl">
               <div>
                 <h4 className="font-bold text-gray-900 text-sm">Active Listing</h4>
-                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">Toggle off to hide from marketplace</p>
+                <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">Toggle off to hide from marketplace</p>
               </div>
               <button 
                 type="button"

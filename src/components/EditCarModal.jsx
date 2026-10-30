@@ -133,7 +133,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             </div>
             <div>
               <h2 className="text-xl font-black text-gray-900">Comprehensive Asset Editor</h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Update Vehicle Specs & Pricing</p>
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Update Vehicle Specs & Pricing</p>
             </div>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
@@ -153,21 +153,21 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             {/* Row 1: Basic Info */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Make</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Make</label>
                 <input 
                   type="text" value={formData.make} onChange={(e) => setFormData({ ...formData, make: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Model</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Model</label>
                 <input 
                   type="text" value={formData.carModel} onChange={(e) => setFormData({ ...formData, carModel: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Year</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Year</label>
                 <input 
                   type="number" value={formData.year} onChange={(e) => setFormData({ ...formData, year: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
@@ -178,14 +178,14 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             {/* Row 2: Pricing & Specs */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">12-Hour Rate (₦)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">12-Hour Rate (₦)</label>
                 <input 
                   type="number" value={formData.pricePer12Hours} onChange={(e) => setFormData({ ...formData, pricePer12Hours: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Seats</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Seats</label>
                 <input 
                   type="number" value={formData.seatNumber} onChange={(e) => setFormData({ ...formData, seatNumber: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-bold focus:ring-2 focus:ring-brand-primary/50 outline-none"
@@ -196,14 +196,14 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             {/* Row 3: Description & Features */}
             <div className="space-y-4">
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Description</label>
                 <textarea 
                   rows="3" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-brand-primary/50 outline-none resize-none"
                 />
               </div>
               <div>
-                <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-2">Features (Comma Separated)</label>
+                <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Features (Comma Separated)</label>
                 <input 
                   type="text" value={formData.features} onChange={(e) => setFormData({ ...formData, features: e.target.value })}
                   placeholder="Leather Seats, V6 Engine, Tinted..."
@@ -214,7 +214,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
 
             {/* Row 4: Images */}
             <div>
-              <label className="block text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-3">Asset Images</label>
+              <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Asset Images</label>
               
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                 {/* Existing Images */}
@@ -240,7 +240,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
                 {/* Upload Button */}
                 <label className="aspect-square border-2 border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center bg-gray-50 hover:bg-gray-100 cursor-pointer group transition-colors">
                   <ImageIcon className="w-6 h-6 text-gray-400 group-hover:text-brand-primary mb-2" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Add Photos</span>
+                  <span className="text-xs font-bold text-gray-500 uppercase">Add Photos</span>
                   <input type="file" multiple accept="image/*" className="hidden" onChange={handleImageUpload} />
                 </label>
               </div>
@@ -250,7 +250,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             <div className="flex items-center justify-between bg-gray-50 border border-gray-200 p-5 rounded-xl">
               <div>
                 <h4 className="font-bold text-gray-900 text-sm">Active Listing</h4>
-                <p className="text-[10px] text-gray-500 mt-1 uppercase tracking-wider">Toggle off to hide from marketplace</p>
+                <p className="text-xs text-gray-500 mt-1 uppercase tracking-wider">Toggle off to hide from marketplace</p>
               </div>
               <button 
                 type="button"

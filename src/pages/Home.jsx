@@ -9,9 +9,14 @@ import { getCars } from '../api/car';
 import {
   Key, Building2, CarFront, Crown,
   ChevronRight, MapPin, Shield,
-  Star, Clock
+  Star, Clock, Bell, CalendarDays
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { getUnreadCountApi } from '../api/user';
+import { fetchGuestBookings } from '../api/trips';
+import SearchBox from '../components/browse/SearchBox';
+import ListingsMap from '../components/browse/ListingsMap';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import BrowseShell from '../components/browse/BrowseShell';
 import { SkeletonGrid, ErrorState, NoResults } from '../components/browse/States';
@@ -37,13 +42,24 @@ const HERO_COPY = {
   car: 'Premium cars and chauffeurs, priced per 12 hours. Book a single day or extend.',
 };
 
-const SHORTLET_FILTERS = [
+const shortletFilters = (typeOptions) => [
   { kind: 'city' },
   { kind: 'price', label: 'Price per night', max: 2000000, step: 25000 },
+  ...(typeOptions.length > 1 ? [{ kind: 'multi', key: 'ptypes', label: 'Property type', options: typeOptions }] : []),
   { kind: 'stepper', key: 'bedrooms', label: 'Bedrooms', max: 10 },
+  { kind: 'stepper', key: 'bathrooms', label: 'Bathrooms', max: 10 },
   { kind: 'rating' },
   { kind: 'multi', key: 'amenities', label: 'Amenities', options: AMENITY_OPTIONS.map((a) => ({ value: a, label: a })) },
 ];
+
+const isActiveFilters = (f) => Object.values(f).some((v) => v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0));
+
+const greetingFor = () => {
+  const h = new Date().getHours();
+  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+};
+
+const fmtDay = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 
 const CAR_FILTERS = [
   { kind: 'city' },
@@ -84,6 +100,10 @@ export default function Home({
   const [error, setError] = useState(false);
   const [filters, setFilters] = useState({});
   const [sort, setSort] = useState('recommended');
+  const [view, setView] = useState('list');
+  const { user } = useAuth();
+  const [unread, setUnread] = useState(0);
+  const [nextTrip, setNextTrip] = useState(null);
 
   const cat = activeCategory.toLowerCase();
   const isHotel = cat === 'hotel';
@@ -97,9 +117,30 @@ export default function Home({
   );
 
   useEffect(() => {
-    setFilters({});
+    setFilters((f) => (f.query ? { query: f.query } : {}));
     setSort('recommended');
+    setView('list');
   }, [activeCategory]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) {
+      setUnread(0);
+      setNextTrip(null);
+      return undefined;
+    }
+    getUnreadCountApi().then((n) => active && setUnread(n)).catch(() => active && setUnread(0));
+    fetchGuestBookings()
+      .then((rows) => {
+        if (!active) return;
+        const upcoming = rows
+          .filter((r) => r.bucket === 'upcoming' && r.start.getTime() > Date.now() - 24 * 3600 * 1000)
+          .sort((a, b) => a.start - b.start);
+        setNextTrip(upcoming[0] || null);
+      })
+      .catch(() => active && setNextTrip(null));
+    return () => { active = false; };
+  }, [user]);
 
   const load = useCallback(async () => {
     if (isHotel || isVip) {
@@ -163,12 +204,34 @@ export default function Home({
     return sortItems(applyFilters(results, { ...filters, city: undefined }), sort);
   }, [raw, filters, sort, searchKey, activeCityContext, isCar]);
 
-  const hasFilters = Object.keys(filters).length > 0;
+  const hasFilters = isActiveFilters(filters);
+  const typeOptions = useMemo(
+    () => (isShortlet ? [...new Set(raw.map((i) => listingTag(i, 'shortlet')))].map((t) => ({ value: t, label: t })) : []),
+    [raw, isShortlet]
+  );
   const showCuratedHome = isShortlet && !hasFilters && sort === 'recommended' && (!searchFilters.location || searchFilters.location === activeCityContext);
   const gridItems = showCuratedHome ? listings.slice(1) : listings;
 
   return (
     <main className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+
+      {/* Greeting + notifications */}
+      {user && (
+        <div className="flex items-center justify-between mb-5 animate-fade-up">
+          <div>
+            <p className="text-base text-brand-text-secondary">{greetingFor()}</p>
+            <p className="text-2xl font-display font-bold text-brand-dark">{user.firstName || 'Welcome back'}</p>
+          </div>
+          <Link
+            to="/notifications"
+            aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+            className="relative w-12 h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-dark transition-colors"
+          >
+            <Bell className="w-5 h-5 text-brand-dark" />
+            {unread > 0 && <span className="absolute top-2.5 right-3 w-3 h-3 rounded-full bg-brand-primary border-2 border-white" />}
+          </Link>
+        </div>
+      )}
 
       {/* Hero */}
       {!isVip && (
@@ -218,10 +281,37 @@ export default function Home({
         </div>
       )}
 
+      {showCuratedHome && nextTrip && (
+        <Link to="/trips" className="mb-10 flex items-center gap-5 p-4 pr-6 rounded-2xl border border-gray-100 bg-white shadow-card hover:shadow-card-hover transition-shadow animate-fade-up">
+          <img src={nextTrip.image} alt="" className="w-24 h-20 rounded-xl object-cover bg-gray-100 shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold uppercase tracking-wider text-brand-primary">Your upcoming trip</p>
+            <p className="text-lg font-display font-bold text-brand-dark truncate">{nextTrip.title}</p>
+            <p className="text-base text-brand-text-secondary flex items-center gap-2">
+              <CalendarDays className="w-4 h-4 shrink-0" />
+              {fmtDay(nextTrip.start)}{nextTrip.end ? ` to ${fmtDay(nextTrip.end)}` : ''}
+              <span className="text-brand-text-muted">· {nextTrip.reference}</span>
+            </p>
+          </div>
+          <ChevronRight className="w-5 h-5 text-brand-text-muted shrink-0" />
+        </Link>
+      )}
+
+      <SearchBox
+        value={filters.query || ''}
+        onChange={(q) => setFilters((f) => {
+          const next = { ...f };
+          if (q) next.query = q; else delete next.query;
+          return next;
+        })}
+        placeholder={isCar ? 'Search cars by make, model or city...' : isHotel ? 'Search hotels by name or area...' : isVip ? 'Search VIP venues and services...' : 'Search shortlets, hotels, cars...'}
+      />
+
       {isHotel ? (
-        <HotelListingView activeCityContext={activeCityContext} searchFilters={searchFilters} />
+        <HotelListingView activeCityContext={activeCityContext} searchFilters={searchFilters} query={filters.query} />
       ) : isVip ? (
         <VipListingView
+          query={filters.query}
           defaultLocation={searchFilters.location || activeCityContext}
           defaultService={searchFilters.serviceType}
           defaultDate={searchFilters.date || searchFilters.checkIn}
@@ -281,7 +371,7 @@ export default function Home({
           )}
 
           <BrowseShell
-            config={isCar ? CAR_FILTERS : SHORTLET_FILTERS}
+            config={isCar ? CAR_FILTERS : shortletFilters(typeOptions)}
             filters={filters}
             setFilters={setFilters}
             sort={sort}
@@ -289,6 +379,8 @@ export default function Home({
             total={listings.length}
             noun={isCar ? 'cars' : 'stays'}
             chipLabels={CLASS_LABELS}
+            view={view}
+            setView={setView}
           >
             {showCuratedHome && !loading && !error && listings.length > 1 && (
               <SectionHeader title="Recommended for you" subtitle={`${listings.length - 1} more in ${activeCityContext}`} />
@@ -303,6 +395,14 @@ export default function Home({
                 hasFilters={hasFilters}
                 onClear={() => setFilters({})}
                 text={hasFilters ? undefined : `We couldn't find listings in ${filters.city || searchFilters.location || activeCityContext}. Try adjusting your search.`}
+              />
+            ) : view === 'map' ? (
+              <ListingsMap
+                items={listings}
+                hrefFor={(item) => (isCar ? `/cars/${item._id}` : `/property/${item._id}`)}
+                titleFor={(item) => (isCar ? [item.make, item.carModel].filter(Boolean).join(' ') || 'Car' : item.title)}
+                imageFor={(item) => item.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=400&q=80'}
+                subtitleFor={(item) => [(item.address || item.location)?.city, (item.address || item.location)?.state].filter(Boolean).join(', ')}
               />
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-x-5 gap-y-10">

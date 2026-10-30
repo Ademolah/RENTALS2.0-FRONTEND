@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { CalendarX } from 'lucide-react';
 import { AccountShell, ListSkeleton, ErrorBox } from '../components/account/AccountShell';
 import BookingCard from '../components/account/BookingCard';
@@ -6,6 +7,14 @@ import BookingDetail from '../components/account/BookingDetail';
 import { Card, EmptyState, Button } from '../components/ui';
 import { fetchGuestBookings } from '../api/trips';
 import { useDocumentMeta } from '../lib/seo';
+
+const CATEGORIES = [
+  { id: 'all', label: 'All' },
+  { id: 'SHORTLET', label: 'Shortlets', types: ['SHORTLET'] },
+  { id: 'HOTEL', label: 'Hotels', types: ['HOTEL'] },
+  { id: 'CAR', label: 'Cars', types: ['CAR'] },
+  { id: 'VIP', label: 'VIP', types: ['VIP', 'VIP_SERVICE'] },
+];
 
 const TABS = [
   { id: 'upcoming', label: 'Upcoming', empty: 'No upcoming trips', hint: 'When you book a stay, car or VIP experience it will show here.' },
@@ -19,6 +28,8 @@ export default function Trips() {
   const [error, setError] = useState(false);
   const [tab, setTab] = useState('upcoming');
   const [openId, setOpenId] = useState(null);
+  const [category, setCategory] = useState('all');
+  const [params, setParams] = useSearchParams();
 
   const load = useCallback(() => {
     setError(false);
@@ -31,13 +42,32 @@ export default function Trips() {
     else setBookings([]);
   }, [load]);
 
+  const inCategory = useMemo(() => {
+    const cat = CATEGORIES.find((c) => c.id === category);
+    return (bookings || []).filter((b) => !cat.types || cat.types.includes(b.type));
+  }, [bookings, category]);
+
   const counts = useMemo(() => {
     const c = { upcoming: 0, past: 0, cancelled: 0 };
-    (bookings || []).forEach((b) => { c[b.bucket] += 1; });
+    inCategory.forEach((b) => { c[b.bucket] += 1; });
     return c;
-  }, [bookings]);
+  }, [inCategory]);
 
-  const visible = (bookings || []).filter((b) => b.bucket === tab);
+  const visible = inCategory.filter((b) => b.bucket === tab);
+
+  const wanted = params.get('booking');
+  useEffect(() => {
+    if (!wanted || !bookings) return;
+    const match = bookings.find((b) => b.id === wanted);
+    if (match) {
+      setCategory('all');
+      setTab(match.bucket);
+      setOpenId(match.id);
+    }
+    const next = new URLSearchParams(params);
+    next.delete('booking');
+    setParams(next, { replace: true });
+  }, [wanted, bookings]); // eslint-disable-line react-hooks/exhaustive-deps
   const selected = bookings?.find((b) => b.id === openId);
 
   const applyChange = (id, patch) => setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));
@@ -45,6 +75,21 @@ export default function Trips() {
 
   return (
     <AccountShell title="My trips" subtitle="Every booking in one place: stays, hotels, cars and VIP.">
+      <div className="flex gap-2 mb-4 overflow-x-auto no-scrollbar" aria-label="Filter by type">
+        {CATEGORIES.map((c) => (
+          <button
+            key={c.id}
+            onClick={() => setCategory(c.id)}
+            aria-pressed={category === c.id}
+            className={`px-4 py-2 rounded-full text-base font-medium whitespace-nowrap transition-all border ${
+              category === c.id ? 'bg-brand-primary-soft text-brand-dark border-brand-primary' : 'bg-white border-gray-200 text-brand-text-secondary hover:text-brand-dark'
+            }`}
+          >
+            {c.label}
+          </button>
+        ))}
+      </div>
+
       <div className="flex gap-2 mb-6 overflow-x-auto no-scrollbar" role="tablist">
         {TABS.map((t) => (
           <button

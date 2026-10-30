@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser as loginApi, registerUser as registerApi } from '../api/auth';
 
@@ -9,8 +9,15 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
   
   // NEW: Global state for the Auth Modal
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  
+  const [showAuthModal, setShowAuthModalState] = useState(false);
+  const pendingRef = useRef(null);
+
+  // Closing the modal without signing in drops the action that was waiting.
+  const setShowAuthModal = useCallback((open) => {
+    if (!open) pendingRef.current = null;
+    setShowAuthModalState(open);
+  }, []);
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -50,6 +57,33 @@ export function AuthProvider({ children }) {
 
  
 
+  // Runs `action` now if signed in; otherwise opens sign-in and runs it after success.
+  const requireAuth = (action) => {
+    if (localStorage.getItem('rentals_token')) {
+      action?.();
+      return true;
+    }
+    pendingRef.current = action || null;
+    setShowAuthModalState(true);
+    return false;
+  };
+
+  // Stores the session without navigating, so callers can add steps before finishing.
+  const completeSignIn = (token, userPayload) => {
+    localStorage.setItem('rentals_token', token);
+    localStorage.setItem('rentals_user', JSON.stringify(userPayload));
+    setUser(userPayload);
+  };
+
+  // Closes the modal, then resumes the waiting action or goes to the role dashboard.
+  const finishSignIn = (userPayload) => {
+    const pending = pendingRef.current;
+    pendingRef.current = null;
+    setShowAuthModalState(false);
+    if (pending) setTimeout(pending, 0);
+    else redirectUserByRole(userPayload?.role);
+  };
+
   const login = async (credentials) => {
     // Return the promise directly so AuthModal's try/catch can handle failures
     const rawResponse = await loginApi(credentials);
@@ -59,12 +93,8 @@ export function AuthProvider({ children }) {
       throw new Error("Unable to parse user session from server response.");
     }
 
-    localStorage.setItem('rentals_token', token);
-    localStorage.setItem('rentals_user', JSON.stringify(userPayload));
-    setUser(userPayload);
-    
-    setShowAuthModal(false);
-    redirectUserByRole(userPayload.role);
+    completeSignIn(token, userPayload);
+    finishSignIn(userPayload);
     return rawResponse;
   };
 
@@ -76,12 +106,8 @@ export function AuthProvider({ children }) {
       throw new Error("Unable to parse user session from server response.");
     }
 
-    localStorage.setItem('rentals_token', token);
-    localStorage.setItem('rentals_user', JSON.stringify(userPayload));
-    setUser(userPayload);
-
-    setShowAuthModal(false);
-    redirectUserByRole(userPayload.role);
+    completeSignIn(token, userPayload);
+    finishSignIn(userPayload);
     return rawResponse;
   };
   
@@ -89,6 +115,7 @@ export function AuthProvider({ children }) {
     localStorage.removeItem('rentals_token');
     localStorage.removeItem('rentals_user');
     setUser(null);
+    pendingRef.current = null;
     navigate('/');
   };
 
@@ -116,6 +143,9 @@ export function AuthProvider({ children }) {
       register, 
       logout, 
       updateUser,
+      requireAuth,
+      completeSignIn,
+      finishSignIn,
       redirectUserByRole,
       showAuthModal,      // EXPOSED TO APP
       setShowAuthModal    // EXPOSED TO APP

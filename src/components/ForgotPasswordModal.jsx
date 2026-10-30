@@ -107,7 +107,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                 </div>
 
                 {error && (
-                  <div className="flex items-start bg-red-50 text-red-600 text-sm font-semibold p-3 rounded-lg border border-red-100 animate-in fade-in">
+                  <div className="flex items-start bg-red-50 text-red-600 text-base font-semibold p-3 rounded-lg border border-red-100 animate-in fade-in">
                     <AlertCircle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
                     <span>{error}</span>
                   </div>
@@ -132,7 +132,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
               <div className="mt-8 text-center">
                 <button 
                   onClick={onBackToLogin}
-                  className="text-sm font-semibold text-brand-text-secondary hover:text-brand-dark transition-colors"
+                  className="text-base font-semibold text-brand-text-secondary hover:text-brand-dark transition-colors"
                 >
                   Wait, I remember my password
                 </button>

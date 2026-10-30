@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Bell, Trash2, CheckCheck, CalendarCheck, CreditCard, KeyRound, CarFront,
-  Banknote, XCircle, ShieldCheck, Info,
+  Banknote, XCircle, ShieldCheck, Info, X, ExternalLink,
 } from 'lucide-react';
 import { AccountShell, ListSkeleton, ErrorBox } from '../components/account/AccountShell';
 import { Card, EmptyState, Button, ConfirmDialog } from '../components/ui';
@@ -11,6 +11,7 @@ import {
   deleteNotification, clearAllNotifications,
 } from '../api/notifications';
 import { useDocumentMeta } from '../lib/seo';
+import { useToast } from '../components/Toast';
 
 const TYPES = {
   NEW_BOOKING: { icon: CalendarCheck, tone: 'bg-blue-50 text-blue-600' },
@@ -39,8 +40,9 @@ export default function Notifications() {
   const [items, setItems] = useState(null);
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
-  const [notice, setNotice] = useState('');
+  const toast = useToast();
   const [confirm, setConfirm] = useState(null);
+  const [detail, setDetail] = useState(null);
 
   const load = useCallback(() => {
     setError(false);
@@ -57,18 +59,24 @@ export default function Notifications() {
       setItems((prev) => prev.map((x) => (x.id === n.id ? { ...x, isRead: true } : x)));
       markNotificationRead(n.id).catch(() => {});
     }
-    if (n.relatedId) navigate('/trips');
+    setDetail({ ...n, isRead: true });
+  };
+
+  const openBooking = (n) => {
+    setDetail(null);
+    navigate(`/trips?booking=${encodeURIComponent(n.relatedId)}`);
   };
 
   const confirmDelete = async () => {
     const id = confirm.id;
     setBusy(true);
-    setNotice('');
     try {
       await deleteNotification(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
+      setDetail((d) => (d && d.id === id ? null : d));
+      toast.success('Notification deleted.');
     } catch (e) {
-      setNotice(`The notification could not be deleted. ${errText(e)}`);
+      toast.error(`The notification could not be deleted. ${errText(e)}`);
     }
     setBusy(false);
     setConfirm(null);
@@ -76,7 +84,6 @@ export default function Notifications() {
 
   const confirmClearAll = async () => {
     setBusy(true);
-    setNotice('');
     const results = await clearAllNotifications(items.map((n) => n.id));
     const failed = results.filter((r) => r.status === 'rejected');
     try {
@@ -85,7 +92,9 @@ export default function Notifications() {
       setError(true);
     }
     if (failed.length) {
-      setNotice(`${failed.length} notification${failed.length > 1 ? 's' : ''} could not be deleted. ${errText(failed[0].reason)}`);
+      toast.error(`${failed.length} notification${failed.length > 1 ? 's' : ''} could not be deleted. ${errText(failed[0].reason)}`);
+    } else {
+      toast.success('All notifications cleared.');
     }
     setBusy(false);
     setConfirm(null);
@@ -107,9 +116,6 @@ export default function Notifications() {
 
   return (
     <AccountShell title="Notifications" subtitle={unread ? `${unread} unread` : 'You are all caught up.'} actions={actions}>
-      {notice && (
-        <div role="alert" className="mb-4 p-4 rounded-xl bg-red-50 border border-red-100 text-base text-red-700 font-medium">{notice}</div>
-      )}
       {error ? (
         <ErrorBox message="We could not load your notifications." onRetry={load} />
       ) : items === null ? (
@@ -155,6 +161,28 @@ export default function Notifications() {
           })}
         </Card>
       )}
+
+      {detail && (() => {
+        const t = TYPES[detail.type] || TYPES.SYSTEM;
+        const Icon = t.icon;
+        return (
+          <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm animate-fade-up" onClick={() => setDetail(null)}>
+            <div role="dialog" aria-modal="true" aria-label="Notification" className="w-full max-w-lg bg-white rounded-3xl shadow-elevated p-8" onClick={(e) => e.stopPropagation()}>
+              <div className="flex items-start justify-between gap-4">
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${t.tone}`}><Icon className="w-7 h-7" /></div>
+                <button aria-label="Close" onClick={() => setDetail(null)} className="p-2 rounded-full hover:bg-gray-100"><X className="w-5 h-5" /></button>
+              </div>
+              <h2 className="mt-5 text-2xl font-display font-bold text-brand-dark">{detail.title}</h2>
+              <p className="mt-1 text-sm text-brand-text-muted">{new Date(detail.createdAt).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
+              <p className="mt-4 text-lg text-brand-text-secondary leading-relaxed whitespace-pre-line">{detail.body}</p>
+              <div className="mt-8 flex flex-wrap gap-3 justify-end">
+                <Button variant="outline" onClick={() => { setConfirm({ id: detail.id }); }}><Trash2 className="w-4 h-4" /> Delete</Button>
+                {detail.relatedId && <Button onClick={() => openBooking(detail)}><ExternalLink className="w-4 h-4" /> Open booking</Button>}
+              </div>
+            </div>
+          </div>
+        );
+      })()}
 
       <ConfirmDialog
         open={!!confirm}

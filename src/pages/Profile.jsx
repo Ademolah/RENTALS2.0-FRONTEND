@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Clock, XCircle, Trash2, FileText, Lock, LifeBuoy, ChevronRight, Home } from 'lucide-react';
+import { Loader2, CheckCircle2, AlertCircle, ShieldCheck, Clock, XCircle, Trash2, FileText, Lock, LifeBuoy, ChevronRight, Home, Plane, Heart } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-import { Container, Card, Button, Badge, SectionTitle, EmptyState } from '../components/ui';
+import { Container, Card, Button, Badge, SectionTitle, EmptyState, WhatsAppIcon } from '../components/ui';
+import InterestsPicker from '../components/profile/InterestsPicker';
+import { useToast } from '../components/Toast';
+import { CONCIERGE_WHATSAPP } from '../lib/config';
 import AvatarUploader from '../components/profile/AvatarUploader';
 import HostUpgradeModal from '../components/HostUpgradeModal';
 import { getMyProfileApi, updateMyProfileApi, deleteMyAccountApi } from '../api/user';
@@ -30,6 +33,9 @@ const HOST_STATUS = {
 export default function Profile() {
   const { user, loading: authLoading, setShowAuthModal, updateUser, logout } = useAuth();
   useDocumentMeta('Your profile');
+  const toast = useToast();
+  const [interests, setInterests] = useState({ lookingFor: [], offering: [] });
+  const [savingInterests, setSavingInterests] = useState(false);
 
   const [form, setForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [loading, setLoading] = useState(true);
@@ -57,6 +63,7 @@ export default function Profile() {
         if (!active) return;
         setForm({ firstName: u.firstName || '', lastName: u.lastName || '', phoneNumber: u.phoneNumber || '' });
         if (u.profilePicture) updateUser({ profilePicture: u.profilePicture });
+        setInterests({ lookingFor: u.interests?.lookingFor || [], offering: u.interests?.offering || [] });
       } catch (err) {
         if (active) setLoadError(err.response?.data?.message || 'We could not load your profile. Please refresh.');
       } finally {
@@ -115,11 +122,24 @@ export default function Profile() {
       });
       const u = res?.data?.user || res?.user || {};
       updateUser({ firstName: u.firstName ?? form.firstName.trim(), lastName: u.lastName ?? form.lastName.trim() });
-      setNotice({ type: 'success', text: 'Your details have been saved.' });
+      toast.success('Your details have been saved.');
     } catch (err) {
       setNotice({ type: 'error', text: err.response?.data?.message || 'Could not save your changes. Please try again.' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const saveInterests = async () => {
+    setSavingInterests(true);
+    try {
+      await updateMyProfileApi({ interests });
+      updateUser({ interests });
+      toast.success('Your preferences have been saved.');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Could not save your preferences. Please try again.');
+    } finally {
+      setSavingInterests(false);
     }
   };
 
@@ -161,7 +181,7 @@ export default function Profile() {
             <AvatarUploader
               src={user.profilePicture}
               initials={initials}
-              onUploaded={(url) => { updateUser({ profilePicture: url }); setNotice({ type: 'success', text: 'Profile photo updated.' }); }}
+              onUploaded={(url) => { updateUser({ profilePicture: url }); toast.success('Profile photo updated.'); }}
             />
             <h2 className="mt-6 text-2xl font-display font-bold text-brand-dark">{user.firstName} {user.lastName}</h2>
             <p className="text-base text-brand-text-secondary break-all">{user.email}</p>
@@ -187,6 +207,14 @@ export default function Profile() {
                   </Button>
                 </form>
               )}
+            </Card>
+
+            <Card className="p-6 md:p-8">
+              <SectionTitle title="What brings you here?" subtitle="Tell us what you want to do and we will tailor Rentals Africa for you." />
+              <InterestsPicker value={interests} onChange={setInterests} />
+              <Button className="mt-6" onClick={saveInterests} disabled={savingInterests}>
+                {savingInterests ? <><Loader2 className="w-5 h-5 animate-spin" /> Saving...</> : 'Save preferences'}
+              </Button>
             </Card>
 
             {isGuest && (
@@ -215,6 +243,8 @@ export default function Profile() {
 
             <Card className="p-2 md:p-3">
               {[
+                ['/trips', Plane, 'My trips and bookings'],
+                ['/saved', Heart, 'Saved listings'],
                 ['/terms', FileText, 'Terms of Service'],
                 ['/privacy', Lock, 'Privacy Policy'],
                 ['/help', LifeBuoy, 'Help and contact'],
@@ -224,6 +254,10 @@ export default function Profile() {
                   <ChevronRight className="w-5 h-5 text-brand-text-muted" />
                 </Link>
               ))}
+              <a href={`https://wa.me/${CONCIERGE_WHATSAPP}`} target="_blank" rel="noreferrer" className="flex items-center justify-between gap-4 px-5 py-4 rounded-xl hover:bg-gray-50 transition-colors">
+                <span className="flex items-center gap-4 text-lg font-semibold text-brand-dark"><WhatsAppIcon className="w-5 h-5 text-[#25D366]" />Chat with the concierge</span>
+                <ChevronRight className="w-5 h-5 text-brand-text-muted" />
+              </a>
             </Card>
 
             <Card className="p-6 md:p-8 border-red-100">

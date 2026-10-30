@@ -5,24 +5,12 @@ import {
   Users, AlignLeft, Video 
 } from 'lucide-react';
 import { createProperty } from '../api/properties';
+import { useToast } from './Toast';
+import { useDraft } from './host/useDraft';
+import DraftBar from './host/DraftBar';
+import ArrivalGuideFields from './host/ArrivalGuideFields';
+import SuggestedPrice from './host/SuggestedPrice';
 
-// --- CUSTOM SUCCESS TOAST COMPONENT ---
-const SuccessToast = ({ message, isVisible, onClose }) => {
-  if (!isVisible) return null;
-  return (
-    <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] animate-in slide-in-from-bottom-5 fade-in duration-300">
-      <div className="bg-gray-900 text-white px-6 py-4 rounded-2xl shadow-2xl flex items-center space-x-3 border border-gray-700">
-        <div className="bg-emerald-500/20 p-1.5 rounded-full">
-          <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-        </div>
-        <span className="font-medium text-sm tracking-wide">{message}</span>
-        <button onClick={onClose} className="pl-4 text-gray-400 hover:text-white transition-colors">
-          <X className="w-4 h-4" />
-        </button>
-      </div>
-    </div>
-  );
-};
 
 const AVAILABLE_AMENITIES = [
   'High-Speed WiFi', 'Swimming Pool', 'Fitness Center', '24/7 Power', 
@@ -37,12 +25,13 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [loading, setLoading] = useState(false);
   const [loadingText, setLoadingText] = useState('Processing Upload...');
   const [error, setError] = useState('');
-  const [showToast, setShowToast] = useState(false);
+  const toast = useToast();
+  const [arrivalNotes, setArrivalNotes] = useState('');
+  const [arrivalPhotos, setArrivalPhotos] = useState([]);
 
   // Schema-Aligned Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('APARTMENT');
   const [pricePerNight, setPricePerNight] = useState(150000);
   const [maxGuests, setMaxGuests] = useState(2);
   const [bedrooms, setBedrooms] = useState(1);
@@ -85,6 +74,25 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       if (videoPreviewUrl) URL.revokeObjectURL(videoPreviewUrl);
     };
   }, [previewUrls, videoPreviewUrl]);
+
+  const { savedAt, clearDraft } = useDraft(
+    'rentals_draft_property',
+    isOpen,
+    { title, description, maxGuests, bedrooms, bathrooms, street, stateName, city, amenities, pricePerNight, arrivalNotes },
+    (v) => {
+      setTitle(v.title || '');
+      setDescription(v.description || '');
+      setMaxGuests(v.maxGuests ?? 2);
+      setBedrooms(v.bedrooms ?? 1);
+      setBathrooms(v.bathrooms ?? 1);
+      setStreet(v.street || '');
+      setStateName(v.stateName || '');
+      setCity(v.city || '');
+      setAmenities(Array.isArray(v.amenities) ? v.amenities : []);
+      setPricePerNight(v.pricePerNight ?? 150000);
+      setArrivalNotes(v.arrivalNotes || '');
+    }
+  );
 
   if (!isOpen) return null;
 
@@ -180,7 +188,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       const formData = new FormData();
       formData.append('title', title);
       formData.append('description', description);
-      formData.append('category', category);
+      formData.append('category', 'SHORTLET');
       formData.append('pricePerNight', pricePerNight);
       formData.append('maxGuests', maxGuests);
       formData.append('bedrooms', bedrooms);
@@ -205,14 +213,16 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       }
       
       selectedFiles.forEach(file => formData.append('images', file));
+      if (arrivalNotes.trim()) formData.append('arrivalNotes', arrivalNotes.trim());
+      arrivalPhotos.slice(0, 5).forEach(file => formData.append('arrivalPhotos', file));
 
       const response = await createProperty(formData);
       
-      setShowToast(true);
+      toast.success('Listing published. It goes live after a quick verification.');
+      clearDraft();
       
       setTimeout(() => {
         if (onPropertyAdded) onPropertyAdded(response.data.property);
-        setShowToast(false);
         onClose();
         resetForm();
       }, 2500);
@@ -227,7 +237,6 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const resetForm = () => {
     setTitle('');
     setDescription('');
-    setCategory('APARTMENT');
     setPricePerNight(150000);
     setMaxGuests(2);
     setBedrooms(1);
@@ -242,6 +251,8 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
     setVideoPreviewUrl(null);
     setLoading(false);
     setLoadingText('Processing Upload...');
+    setArrivalNotes('');
+    setArrivalPhotos([]);
   };
 
   return (
@@ -251,7 +262,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
           
           <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex justify-between items-center md:rounded-t-3xl">
             <div>
-              <span className="text-[10px] font-bold tracking-widest text-brand-primary uppercase">Host Studio</span>
+              <span className="text-xs font-bold tracking-widest text-brand-primary uppercase">Host Studio</span>
               <h2 className="text-2xl font-bold text-gray-900 mt-0.5 tracking-tight">Create Listing</h2>
             </div>
             <button 
@@ -272,6 +283,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
             )}
 
             <form id="property-form" onSubmit={handleSubmit} className="space-y-12">
+              <DraftBar savedAt={savedAt} onExit={onClose} onDiscard={() => { clearDraft(); resetForm(); }} />
               
               <section>
                 <div className="flex items-center space-x-2 mb-6">
@@ -286,7 +298,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       type="text" required maxLength={70}
                       placeholder="e.g. Minimalist Luxury Suite with Lagoon View"
                       value={title} onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                     />
                   </div>
 
@@ -296,24 +308,11 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       required rows={4}
                       placeholder="Describe the aesthetic, vibe, and unique selling points..."
                       value={description} onChange={(e) => setDescription(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white resize-none"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white resize-none"
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Category</label>
-                      <select 
-                        value={category} onChange={(e) => setCategory(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
-                      >
-                        <option value="APARTMENT">Luxury Apartment</option>
-                        <option value="SHORTLET">Premium Shortlet</option>
-                        <option value="VACATION">Vacation Villa</option>
-                        <option value="HOTEL">Boutique Hotel Suite</option>
-                      </select>
-                    </div>
-
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2 flex items-center space-x-1.5">
                         <Users className="w-4 h-4 text-gray-400" />
@@ -322,7 +321,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       <input 
                         type="number" required min="1" max="20"
                         value={maxGuests} onChange={(e) => setMaxGuests(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                       />
                     </div>
 
@@ -331,7 +330,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       <input 
                         type="number" required min="1" max="20"
                         value={bedrooms} onChange={(e) => setBedrooms(Number(e.target.value))}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                       />
                     </div>
 
@@ -340,7 +339,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       <input 
                         type="number" required min="1" max="20"
                         value={bathrooms} onChange={(e) => setBathrooms(Number(e.target.value))}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                       />
                     </div>
                   </div>
@@ -362,7 +361,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       type="text" required
                       placeholder="e.g. 15 Bourdillon Road"
                       value={street} onChange={(e) => setStreet(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
                     />
                   </div>
 
@@ -372,7 +371,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       required
                       value={stateName} 
                       onChange={handleStateChange}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none"
                     >
                       <option value="" disabled>Select State</option>
                       {Object.keys(LOCATION_DATA).map(state => (
@@ -388,7 +387,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       value={city} 
                       onChange={(e) => setCity(e.target.value)}
                       disabled={!stateName} 
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white cursor-pointer appearance-none disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       <option value="" disabled>
                         {stateName ? 'Select City' : 'Select State First'}
@@ -446,7 +445,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                 </div>
                 
                 <div className="mb-6 p-5 rounded-2xl bg-gray-900 text-white shadow-md border border-gray-800">
-                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-[10px] tracking-widest uppercase mb-2">
+                  <div className="flex items-center space-x-2 text-amber-400 font-bold text-xs tracking-widest uppercase mb-2">
                     <span>Rentals Quality Standard</span>
                   </div>
                   {/* 💡 UPDATED: Text specifies the video is optional */}
@@ -484,7 +483,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       >
                         <XCircle className="w-5 h-5" />
                       </button>
-                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm uppercase tracking-wider">
+                      <div className="absolute top-3 left-3 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-xs font-bold text-gray-900 shadow-sm uppercase tracking-wider">
                         Cinematic Tour
                       </div>
                     </div>
@@ -523,7 +522,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                             </button>
                           </div>
                           {index === 0 && (
-                            <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-[10px] font-bold text-gray-900 shadow-sm">
+                            <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-xs font-bold text-gray-900 shadow-sm">
                               COVER
                             </div>
                           )}
@@ -533,6 +532,10 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                   )}
                 </div>
               </section>
+
+              <hr className="border-gray-100" />
+
+              <ArrivalGuideFields notes={arrivalNotes} onNotes={setArrivalNotes} photos={arrivalPhotos} onPhotos={setArrivalPhotos} />
 
               <hr className="border-gray-100" />
 
@@ -558,6 +561,8 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     className="w-full h-2.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-900/10"
                   />
                   
+                  <SuggestedPrice category="shortlets" state={stateName} area={city} bedrooms={Number(bedrooms) || undefined} onUse={setPricePerNight} />
+
                   <div className="flex justify-between items-center text-sm pt-6 mt-6 border-t border-gray-200">
                     <span className="text-gray-500 font-medium">Platform commission (5%)</span>
                     <span className="font-semibold text-gray-700 text-lg">Net Payout: <span className="text-emerald-600 font-bold ml-1">₦{netEarnings.toLocaleString()}</span></span>
@@ -592,11 +597,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
         </div>
       </div>
       
-      <SuccessToast 
-        message="Listing published successfully! Undergoing quick verification." 
-        isVisible={showToast} 
-        onClose={() => setShowToast(false)} 
-      />
+      
     </>
   );
 }

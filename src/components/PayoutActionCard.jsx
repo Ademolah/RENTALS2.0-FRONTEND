@@ -1,86 +1,65 @@
-import React, { useState } from 'react';
-import { ShieldCheck, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
+import { useState } from 'react';
+import { Banknote, CheckCircle, Clock, Loader2 } from 'lucide-react';
 import { executePayout } from '../api/payouts';
+import { Badge, Button, Card } from './ui';
+import { useToast } from './Toast';
 
+// One payout row on the host dashboard. Payout is 95% of the booking (5% platform commission).
+export default function PayoutActionCard({ booking, typeLabel, onReleased, onNeedBank }) {
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
 
-export default function PayoutActionCard({ booking }) {
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [payoutStatus, setPayoutStatus] = useState(booking.payoutStatus || booking.escrowStatus);
-  const [errorMsg, setErrorMsg] = useState('');
+  const isCar = booking.type === 'CAR';
+  const hostConfirmed = isCar ? booking.ownerConfirmedHandover : booking.checkInConfirmedByHost;
+  const guestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
+  const released = booking.escrowStatus === 'RELEASED';
+  const ready = !released && hostConfirmed && guestConfirmed;
+  const gross = Number(booking.payoutAmount) || 0;
+  const net = Math.round(gross * 0.95);
 
-  // Normalize data for properties vs cars
-  const isCar = !!booking.carId;
-  const title = isCar 
-    ? `${booking.carId?.make} ${booking.carId?.model}`
-    : booking.propertyId?.title || 'Luxury Booking';
-  
-  const amount = booking.totalAmount || 0;
-  
-  // Host payout is 95% of the booking (5% commission)
-  const netPayout = amount * 0.95;
-
-  const handlePayoutRequest = async () => {
-    setIsProcessing(true);
-    setErrorMsg('');
-    
+  const request = async () => {
+    setBusy(true);
     try {
       await executePayout(booking._id);
-      setPayoutStatus(isCar ? 'RELEASED' : 'RELEASED_TO_LANDLORD');
-    } catch (error) {
-      // Catch Paystack compliance or network errors
-      setErrorMsg(error.response?.data?.message || 'Payout failed. Ensure your bank details are verified.');
+      onReleased?.(booking._id);
+      toast.success('Payout requested. Funds are on their way to your bank account.');
+    } catch (e) {
+      const message = e?.response?.data?.message || 'The payout could not be completed. Make sure your bank details are verified.';
+      toast.error(message);
+      onNeedBank?.();
     } finally {
-      setIsProcessing(false);
+      setBusy(false);
     }
   };
 
-  const isReleased = payoutStatus === 'RELEASED' || payoutStatus === 'RELEASED_TO_LANDLORD';
-
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-      
-      {/* Booking Details */}
-      <div>
-        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">
-          {isCar ? 'Vehicle Handover' : 'Guest Check-in'}
-        </div>
-        <h3 className="text-lg font-extrabold text-gray-900">{title}</h3>
-        <div className="text-gray-500 font-medium text-sm mt-1">
-          Gross: ₦{amount.toLocaleString()} <span className="mx-2">•</span> 
-          Net Payout: <span className="text-gray-900 font-bold">₦{netPayout.toLocaleString()}</span>
-        </div>
+    <Card className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-5">
+      <div className="min-w-0">
+        <p className="text-sm font-bold uppercase tracking-wider text-brand-text-muted">
+          Booking #{String(booking._id).slice(-6).toUpperCase()} · Managed by Rentals Africa
+        </p>
+        <h3 className="text-lg font-display font-bold text-brand-dark truncate mt-1">{booking.asset.title}</h3>
+        <p className="text-base text-brand-text-secondary">{typeLabel} · {booking.dates}</p>
       </div>
 
-      {/* Payout Action Center */}
-      <div className="w-full md:w-auto">
-        {isReleased ? (
-          <div className="flex items-center space-x-2 bg-green-50 text-green-700 px-4 py-3 rounded-xl border border-green-100 w-full md:w-auto justify-center">
-            <CheckCircle className="w-5 h-5 text-green-500" />
-            <span className="font-bold text-sm">Payout Released</span>
-          </div>
+      <div className="flex flex-wrap items-center gap-5">
+        <div className="text-right">
+          <p className="text-sm text-brand-text-muted">Your payout (after 5%)</p>
+          <p className="text-2xl font-display font-bold text-brand-dark">₦{net.toLocaleString()}</p>
+          <p className="text-sm text-brand-text-muted">Booking total ₦{gross.toLocaleString()}</p>
+        </div>
+
+        {released ? (
+          <Badge tone="green"><CheckCircle className="w-4 h-4" /> Released</Badge>
+        ) : ready ? (
+          <Button variant="primary" onClick={request} disabled={busy}>
+            {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Banknote className="w-5 h-5" />}
+            {busy ? 'Requesting...' : 'Request payout'}
+          </Button>
         ) : (
-          <div className="flex flex-col items-end gap-2 w-full md:w-auto">
-            <button 
-              onClick={handlePayoutRequest}
-              disabled={isProcessing}
-              className="w-full md:w-auto px-6 py-3 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95"
-            >
-              {isProcessing ? (
-                <><Loader2 className="w-4 h-4 animate-spin mr-2" /> Processing...</>
-              ) : (
-                <><ShieldCheck className="w-4 h-4 mr-2" /> Request Payout</>
-              )}
-            </button>
-            
-            {errorMsg && (
-              <div className="flex items-center space-x-1 text-red-500 text-xs font-medium mt-1 bg-red-50 px-2 py-1 rounded">
-                <AlertCircle className="w-3 h-3" />
-                <span>{errorMsg}</span>
-              </div>
-            )}
-          </div>
+          <Badge tone="amber"><Clock className="w-4 h-4" /> {hostConfirmed ? 'Waiting for guest' : 'Waiting for check-in'}</Badge>
         )}
       </div>
-    </div>
+    </Card>
   );
 }

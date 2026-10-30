@@ -8,11 +8,14 @@ import {
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
-import { getPropertyReviewsApi, createPropertyReviewApi } from "../api/reviews";
+import { createPropertyReviewApi } from "../api/reviews";
 import { useAuth } from '../context/AuthContext'; 
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import { Container, Card, Badge, Button } from '../components/ui';
 import { useDocumentMeta } from '../lib/seo';
+import { useToast } from '../components/Toast';
+import ReviewsSection from '../components/detail/ReviewsSection';
+import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, PhotoCount, coordsOf } from '../components/detail/extras';
 import { toggleFavoriteApi } from '../api/user';
 
 export default function PropertyDetail() {
@@ -25,8 +28,8 @@ export default function PropertyDetail() {
   const [similarProperties, setSimilarProperties] = useState([]);
 
   // --- REVIEWS STATE ---
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(true);
+  const toast = useToast();
+  const [reviewsKey, setReviewsKey] = useState(0);
   const [showReviewModal, setShowReviewModal] = useState(false);
   const [reviewForm, setReviewForm] = useState({ rating: 0, comment: '' });
   const [isSubmittingReview, setIsSubmittingReview] = useState(false);
@@ -49,6 +52,9 @@ export default function PropertyDetail() {
     setSaved(!prev);
     try { await toggleFavoriteApi(property.id || property._id || id); } catch { setSaved(prev); }
   };
+  const swipe = useSwipe((dir) => {
+    setLightboxIndex((i) => (i === null ? i : (i - dir + (property?.images?.length || 1)) % (property?.images?.length || 1)));
+  });
   const mobileScrollRef = useRef(null);
   
   const scrollGallery = (ref, direction) => {
@@ -103,6 +109,11 @@ export default function PropertyDetail() {
           bedrooms: dbProp.bedrooms,
           bathrooms: dbProp.bathrooms,
           category: dbProp.category,
+          ownerId: dbProp.ownerId?._id || dbProp.ownerId || dbProp.landlordId?._id || dbProp.landlordId,
+          checkInTime: dbProp.checkInTime,
+          checkOutTime: dbProp.checkOutTime,
+          coordinates: dbProp.address?.coordinates || dbProp.location?.coordinates,
+          status: dbProp.status,
           amenities: dbProp.amenities || [],
           video: dbProp.video || null, // 💡 NEW: Extract Video URL
           images: dbProp.images?.length > 0 
@@ -114,17 +125,10 @@ export default function PropertyDetail() {
           numReviews: dbProp.numReviews || 0
         });
 
-        // 2. Fetch Reviews
-        setReviewsLoading(true);
-        const revResponse = await getPropertyReviewsApi(dbProp._id);
-        if (revResponse?.success) {
-          setReviews(revResponse.reviews);
-        }
       } catch (error) {
         console.error("Failed to load property details or reviews:", error);
       } finally {
         setLoading(false);
-        setReviewsLoading(false);
       }
     }
     if (id) fetchDetailsAndReviews();
@@ -170,18 +174,8 @@ export default function PropertyDetail() {
       const res = await createPropertyReviewApi(property.id, reviewForm, user.token);
       
       if (res.success) {
-        // Optimistically update UI
-        setReviews([{
-          _id: res.review._id,
-          rating: res.review.rating,
-          comment: res.review.comment,
-          createdAt: res.review.createdAt,
-          user: {
-            firstName: user.firstName,
-            lastName: user.lastName,
-            profilePicture: user.profilePicture
-          }
-        }, ...reviews]);
+        setReviewsKey((k) => k + 1);
+        toast.success('Thank you. Your review was posted.');
         
         setProperty(prev => ({
           ...prev,
@@ -216,6 +210,7 @@ export default function PropertyDetail() {
     );
   }
 
+  const ownListing = isOwnListing(user, property.ownerId);
   const imgs = property.images;
   const fact = (Icon, label) => (
     <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-brand-accent-soft text-brand-dark font-semibold text-base">
@@ -306,7 +301,7 @@ export default function PropertyDetail() {
               </button>
             </div>
 
-            <div className="relative w-full max-w-7xl px-4 flex items-center justify-center">
+            <div className="relative w-full max-w-7xl px-4 flex items-center justify-center" {...swipe}>
               {imgs.length > 1 && (
                 <button onClick={prevLightboxImage} className="absolute left-4 md:left-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50">
                   <ChevronLeft className="w-8 h-8" />
@@ -405,6 +400,7 @@ export default function PropertyDetail() {
                 ))}
               </div>
             )}
+            {imgs.length > 1 && <PhotoCount current={1} total={imgs.length} className="absolute top-5 right-5" />}
             {imgs.length > 1 && (
               <button
                 onClick={() => setLightboxIndex(0)}
@@ -443,6 +439,8 @@ export default function PropertyDetail() {
                 </div>
               )}
             </section>
+
+            <StayFacts checkInTime={property.checkInTime} checkOutTime={property.checkOutTime} price={property.price} />
 
             {/* Host card */}
             <section className="pb-10 border-b border-gray-100">
@@ -493,84 +491,26 @@ export default function PropertyDetail() {
             )}
 
             {/* Reviews */}
-            <section className="pb-10 border-b border-gray-100">
-              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-                <div className="flex items-center gap-3">
-                  <Star className="w-7 h-7 fill-brand-star text-brand-star" />
-                  <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">
-                    {property.numReviews === 0 ? 'No reviews yet' : `${property.rating} · ${property.numReviews} review${property.numReviews !== 1 ? 's' : ''}`}
-                  </h3>
-                </div>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    if (!user) {
-                      setShowAuthModal(true);
-                    } else if (user.role === 'USER') {
-                      setShowReviewModal(true);
-                    } else {
-                      alert('Only guest accounts can submit reviews.');
-                    }
-                  }}
-                >
-                  Write a review
-                </Button>
-              </div>
-
-              {reviewsLoading ? (
-                <div className="flex items-center gap-2 text-brand-text-secondary text-base">
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                  <span>Loading guest feedback...</span>
-                </div>
-              ) : reviews.length === 0 ? (
-                <div className="bg-gray-50 rounded-2xl p-10 border border-gray-100 flex flex-col items-center text-center">
-                  <MessageSquare className="w-10 h-10 text-gray-300 mb-4" />
-                  <h4 className="text-xl font-display font-bold text-brand-dark mb-1">Be the first to review</h4>
-                  <p className="text-base text-brand-text-secondary max-w-sm">Share your experience to help other travelers make informed decisions.</p>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  {reviews.map((review) => (
-                    <Card key={review._id} className="p-6 space-y-4">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                          {review.user?.profilePicture ? (
-                            <img src={review.user.profilePicture} alt="User" className="w-full h-full object-cover" />
-                          ) : (
-                            <div className="w-full h-full bg-brand-dark flex items-center justify-center text-white font-display font-bold text-lg uppercase">
-                              {review.user?.firstName?.charAt(0) || 'G'}
-                            </div>
-                          )}
-                        </div>
-                        <div>
-                          <div className="text-base font-bold text-brand-dark">{review.user?.firstName}</div>
-                          <div className="text-sm text-brand-text-muted">
-                            {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className={`w-4 h-4 ${review.rating >= star ? 'fill-brand-star text-brand-star' : 'fill-transparent text-gray-300'}`} />
-                        ))}
-                      </div>
-                      <p className="text-base text-brand-text-secondary leading-relaxed">{review.comment}</p>
-                    </Card>
-                  ))}
-                </div>
-              )}
-            </section>
+            <ReviewsSection
+              listingId={property.id}
+              fallback={{ rating: property.rating, count: property.numReviews }}
+              refreshKey={reviewsKey}
+              onWrite={() => {
+                if (!user) setShowAuthModal(true);
+                else if (user.role === 'USER') setShowReviewModal(true);
+                else toast.info('Only guest accounts can submit reviews.');
+              }}
+            />
 
             <div className="lg:hidden block">
-              <BookingWidget property={property} />
+              {ownListing ? <ManageListingCard status={String(property.status || '').toLowerCase()} /> : <BookingWidget property={property} />}
             </div>
 
             {/* Map */}
             <section>
               <h3 className="text-2xl font-display font-bold text-brand-dark mb-2">Where you'll be</h3>
-              <p className="text-base text-brand-text-secondary mb-5 flex items-center"><MapPin className="w-5 h-5 mr-1.5 text-brand-primary" />{property.location}</p>
+              <p className="text-base text-brand-text-secondary mb-3 flex items-center"><MapPin className="w-5 h-5 mr-1.5 text-brand-primary" />{property.location}</p>
+              <DirectionsLink {...coordsOf(property.coordinates)} address={property.location} className="mb-5" />
               <div className="w-full h-[420px] rounded-3xl overflow-hidden border border-gray-100 shadow-card">
                 <InteractiveMap
                   address={property.address}
@@ -584,7 +524,7 @@ export default function PropertyDetail() {
 
           <div className="hidden lg:block lg:col-span-5 xl:col-span-4 relative">
             <div className="sticky top-28 w-full ml-auto">
-              <BookingWidget property={property} />
+              {ownListing ? <ManageListingCard status={String(property.status || '').toLowerCase()} /> : <BookingWidget property={property} />}
             </div>
           </div>
 

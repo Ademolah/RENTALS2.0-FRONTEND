@@ -97,7 +97,7 @@ export default function ResetPassword() {
               </p>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-semibold flex items-start animate-in fade-in">
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-base font-semibold flex items-start animate-in fade-in">
                   <AlertCircle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>

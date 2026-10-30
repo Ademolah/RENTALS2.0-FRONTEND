@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { toLocalISO } from '../lib/dates';
+import { addRecentSearch } from '../lib/recentSearches';
 import { Search, SlidersHorizontal, MapPin, Plus, Minus, X, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 
 const LOCATION_TAXONOMY = {
@@ -147,7 +148,8 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     if (e) e.stopPropagation();
     setActiveMenu(null);
     setIsMobileModalOpen(false);
-    
+    if (location) addRecentSearch(location);
+
     if (onSearch) {
       if (isCar) {
         onSearch({ location, pickupDate: checkIn, dropoffDate: checkOut });
