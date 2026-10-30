@@ -239,16 +239,16 @@ export default function BookingWidget({ property }) {
       {/* Header */}
       <div className="flex items-baseline justify-between mb-6">
         <div className="flex items-baseline space-x-1">
-          <span className="text-2xl font-bold text-gray-900 tracking-tight">
+          <span className="text-2xl font-bold text-brand-dark tracking-tight">
             ₦{pricingDetails ? pricingDetails.baseTotal.toLocaleString() : Number(currentPrice).toLocaleString()}
           </span>
-          <span className="text-gray-500 text-sm font-medium">
+          <span className="text-brand-text-secondary text-sm font-medium">
             {pricingDetails ? '/ total' : '/ night'}
           </span>
         </div>
         <div className="flex items-center space-x-1">
-          <Star className="w-4 h-4 fill-gray-900 text-gray-900" />
-          <span className="font-semibold text-sm text-gray-900">{property?.rating || "5.0"}</span>
+          <Star className="w-4 h-4 fill-gray-900 text-brand-dark" />
+          <span className="font-semibold text-sm text-brand-dark">{property?.rating || "5.0"}</span>
         </div>
       </div>
 
@@ -270,8 +270,8 @@ export default function BookingWidget({ property }) {
                 onClick={() => openCalendar('checkIn')}
                 className={`flex-1 p-3.5 border-r border-gray-300 relative cursor-pointer transition-colors ${calendarMode === 'checkIn' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
               >
-                <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-1">Check-in</label>
-                <div className="text-sm font-bold text-gray-900 flex items-center">
+                <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-in</label>
+                <div className="text-sm font-bold text-brand-dark flex items-center">
                   {checkIn ? new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                 </div>
               </div>
@@ -281,8 +281,8 @@ export default function BookingWidget({ property }) {
                 onClick={() => openCalendar('checkOut')}
                 className={`flex-1 p-3.5 relative cursor-pointer transition-colors ${calendarMode === 'checkOut' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
               >
-                <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-1">Check-out</label>
-                <div className="text-sm font-bold text-gray-900 flex items-center">
+                <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-out</label>
+                <div className="text-sm font-bold text-brand-dark flex items-center">
                   {checkOut ? new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                 </div>
               </div>
@@ -291,24 +291,24 @@ export default function BookingWidget({ property }) {
             {/* Plus / Minus Guest Counter */}
             <div className="p-4 flex justify-between items-center bg-gray-50/50">
               <div>
-                <label className="text-[10px] font-extrabold uppercase tracking-widest text-gray-900 block">Guests</label>
-                <span className="text-xs text-gray-500 font-medium">Max {maxAllowedGuests}</span>
+                <label className="text-[10px] font-display font-bold uppercase tracking-widest text-brand-dark block">Guests</label>
+                <span className="text-xs text-brand-text-secondary font-medium">Max {maxAllowedGuests}</span>
               </div>
               <div className="flex items-center space-x-4">
                 <button 
                   type="button" 
                   onClick={() => setGuests(prev => Math.max(1, prev - 1))}
                   disabled={guests <= 1}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-gray-900 hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-semibold text-gray-900 w-4 text-center">{guests}</span>
+                <span className="font-semibold text-brand-dark w-4 text-center">{guests}</span>
                 <button 
                   type="button" 
                   onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
                   disabled={guests >= maxAllowedGuests}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-500 hover:border-gray-900 hover:text-gray-900 disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-gray-900 hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -318,15 +318,15 @@ export default function BookingWidget({ property }) {
 
           {/* Calendar Popover */}
           {showCalendar && (
-            <div className="absolute top-[75px] left-0 mt-2 w-full bg-white border border-gray-200 shadow-2xl rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+            <div className="absolute top-[75px] left-0 mt-2 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center mb-4">
                 <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
-                <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
+                <span className="font-display font-bold text-sm tracking-widest uppercase text-brand-dark">
                   {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </span>
                 <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
               </div>
-              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
+              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-display font-bold text-brand-text-muted tracking-widest uppercase">
                 {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
               </div>
               <div className="grid grid-cols-7 gap-y-2">
@@ -342,9 +342,9 @@ export default function BookingWidget({ property }) {
                   const isDisabledForCheckOut = calendarMode === 'checkOut' && checkIn && dateStr <= checkIn;
                   const disabled = isPast || isDisabledForCheckOut;
 
-                  let bgClass = 'hover:bg-gray-100 text-gray-900';
+                  let bgClass = 'hover:bg-gray-100 text-brand-dark';
                   if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
-                  if (isBetween) bgClass = 'bg-gray-100 text-gray-900';
+                  if (isBetween) bgClass = 'bg-gray-100 text-brand-dark';
                   if (isSelectedIn || isSelectedOut) bgClass = 'bg-gray-900 text-white shadow-md';
 
                   return (
@@ -361,12 +361,12 @@ export default function BookingWidget({ property }) {
               </div>
               
               <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">
                   Selecting: {calendarMode === 'checkIn' ? 'Check-in' : 'Check-out'}
                 </span>
                 <button 
                   onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
-                  className="text-xs font-bold text-gray-900 underline underline-offset-2"
+                  className="text-xs font-bold text-brand-dark underline underline-offset-2"
                 >
                   Close
                 </button>
@@ -397,7 +397,7 @@ export default function BookingWidget({ property }) {
               type="button"
               onClick={handleCheckAvailability}
               disabled={isCheckingAvailability}
-              className="w-1/2 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 rounded-xl font-bold text-sm transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+              className="w-1/2 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-brand-dark rounded-xl font-bold text-sm transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
             >
               {isCheckingAvailability ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -446,22 +446,22 @@ export default function BookingWidget({ property }) {
         <div className="flex gap-3">
           <ShieldCheck className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">100% Secured Payment</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
+            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">100% Secured Payment</h4>
+            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
           </div>
         </div>
         <div className="flex gap-3">
           <Clock className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Caution Fee Protection</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of checkout, subject to a standard property inspection.</p>
+            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">Caution Fee Protection</h4>
+            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of checkout, subject to a standard property inspection.</p>
           </div>
         </div>
         <div className="flex gap-3">
           <Info className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">Cancellations & Refunds</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Refunds are processed according to our standard platform terms and conditions.</p>
+            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">Cancellations & Refunds</h4>
+            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Refunds are processed according to our standard platform terms and conditions.</p>
           </div>
         </div>
       </div>
@@ -478,7 +478,7 @@ export default function BookingWidget({ property }) {
             <span className="underline decoration-gray-300 underline-offset-4">Taxes</span>
             <span>₦{pricingDetails.platformFee.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between font-bold text-gray-900 text-base pt-3 border-t border-gray-200">
+          <div className="flex justify-between font-bold text-brand-dark text-base pt-3 border-t border-gray-200">
             <span>Total</span>
             <span>₦{pricingDetails.grandTotal.toLocaleString()}</span>
           </div>

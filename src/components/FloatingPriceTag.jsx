@@ -52,7 +52,7 @@ export default function FloatingPriceTag() {
           <Tag className={`w-4 h-4 text-brand-primary fill-brand-primary ${isDangling ? 'animate-dangle' : ''}`} />
         </div>
         
-        <span className="text-[13px] font-extrabold text-gray-900 tracking-tight">
+        <span className="text-[13px] font-display font-bold text-brand-dark tracking-tight">
           Prices include all fees
         </span>
       </div>

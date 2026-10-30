@@ -124,8 +124,8 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
         
-        <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur-md text-xs font-extrabold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5
-          ${isVipAsset ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-gray-900'}
+        <div className={`absolute top-4 left-4 px-3 py-1 backdrop-blur-md text-xs font-display font-bold uppercase tracking-widest rounded-full shadow-sm flex items-center space-x-1.5
+          ${isVipAsset ? 'bg-amber-500/90 text-black' : 'bg-white/90 text-brand-dark'}
         `}>
           <span>{isVipService ? 'VIP Service' : isVip ? 'VIP Venue' : isCar ? 'Vehicle Rental' : isHotel ? 'Hotel Booking' : 'Shortlet'}</span>
         </div>
@@ -145,17 +145,17 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
       <div className="p-6 md:p-8 flex-1 flex flex-col justify-between relative z-10">
         <div>
           <div className="flex justify-between items-start mb-2">
-            <h3 className={`text-xl md:text-2xl font-bold tracking-tight leading-tight ${isCancelled ? 'text-gray-500 line-through decoration-red-500/50' : 'text-gray-900'}`}>{title}</h3>
-            <span className="text-lg font-black text-gray-900 tracking-tight">₦{(booking.totalAmount || 0).toLocaleString()}</span>
+            <h3 className={`text-xl md:text-2xl font-bold tracking-tight leading-tight ${isCancelled ? 'text-brand-text-secondary line-through decoration-red-500/50' : 'text-brand-dark'}`}>{title}</h3>
+            <span className="text-lg font-display font-bold text-brand-dark tracking-tight">₦{(booking.totalAmount || 0).toLocaleString()}</span>
           </div>
           
-          <div className="flex items-center text-gray-500 text-sm font-medium space-x-4 mb-6">
+          <div className="flex items-center text-brand-text-secondary text-sm font-medium space-x-4 mb-6">
             <div className="flex items-center space-x-1">
-              <MapPin className="w-4 h-4 text-gray-400" />
+              <MapPin className="w-4 h-4 text-brand-text-muted" />
               <span>{location}</span>
             </div>
             <div className="flex items-center space-x-1">
-              <Calendar className="w-4 h-4 text-gray-400" />
+              <Calendar className="w-4 h-4 text-brand-text-muted" />
               <span>
                 {startDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })} 
                 {!isVip && ` - ${endDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}`}
@@ -195,7 +195,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
               </div>
               <div>
                 <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'}</div>
-                <div className="text-xs font-medium text-gray-500 mt-0.5">
+                <div className="text-xs font-medium text-brand-text-secondary mt-0.5">
                   You've confirmed. Escrow will release once the provider acknowledges.
                 </div>
               </div>
@@ -207,12 +207,12 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
                 : 'bg-gray-50/50 border-gray-100'
             }`}>
               <div className="flex items-start space-x-3">
-                <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-600' : 'text-blue-600' : 'text-gray-900'}`} />
+                <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-600' : 'text-blue-600' : 'text-brand-dark'}`} />
                 <div>
-                  <div className={`text-sm font-bold ${hasHostConfirmed ? isVipAsset ? 'text-amber-900' : 'text-blue-900' : 'text-gray-900'}`}>
+                  <div className={`text-sm font-bold ${hasHostConfirmed ? isVipAsset ? 'text-amber-900' : 'text-blue-900' : 'text-brand-dark'}`}>
                     {hasHostConfirmed ? `${isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'} Confirmed ${isVipService ? 'Delivery' : isVip ? 'Arrival' : 'Handover'}` : 'Deposit Escrowed'}
                   </div>
-                  <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-700' : 'text-blue-700' : 'text-gray-500'}`}>
+                  <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-700' : 'text-blue-700' : 'text-brand-text-secondary'}`}>
                     {hasHostConfirmed 
                       ? `Please tap confirm to release the deposit to the ${isVipService ? 'provider' : 'venue'}.` 
                       : `Provider is unpaid until you confirm your ${isVipService ? 'delivery' : isCar ? 'pickup' : 'arrival'}.`}
@@ -232,7 +232,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
                 <button 
                   onClick={handleConfirm}
                   disabled={isConfirming}
-                  className={`w-full sm:w-auto px-6 py-3.5 rounded-xl font-black text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
+                  className={`w-full sm:w-auto px-6 py-3.5 rounded-xl font-display font-bold text-xs uppercase tracking-widest transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200 ${
                     hasHostConfirmed 
                       ? isVipAsset ? 'bg-amber-500 hover:bg-amber-400 text-black' : 'bg-blue-600 hover:bg-blue-700 text-white' 
                       : 'bg-gray-900 hover:bg-black text-white'
@@ -262,16 +262,16 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
         {isCancelModalOpen && (
           <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
             <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsCancelModalOpen(false)}></div>
-            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-2xl">
-              <button onClick={() => setIsCancelModalOpen(false)} className="absolute top-4 right-4 p-2 text-gray-400 hover:bg-gray-100 rounded-full">
+            <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-elevated">
+              <button onClick={() => setIsCancelModalOpen(false)} className="absolute top-4 right-4 p-2 text-brand-text-muted hover:bg-gray-100 rounded-full">
                 <X className="w-5 h-5" />
               </button>
               <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
                 <AlertCircle className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-black text-gray-900 mb-2">Cancel Reservation?</h3>
-              <p className="text-gray-500 font-medium text-sm leading-relaxed mb-6">
-                Are you sure you want to cancel your reservation for <span className="font-bold text-gray-900">{title}</span>? 
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-2">Cancel Reservation?</h3>
+              <p className="text-brand-text-secondary font-medium text-sm leading-relaxed mb-6">
+                Are you sure you want to cancel your reservation for <span className="font-bold text-brand-dark">{title}</span>? 
                 This action cannot be undone. If you cancel, your escrowed funds will be flagged for administrative review and refund processing.
               </p>
               <div className="flex gap-3">
@@ -328,9 +328,9 @@ const FavoriteCard = ({ property, onRemove }) => {
         />
         <div className="absolute top-3 left-3">
           {isAvailable ? (
-            <div className="bg-green-500 text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">Available</div>
+            <div className="bg-green-500 text-white text-[9px] font-display font-bold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">Available</div>
           ) : (
-            <div className="bg-gray-900/90 backdrop-blur-sm text-white text-[9px] font-extrabold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">Booked until {nextDate}</div>
+            <div className="bg-gray-900/90 backdrop-blur-sm text-white text-[9px] font-display font-bold uppercase tracking-widest px-2.5 py-1 rounded-md shadow-sm">Booked until {nextDate}</div>
           )}
         </div>
         <button 
@@ -342,18 +342,18 @@ const FavoriteCard = ({ property, onRemove }) => {
         </button>
       </div>
 
-      <div className="flex flex-col text-gray-900 px-1 pb-1">
+      <div className="flex flex-col text-brand-dark px-1 pb-1">
         <div className="flex justify-between items-start">
-          <h3 className="font-bold text-sm leading-tight truncate pr-4 text-gray-900">{property.address?.city || 'Location unavailable'}</h3>
+          <h3 className="font-bold text-sm leading-tight truncate pr-4 text-brand-dark">{property.address?.city || 'Location unavailable'}</h3>
           <div className="flex items-center space-x-1 shrink-0">
-            <Star className="w-3.5 h-3.5 fill-gray-900 text-gray-900" />
+            <Star className="w-3.5 h-3.5 fill-gray-900 text-brand-dark" />
             <span className="text-xs font-medium">5.0</span>
           </div>
         </div>
-        <p className="text-gray-500 text-xs truncate mt-0.5">{property.title}</p>
+        <p className="text-brand-text-secondary text-xs truncate mt-0.5">{property.title}</p>
         <div className="mt-2 flex items-baseline space-x-1 border-t border-gray-50 pt-2">
-          <span className="font-extrabold text-sm">₦{(property.pricePerNight || 0).toLocaleString()}</span>
-          <span className="text-gray-500 text-[10px] font-medium uppercase tracking-wider">/ night</span>
+          <span className="font-display font-bold text-sm">₦{(property.pricePerNight || 0).toLocaleString()}</span>
+          <span className="text-brand-text-secondary text-[10px] font-medium uppercase tracking-wider">/ night</span>
         </div>
       </div>
     </Link>
@@ -532,14 +532,14 @@ export default function GuestDashboard() {
       <div className="bg-white border-b border-gray-200 px-6 py-12 md:px-12 md:py-16">
         <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Your Itinerary</h1>
-            <p className="text-gray-500 font-medium mt-3 text-lg">Manage your luxury bookings and reservations.</p>
+            <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-dark tracking-tight">Your Itinerary</h1>
+            <p className="text-brand-text-secondary font-medium mt-3 text-lg">Manage your luxury bookings and reservations.</p>
           </div>
           <div className="bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 flex items-center space-x-4">
             <Wallet className="w-8 h-8 text-brand-primary" />
             <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">Total Escrow Value</div>
-              <div className="text-xl font-bold text-gray-900">
+              <div className="text-xs font-bold uppercase tracking-widest text-brand-text-muted">Total Escrow Value</div>
+              <div className="text-xl font-bold text-brand-dark">
                 ₦{bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0).toLocaleString()}
               </div>
             </div>
@@ -563,7 +563,7 @@ export default function GuestDashboard() {
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
                   className={`flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left
-                    ${isActive ? isVipTab ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
+                    ${isActive ? isVipTab ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-gray-900 text-white shadow-lg' : 'text-brand-text-secondary hover:bg-white hover:text-brand-dark hover:shadow-sm'}
                     ${isSettingsTab && !isActive ? 'mt-4 border border-gray-200 bg-white' : ''}
                   `}
                 >
@@ -591,35 +591,35 @@ export default function GuestDashboard() {
         {/* Main Content Area */}
         <div className="flex-1 space-y-6">
           {loading ? (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+            <div className="flex flex-col items-center justify-center py-20 text-brand-text-muted">
               <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
               <p className="font-medium text-lg">Loading your dashboard...</p>
             </div>
           ) : activeTab === 'SETTINGS' ? (
             <div className="max-w-2xl animate-in fade-in duration-300">
               <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-6">
-                <h2 className="text-2xl font-black text-gray-900 mb-6">Profile Settings</h2>
+                <h2 className="text-2xl font-display font-bold text-brand-dark mb-6">Profile Settings</h2>
                 <form onSubmit={handleProfileUpdate} className="space-y-5">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">First Name</label>
+                      <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-2">First Name</label>
                       <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text-muted" />
                         <input type="text" value={profileForm.firstName} onChange={(e) => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
                       </div>
                     </div>
                     <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Last Name</label>
+                      <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-2">Last Name</label>
                       <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text-muted" />
                         <input type="text" value={profileForm.lastName} onChange={(e) => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
                       </div>
                     </div>
                   </div>
                   <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Phone Number</label>
+                    <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-2">Phone Number</label>
                     <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-brand-text-muted" />
                       <input type="tel" value={profileForm.phoneNumber} onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
                     </div>
                   </div>
@@ -631,7 +631,7 @@ export default function GuestDashboard() {
 
               {/* Danger Zone */}
               <div className="bg-red-50/50 rounded-3xl border border-red-100 p-8 shadow-sm">
-                <h2 className="text-lg font-black text-red-900 mb-2 flex items-center"><AlertCircle className="w-5 h-5 mr-2"/> Danger Zone</h2>
+                <h2 className="text-lg font-display font-bold text-red-900 mb-2 flex items-center"><AlertCircle className="w-5 h-5 mr-2"/> Danger Zone</h2>
                 <p className="text-sm font-medium text-red-700/80 mb-6">Permanently delete your account and all associated data. This action is irreversible.</p>
                 <button onClick={() => setIsDeleteModalOpen(true)} className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-red-600/20 flex items-center">
                   <Trash2 className="w-4 h-4 mr-2" /> Delete My Account
@@ -642,8 +642,8 @@ export default function GuestDashboard() {
             favorites.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6"><Heart className="w-8 h-8 text-gray-300" /></div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No saved stays yet</h3>
-                <p className="text-gray-500 font-medium">Properties you favorite will appear here for easy booking.</p>
+                <h3 className="text-2xl font-bold text-brand-dark mb-2">No saved stays yet</h3>
+                <p className="text-brand-text-secondary font-medium">Properties you favorite will appear here for easy booking.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-in fade-in duration-300">
@@ -654,8 +654,8 @@ export default function GuestDashboard() {
             filteredBookings.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6"><Calendar className="w-8 h-8 text-gray-300" /></div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-2">No bookings found</h3>
-                <p className="text-gray-500 font-medium">You don't have any {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} reservations yet.</p>
+                <h3 className="text-2xl font-bold text-brand-dark mb-2">No bookings found</h3>
+                <p className="text-brand-text-secondary font-medium">You don't have any {activeTab !== 'ALL' ? activeTab.toLowerCase() : ''} reservations yet.</p>
               </div>
             ) : (
               filteredBookings.map((booking) => (
@@ -674,7 +674,7 @@ export default function GuestDashboard() {
       {/* Floating Success Toast */}
       {toastMessage && (
         <div className="fixed bottom-10 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-5 fade-in duration-300">
-          <div className="bg-gray-900 text-white px-6 py-4 rounded-full shadow-2xl flex items-center space-x-3 border border-gray-700">
+          <div className="bg-gray-900 text-white px-6 py-4 rounded-full shadow-elevated flex items-center space-x-3 border border-gray-700">
             <div className="bg-green-500 p-1 rounded-full"><CheckCircle className="w-4 h-4 text-white" /></div>
             <span className="font-bold text-sm tracking-wide">{toastMessage}</span>
           </div>
@@ -687,12 +687,12 @@ export default function GuestDashboard() {
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}></div>
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-2xl">
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-elevated">
             <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
               <AlertCircle className="w-6 h-6" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Delete Account?</h3>
-            <p className="text-gray-500 font-medium text-sm leading-relaxed mb-6">
+            <h3 className="text-2xl font-display font-bold text-brand-dark mb-2">Delete Account?</h3>
+            <p className="text-brand-text-secondary font-medium text-sm leading-relaxed mb-6">
               This action is permanent and cannot be undone. All your personal data, saved favorites, and history will be wiped. 
             </p>
             <div className="flex gap-3">

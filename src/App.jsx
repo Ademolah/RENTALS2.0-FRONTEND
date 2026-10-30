@@ -62,7 +62,7 @@ function App() {
       )}
       
       {/* Header Wrapper */}
-      <div className="sticky top-0 z-50 bg-white border-b border-gray-100 shadow-sm flex flex-col">
+      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/80 flex flex-col">
         
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar 
@@ -88,10 +88,11 @@ function App() {
           <Route 
             path="/" 
             element={
-              <Home 
-                activeCategory={activeCategory} 
-                searchFilters={searchFilters} 
+              <Home
+                activeCategory={activeCategory}
+                searchFilters={searchFilters}
                 activeCityContext={selectedCity}
+                onCategoryChange={setActiveCategory}
               />
             } 
           />

@@ -169,8 +169,8 @@ export default function AuthModal({ isOpen, onClose }) {
 
 
   return createPortal(
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl max-w-[420px] w-full p-6 sm:p-8 shadow-2xl relative animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-brand-dark/60 backdrop-blur-sm p-4">
+      <div className="bg-white rounded-3xl max-w-[420px] w-full p-6 sm:p-8 shadow-elevated relative animate-in fade-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto no-scrollbar">
         
         <button 
           onClick={onClose}
@@ -180,10 +180,10 @@ export default function AuthModal({ isOpen, onClose }) {
         </button>
 
         <div className="mb-6 pr-6">
-          <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+          <h2 className="text-2xl sm:text-3xl font-display font-bold text-brand-dark tracking-tight">
             {isLogin ? 'Welcome back.' : 'Create account.'}
           </h2>
-          <p className="text-xs sm:text-sm text-gray-500 mt-1.5 font-medium">
+          <p className="text-xs sm:text-sm text-brand-text-secondary mt-1.5 font-medium">
             {isLogin ? 'Enter details to access your itinerary.' : 'Join Rentals to experience premium hospitality.'}
           </p>
         </div>

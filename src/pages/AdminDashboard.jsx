@@ -240,8 +240,8 @@ export default function AdminDashboard() {
       {/* --- MOBILE TOP BAR --- */}
       <div className="md:hidden bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
         <div className="flex items-center space-x-2">
-          <ShieldCheck className="w-6 h-6 text-gray-900" />
-          <span className="text-sm font-black tracking-widest uppercase text-gray-900">Rentals Admin</span>
+          <ShieldCheck className="w-6 h-6 text-brand-dark" />
+          <span className="text-sm font-display font-bold tracking-widest uppercase text-brand-dark">Rentals Admin</span>
         </div>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
@@ -262,8 +262,8 @@ export default function AdminDashboard() {
       {/* --- SIDEBAR COMMAND CENTER --- */}
       <aside className={`w-64 bg-white border-r border-gray-200 fixed h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-6 border-b border-gray-100 hidden md:flex items-center space-x-2">
-          <ShieldCheck className="w-6 h-6 text-gray-900" />
-          <span className="text-sm font-black tracking-widest uppercase text-gray-900">Rentals Admin</span>
+          <ShieldCheck className="w-6 h-6 text-brand-dark" />
+          <span className="text-sm font-display font-bold tracking-widest uppercase text-brand-dark">Rentals Admin</span>
         </div>
         
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -286,13 +286,13 @@ export default function AdminDashboard() {
                 className={`w-full flex items-center space-x-3 px-4 py-3 rounded-xl text-sm font-bold transition-all duration-200 ${
                   isActive 
                     ? 'bg-gray-900 text-white shadow-md' 
-                    : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    : 'text-brand-text-secondary hover:bg-gray-100 hover:text-brand-dark'
                 }`}
               >
-                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-gray-400'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-white' : 'text-brand-text-muted'}`} />
                 <span>{item.label}</span>
                 {badgeCount > 0 && (
-                  <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-gray-900'}`}>
+                  <span className={`ml-auto text-[10px] px-2 py-0.5 rounded-full ${isActive ? 'bg-white/20 text-white' : 'bg-brand-primary/10 text-brand-dark'}`}>
                     {badgeCount}
                   </span>
                 )}
@@ -307,10 +307,10 @@ export default function AdminDashboard() {
         
         <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-6 md:mb-8 gap-4">
           <div>
-            <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight capitalize">
+            <h1 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight capitalize">
               {activeTab.replace('-', ' ')}
             </h1>
-            <p className="text-xs md:text-sm text-gray-500 font-medium mt-1">Manage and oversee platform operations.</p>
+            <p className="text-xs md:text-sm text-brand-text-secondary font-medium mt-1">Manage and oversee platform operations.</p>
           </div>
         </header>
 
@@ -318,29 +318,29 @@ export default function AdminDashboard() {
         {activeTab === 'overview' && (
           <div className="animate-in fade-in">
             {loading ? (
-              <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
+              <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-brand-text-muted" /></div>
             ) : stats ? (
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 
                 {/* Network Card */}
                 <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Network</h3>
-                    <Users className="w-4 h-4 text-gray-400" />
+                    <h3 className="text-[10px] font-display font-bold text-brand-text-muted uppercase tracking-widest">Network</h3>
+                    <Users className="w-4 h-4 text-brand-text-muted" />
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <div className="text-3xl font-black text-gray-900 tracking-tight">{stats.users.totalUsers}</div>
-                      <div className="text-sm font-bold text-gray-400 mt-1">Total Registered Users</div>
+                      <div className="text-3xl font-display font-bold text-brand-dark tracking-tight">{stats.users.totalUsers}</div>
+                      <div className="text-sm font-bold text-brand-text-muted mt-1">Total Registered Users</div>
                     </div>
                     <div className="pt-5 border-t border-gray-100 flex justify-between">
                       <div>
-                        <div className="text-sm font-extrabold text-gray-900">{stats.users.totalHosts}</div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Verified Hosts</div>
+                        <div className="text-sm font-display font-bold text-brand-dark">{stats.users.totalHosts}</div>
+                        <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Verified Hosts</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-extrabold text-amber-500">{stats.users.pendingHosts}</div>
-                        <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Pending Apps</div>
+                        <div className="text-sm font-display font-bold text-amber-500">{stats.users.pendingHosts}</div>
+                        <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Pending Apps</div>
                       </div>
                     </div>
                   </div>
@@ -349,25 +349,25 @@ export default function AdminDashboard() {
                 {/* Inventory Card */}
                 <div className="bg-white p-6 border border-gray-200 rounded-xl shadow-sm">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Live Inventory</h3>
-                    <Building className="w-4 h-4 text-gray-400" />
+                    <h3 className="text-[10px] font-display font-bold text-brand-text-muted uppercase tracking-widest">Live Inventory</h3>
+                    <Building className="w-4 h-4 text-brand-text-muted" />
                   </div>
                   <div className="grid grid-cols-2 gap-x-4 gap-y-6">
                     <div>
-                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalShortlets}</div>
-                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Shortlets</div>
+                      <div className="text-2xl font-display font-bold text-brand-dark">{stats.assets.totalShortlets}</div>
+                      <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Shortlets</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalHotels}</div>
-                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Hotels</div>
+                      <div className="text-2xl font-display font-bold text-brand-dark">{stats.assets.totalHotels}</div>
+                      <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Hotels</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalVip}</div>
-                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">VIP Venues</div>
+                      <div className="text-2xl font-display font-bold text-brand-dark">{stats.assets.totalVip}</div>
+                      <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">VIP Venues</div>
                     </div>
                     <div>
-                      <div className="text-2xl font-black text-gray-900">{stats.assets.totalCars}</div>
-                      <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mt-1">Vehicles</div>
+                      <div className="text-2xl font-display font-bold text-brand-dark">{stats.assets.totalCars}</div>
+                      <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Vehicles</div>
                     </div>
                   </div>
                   {stats.assets.pendingAssets > 0 && (
@@ -380,24 +380,24 @@ export default function AdminDashboard() {
                 {/* Financial Ledger Card */}
                 <div className="bg-gray-900 p-6 border border-gray-800 rounded-xl shadow-lg text-white">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Financial Ledger</h3>
-                    <Wallet className="w-4 h-4 text-gray-400" />
+                    <h3 className="text-[10px] font-display font-bold text-brand-text-muted uppercase tracking-widest">Financial Ledger</h3>
+                    <Wallet className="w-4 h-4 text-brand-text-muted" />
                   </div>
                   <div className="space-y-4">
                     <div>
-                      <div className="text-3xl font-black tracking-tight">
+                      <div className="text-3xl font-display font-bold tracking-tight">
                         ₦{(stats.financials.totalPlatformVolume / 1000000).toFixed(1)}M
                       </div>
-                      <div className="text-sm font-bold text-gray-400 mt-1">Total Transaction Volume</div>
+                      <div className="text-sm font-bold text-brand-text-muted mt-1">Total Transaction Volume</div>
                     </div>
                     <div className="pt-5 border-t border-gray-800 flex justify-between">
                       <div>
-                        <div className="text-sm font-extrabold text-emerald-400">₦{stats.financials.totalPlatformRevenue.toLocaleString()}</div>
-                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Platform Cut (5%)</div>
+                        <div className="text-sm font-display font-bold text-emerald-400">₦{stats.financials.totalPlatformRevenue.toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider mt-1">Platform Cut (5%)</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-extrabold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
-                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Escrow Held</div>
+                        <div className="text-sm font-display font-bold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
+                        <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider mt-1">Escrow Held</div>
                       </div>
                     </div>
                   </div>
@@ -405,7 +405,7 @@ export default function AdminDashboard() {
 
               </div>
             ) : (
-              <div className="text-gray-500 font-bold">No stats available.</div>
+              <div className="text-brand-text-secondary font-bold">No stats available.</div>
             )}
           </div>
         )}
@@ -417,18 +417,18 @@ export default function AdminDashboard() {
                <table className="w-full text-left border-collapse">
                  <thead>
                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Reference</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Guest</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset Requested</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Negotiated Price (₦)</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Generate Link</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Reference</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Guest</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Asset Requested</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-center">Negotiated Price (₦)</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-right">Generate Link</th>
                    </tr>
                  </thead>
                  <tbody>
                    {loading ? (
-                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-text-muted" /></td></tr>
                    ) : conciergeDrafts.length === 0 ? (
-                     <tr><td colSpan="5" className="p-8 text-center text-gray-500">No pending WhatsApp reservations.</td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center text-brand-text-secondary">No pending WhatsApp reservations.</td></tr>
                    ) : (
                      conciergeDrafts.map((draft) => {
                        const isCar = !!draft.carId;
@@ -445,14 +445,14 @@ export default function AdminDashboard() {
                                  navigator.clipboard.writeText(refCode);
                                  alert(`Reference ${refCode} copied to clipboard!`);
                                }}
-                               className="group flex items-center space-x-2 bg-brand-primary/10 hover:bg-brand-primary/20 text-gray-900 border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
+                               className="group flex items-center space-x-2 bg-brand-primary/10 hover:bg-brand-primary/20 text-brand-dark border border-gray-200 hover:border-gray-400 px-3 py-1.5 rounded-lg transition-all cursor-pointer shadow-sm active:scale-95"
                                title="Copy Reference Code"
                              >
-                               <span className="text-xs font-black tracking-widest">{refCode}</span>
-                               <Copy className="w-3.5 h-3.5 text-gray-500 group-hover:text-gray-900 transition-colors" />
+                               <span className="text-xs font-display font-bold tracking-widest">{refCode}</span>
+                               <Copy className="w-3.5 h-3.5 text-brand-text-secondary group-hover:text-brand-dark transition-colors" />
                              </button>
                            </td>
-                           <td className="p-4 text-sm font-bold text-gray-900 whitespace-nowrap">{guestName}</td>
+                           <td className="p-4 text-sm font-bold text-brand-dark whitespace-nowrap">{guestName}</td>
                            <td className="p-4 text-sm text-gray-600 truncate max-w-[200px]">{assetTitle}</td>
                            
                            <td className="p-4 text-center">
@@ -462,7 +462,7 @@ export default function AdminDashboard() {
                                disabled={!!link} // Lock input if link is already generated
                                value={draftPrices[draft._id] || ''}
                                onChange={(e) => setDraftPrices(prev => ({ ...prev, [draft._id]: e.target.value }))}
-                               className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-gray-400"
+                               className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-brand-text-muted"
                              />
                            </td>
                            
@@ -473,7 +473,7 @@ export default function AdminDashboard() {
                                    type="text" 
                                    readOnly 
                                    value={link} 
-                                   className="w-32 px-2 py-1.5 text-[10px] text-gray-500 bg-gray-50 border border-gray-200 rounded outline-none truncate"
+                                   className="w-32 px-2 py-1.5 text-[10px] text-brand-text-secondary bg-gray-50 border border-gray-200 rounded outline-none truncate"
                                  />
                                  <button 
                                    onClick={() => copyToClipboard(link)}
@@ -510,18 +510,18 @@ export default function AdminDashboard() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Applicant Name</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">NIN / ID</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Location</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Applicant Name</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">NIN / ID</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Location</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Status</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-gray-400"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /></td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center text-brand-text-muted"><Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" /></td></tr>
                   ) : applications.length === 0 ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-gray-400 font-medium">No pending host applications.</td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center text-brand-text-muted font-medium">No pending host applications.</td></tr>
                   ) : (
                     applications.map((app) => {
                       const name = app.user ? `${app.user.firstName || ''} ${app.user.lastName || ''}`.trim() : (app.firstName || 'Unknown');
@@ -544,9 +544,9 @@ export default function AdminDashboard() {
 
                       return (
                         <tr key={app._id} className="border-b border-gray-50 hover:bg-gray-50/50 transition-colors">
-                          <td className="p-4 font-bold text-gray-900 whitespace-nowrap">{name}</td>
-                          <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{app.nin || 'N/A'}</td>
-                          <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{app.city}, {app.state}</td>
+                          <td className="p-4 font-bold text-brand-dark whitespace-nowrap">{name}</td>
+                          <td className="p-4 text-sm text-brand-text-secondary whitespace-nowrap">{app.nin || 'N/A'}</td>
+                          <td className="p-4 text-sm text-brand-text-secondary whitespace-nowrap">{app.city}, {app.state}</td>
                           <td className="p-4 whitespace-nowrap">
                             <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
                               <StatusIcon className="w-3.5 h-3.5" />
@@ -556,7 +556,7 @@ export default function AdminDashboard() {
                           <td className="p-4 text-right whitespace-nowrap">
                             <button 
                               onClick={() => setSelectedApp(app)}
-                              className="inline-flex items-center space-x-1 text-xs font-bold text-gray-900 hover:text-brand-primary transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"
+                              className="inline-flex items-center space-x-1 text-xs font-bold text-brand-dark hover:text-brand-primary transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"
                             >
                               <Eye className="w-3.5 h-3.5" /><span>Review</span>
                             </button>
@@ -578,18 +578,18 @@ export default function AdminDashboard() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-gray-50/50 border-b border-gray-100">
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Date Submitted</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset Title</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Category</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Host</th>
-                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Actions</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Date Submitted</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Asset Title</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Category</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Host</th>
+                    <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {loading ? (
-                    <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-text-muted" /></td></tr>
                   ) : pendingListings.length === 0 ? (
-                    <tr><td colSpan="5" className="p-8 text-center text-gray-400 font-medium">No pending asset listings to review.</td></tr>
+                    <tr><td colSpan="5" className="p-8 text-center text-brand-text-muted font-medium">No pending asset listings to review.</td></tr>
                   ) : (
                     pendingListings.map((asset) => {
                       const isCar = !!asset.make;
@@ -598,17 +598,17 @@ export default function AdminDashboard() {
 
                       return (
                         <tr key={asset._id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                          <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">{new Date(asset.createdAt).toLocaleDateString()}</td>
-                          <td className="p-4 font-bold text-gray-900 text-sm flex items-center space-x-2 whitespace-nowrap">
-                            {isCar ? <Car className="w-4 h-4 text-gray-400 shrink-0"/> : <Home className="w-4 h-4 text-gray-400 shrink-0"/>}
+                          <td className="p-4 text-xs font-bold text-brand-text-secondary whitespace-nowrap">{new Date(asset.createdAt).toLocaleDateString()}</td>
+                          <td className="p-4 font-bold text-brand-dark text-sm flex items-center space-x-2 whitespace-nowrap">
+                            {isCar ? <Car className="w-4 h-4 text-brand-text-muted shrink-0"/> : <Home className="w-4 h-4 text-brand-text-muted shrink-0"/>}
                             <span className="truncate max-w-[250px]">{title}</span>
                           </td>
-                          <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">{isCar ? 'CAR' : asset.category}</td>
-                          <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{hostName}</td>
+                          <td className="p-4 text-xs font-bold text-brand-text-secondary whitespace-nowrap">{isCar ? 'CAR' : asset.category}</td>
+                          <td className="p-4 text-sm text-brand-text-secondary whitespace-nowrap">{hostName}</td>
                           <td className="p-4 text-right whitespace-nowrap">
                             <button 
                               onClick={() => setSelectedListing(asset)}
-                              className="inline-flex items-center space-x-1 text-xs font-bold text-gray-900 hover:text-brand-primary transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"
+                              className="inline-flex items-center space-x-1 text-xs font-bold text-brand-dark hover:text-brand-primary transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"
                             >
                               <Eye className="w-3.5 h-3.5" /><span>Review Quality</span>
                             </button>
@@ -630,16 +630,16 @@ export default function AdminDashboard() {
                <table className="w-full text-left border-collapse">
                  <thead>
                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Category</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Status</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Verified Badge</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-center">Visibility</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Asset</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Category</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Status</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-center">Verified Badge</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted text-center">Visibility</th>
                    </tr>
                  </thead>
                  <tbody>
                    {loading ? (
-                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-text-muted" /></td></tr>
                    ) : (
                      [...assets.properties, ...assets.cars].map((asset) => {
                        const isCar = !!asset.make;
@@ -666,11 +666,11 @@ export default function AdminDashboard() {
 
                        return (
                          <tr key={asset._id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                           <td className="p-4 font-bold text-gray-900 text-sm flex items-center space-x-2 whitespace-nowrap">
-                             {isCar ? <Car className="w-4 h-4 text-gray-400 shrink-0"/> : <Home className="w-4 h-4 text-gray-400 shrink-0"/>}
+                           <td className="p-4 font-bold text-brand-dark text-sm flex items-center space-x-2 whitespace-nowrap">
+                             {isCar ? <Car className="w-4 h-4 text-brand-text-muted shrink-0"/> : <Home className="w-4 h-4 text-brand-text-muted shrink-0"/>}
                              <span className="truncate max-w-[250px]">{title}</span>
                            </td>
-                           <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">{typeStr}</td>
+                           <td className="p-4 text-xs font-bold text-brand-text-secondary whitespace-nowrap">{typeStr}</td>
                            <td className="p-4 whitespace-nowrap">
                              <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
                                <StatusIcon className="w-3.5 h-3.5" />
@@ -680,7 +680,7 @@ export default function AdminDashboard() {
                            <td className="p-4 text-center whitespace-nowrap">
                              <button 
                                onClick={() => handleToggleAsset(isCar ? 'CAR' : 'PROPERTY', asset._id, 'isVerified', asset.isVerified)}
-                               className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${asset.isVerified ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-gray-100 text-gray-500 border-gray-200'}`}
+                               className={`px-3 py-1 rounded-full text-xs font-bold border transition-colors ${asset.isVerified ? 'bg-emerald-50 text-emerald-600 border-emerald-200' : 'bg-gray-100 text-brand-text-secondary border-gray-200'}`}
                              >
                                {asset.isVerified ? 'Verified' : 'Unverified'}
                              </button>
@@ -710,18 +710,18 @@ export default function AdminDashboard() {
                <table className="w-full text-left border-collapse">
                  <thead>
                    <tr className="bg-gray-50/50 border-b border-gray-100">
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Date</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Guest</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount (NGN)</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Escrow Status</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Date</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Guest</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Asset</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Amount (NGN)</th>
+                     <th className="p-4 text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted">Escrow Status</th>
                    </tr>
                  </thead>
                  <tbody>
                    {loading ? (
-                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-text-muted" /></td></tr>
                    ) : ledger.length === 0 ? (
-                     <tr><td colSpan="5" className="p-8 text-center text-gray-500">No escrow records found.</td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center text-brand-text-secondary">No escrow records found.</td></tr>
                    ) : (
                      ledger.map((record) => {
                        const isCar = !!record.carId;
@@ -744,10 +744,10 @@ export default function AdminDashboard() {
  
                        return (
                          <tr key={record._id} className="border-b border-gray-50 hover:bg-gray-50/50">
-                           <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">{new Date(record.createdAt).toLocaleDateString()}</td>
-                           <td className="p-4 text-sm font-bold text-gray-900 whitespace-nowrap">{guestName}</td>
+                           <td className="p-4 text-xs font-bold text-brand-text-secondary whitespace-nowrap">{new Date(record.createdAt).toLocaleDateString()}</td>
+                           <td className="p-4 text-sm font-bold text-brand-dark whitespace-nowrap">{guestName}</td>
                            <td className="p-4 text-sm text-gray-600 truncate max-w-[200px]">{assetTitle}</td>
-                           <td className="p-4 text-sm font-extrabold text-gray-900 whitespace-nowrap">₦{amount}</td>
+                           <td className="p-4 text-sm font-display font-bold text-brand-dark whitespace-nowrap">₦{amount}</td>
                            <td className="p-4 whitespace-nowrap">
                              <span className={`inline-flex items-center space-x-1.5 text-[10px] font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
                                <StatusIcon className="w-3.5 h-3.5" />
@@ -768,31 +768,31 @@ export default function AdminDashboard() {
       {/* --- APPLICATION REVIEW MODAL (HOSTS) --- */}
       {selectedApp && (
         <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
+          <div className="bg-white w-full max-w-2xl rounded-3xl shadow-elevated overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
             
             <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
               <div>
-                <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Application Review</h2>
-                <p className="text-[10px] md:text-xs text-gray-500 font-medium mt-1">ID: {selectedApp._id}</p>
+                <h2 className="text-lg md:text-xl font-display font-bold text-brand-dark">Application Review</h2>
+                <p className="text-[10px] md:text-xs text-brand-text-secondary font-medium mt-1">ID: {selectedApp._id}</p>
               </div>
-              <button onClick={() => setSelectedApp(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+              <button onClick={() => setSelectedApp(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6 md:space-y-8">
               <div>
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3 md:mb-4">Applicant Identity</h3>
+                <h3 className="text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-3 md:mb-4">Applicant Identity</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">Full Name</span>
-                    <span className="text-sm font-bold text-gray-900">
+                    <span className="block text-[10px] font-bold text-brand-text-muted uppercase tracking-wider mb-1">Full Name</span>
+                    <span className="text-sm font-bold text-brand-dark">
                       {selectedApp.user ? `${selectedApp.user.firstName || ''} ${selectedApp.user.lastName || ''}` : 'N/A'}
                     </span>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                    <span className="block text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">NIN / ID Number</span>
-                    <span className="text-sm font-bold text-gray-900">{selectedApp.nin || 'Not Provided'}</span>
+                    <span className="block text-[10px] font-bold text-brand-text-muted uppercase tracking-wider mb-1">NIN / ID Number</span>
+                    <span className="text-sm font-bold text-brand-dark">{selectedApp.nin || 'Not Provided'}</span>
                   </div>
                 </div>
               </div>
@@ -821,26 +821,26 @@ export default function AdminDashboard() {
       {/* --- LISTING REVIEW MODAL (ASSETS) --- */}
       {selectedListing && (
         <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
+          <div className="bg-white w-full max-w-4xl rounded-3xl shadow-elevated overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
             
             <div className="flex justify-between items-center p-4 md:p-6 border-b border-gray-100 bg-gray-50/50">
               <div>
-                <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Review Listing Quality</h2>
-                <p className="text-[10px] md:text-xs text-gray-500 font-medium mt-1">
+                <h2 className="text-lg md:text-xl font-display font-bold text-brand-dark">Review Listing Quality</h2>
+                <p className="text-[10px] md:text-xs text-brand-text-secondary font-medium mt-1">
                   {selectedListing.make ? `${selectedListing.make} ${selectedListing.model}` : selectedListing.title} • {selectedListing.make ? 'CAR' : selectedListing.category}
                 </p>
               </div>
-              <button onClick={() => setSelectedListing(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
+              <button onClick={() => setSelectedListing(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6">
               <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                 <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Description</h3>
+                 <h3 className="text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-2">Description</h3>
                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedListing.description}</p>
                  <div className="mt-4 flex space-x-4">
-                   <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                   <span className="text-xs font-bold text-brand-dark bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
                      Price: ₦{selectedListing.pricePerNight || selectedListing.pricePer12Hours || 0}
                    </span>
                  </div>
@@ -848,7 +848,7 @@ export default function AdminDashboard() {
 
               {/* Media Gallery Grid */}
               <div>
-                <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Media Inspection (Click to enlarge)</h3>
+                <h3 className="text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-3">Media Inspection (Click to enlarge)</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                   
                   {/* Video Thumbnail (If exists) */}
@@ -909,9 +909,9 @@ export default function AdminDashboard() {
           
           <div className="w-full h-full flex items-center justify-center p-4 md:p-12">
             {mediaViewer.type === 'image' ? (
-              <img src={mediaViewer.url} alt="Enlarged inspection" className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" />
+              <img src={mediaViewer.url} alt="Enlarged inspection" className="max-w-full max-h-full object-contain rounded-lg shadow-elevated" />
             ) : (
-              <video src={mediaViewer.url} controls autoPlay className="max-w-full max-h-full rounded-lg shadow-2xl" />
+              <video src={mediaViewer.url} controls autoPlay className="max-w-full max-h-full rounded-lg shadow-elevated" />
             )}
           </div>
         </div>

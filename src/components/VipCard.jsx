@@ -29,7 +29,7 @@ export default function VipCard({ establishment }) {
   return (
     <Link 
       to={linkUrl}
-      className="group block relative w-full rounded-3xl overflow-hidden bg-black aspect-[3/4] md:aspect-square lg:aspect-[4/5] shadow-xl hover:shadow-2xl transition-all duration-500 cursor-pointer"
+      className="group block relative w-full rounded-3xl overflow-hidden bg-black aspect-[3/4] md:aspect-square lg:aspect-[4/5] shadow-xl hover:shadow-elevated transition-all duration-500 cursor-pointer"
     >
       {/* Background Image & Overlay */}
       <img 
@@ -41,7 +41,7 @@ export default function VipCard({ establishment }) {
 
       {/* Top Badges */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-[9px] font-black text-amber-400 uppercase tracking-widest border border-amber-400/20 flex items-center space-x-1.5 shadow-lg">
+        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-[9px] font-display font-bold text-amber-400 uppercase tracking-widest border border-amber-400/20 flex items-center space-x-1.5 shadow-lg">
           <Gem className="w-3 h-3" />
           <span>{formattedType}</span>
         </div>
@@ -50,7 +50,7 @@ export default function VipCard({ establishment }) {
         {!isService && openHours?.daysOpen && (
           <div className="flex flex-col items-end gap-1">
             {openHours.daysOpen.slice(0, 3).map(day => (
-              <span key={day} className="bg-white/10 backdrop-blur-md text-white text-[8px] font-extrabold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
+              <span key={day} className="bg-white/10 backdrop-blur-md text-white text-[8px] font-display font-bold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
                 {day.substring(0, 3)}
               </span>
             ))}
@@ -63,17 +63,17 @@ export default function VipCard({ establishment }) {
         
         {/* Title & Location */}
         <div className="mb-4">
-          <h3 className="font-extrabold text-2xl md:text-3xl tracking-tight text-white drop-shadow-md mb-2">
+          <h3 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-white drop-shadow-md mb-2">
             {title}
           </h3>
           <div className="flex flex-col space-y-1.5 text-xs font-medium text-gray-300">
             <span className="flex items-center">
-              <MapPin className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> 
+              <MapPin className="w-3.5 h-3.5 mr-1.5 text-brand-text-muted" /> 
               {address?.street && `${address.street}, `}{address?.city}
             </span>
             {!isService && openHours?.open && (
               <span className="flex items-center">
-                <Clock className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> 
+                <Clock className="w-3.5 h-3.5 mr-1.5 text-brand-text-muted" /> 
                 {openHours.open} - {openHours.close}
               </span>
             )}
@@ -97,17 +97,17 @@ export default function VipCard({ establishment }) {
         {/* Glassmorphism Deposit/Price Footer */}
         <div className="flex items-center justify-between bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-2xl">
           <div>
-            <span className="block text-[9px] font-black uppercase tracking-widest text-amber-400/80 mb-0.5">
+            <span className="block text-[9px] font-display font-bold uppercase tracking-widest text-amber-400/80 mb-0.5">
               {priceLabel}
             </span>
             <div className="flex items-baseline space-x-1">
-              <span className="font-extrabold text-white text-lg md:text-xl tracking-tight">
+              <span className="font-display font-bold text-white text-lg md:text-xl tracking-tight">
                 ₦{displayedPrice.toLocaleString()}
               </span>
             </div>
           </div>
           
-          <div className="w-10 h-10 rounded-full bg-amber-400 text-gray-900 flex items-center justify-center group-hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(251,191,36,0.3)]">
+          <div className="w-10 h-10 rounded-full bg-amber-400 text-brand-dark flex items-center justify-center group-hover:bg-white transition-colors duration-300 shadow-[0_0_20px_rgba(251,191,36,0.3)]">
             <ChevronRight className="w-5 h-5 font-bold" />
           </div>
         </div>

@@ -296,14 +296,14 @@ export default function HotelDetails() {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
         <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-500 font-medium tracking-wide">Preparing hotel details...</p>
+        <p className="text-brand-text-secondary font-medium tracking-wide">Preparing hotel details...</p>
       </div>
     );
   }
 
   if (error || !hotel) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50/50 text-gray-500 font-bold">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50/50 text-brand-text-secondary font-bold">
         Hotel not found or is no longer available.
       </div>
     );
@@ -320,10 +320,10 @@ export default function HotelDetails() {
       {/* REVIEW SUBMISSION MODAL */}
       {showReviewModal && (
         <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative">
+          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-elevated relative">
             <button 
               onClick={() => setShowReviewModal(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-900 transition-colors"
+              className="absolute top-5 right-5 text-brand-text-muted hover:text-brand-dark transition-colors"
             >
               <X className="w-5 h-5" />
             </button>
@@ -331,17 +331,17 @@ export default function HotelDetails() {
             <div className="p-8">
               <div className="flex items-center space-x-3 mb-6">
                 <div className="h-4 w-0.5 bg-brand-primary"></div>
-                <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
+                <span className="text-[11px] font-display font-bold text-brand-primary uppercase tracking-[0.25em]">
                   Guest Feedback
                 </span>
               </div>
               
-              <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">Rate your stay</h3>
-              <p className="text-sm font-medium text-gray-500 mb-8">Your feedback helps maintain our world-class standard.</p>
+              <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-2">Rate your stay</h3>
+              <p className="text-sm font-medium text-brand-text-secondary mb-8">Your feedback helps maintain our world-class standard.</p>
 
               <form onSubmit={handleReviewSubmit} className="space-y-6">
                 <div>
-                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Overall Rating</label>
+                  <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-3">Overall Rating</label>
                   <div className="flex space-x-2">
                     {[1, 2, 3, 4, 5].map((star) => (
                       <button
@@ -350,20 +350,20 @@ export default function HotelDetails() {
                         onClick={() => setReviewForm({ ...reviewForm, rating: star })}
                         className="focus:outline-none transition-transform active:scale-90"
                       >
-                        <Star className={`w-8 h-8 ${reviewForm.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
+                        <Star className={`w-8 h-8 ${reviewForm.rating >= star ? 'fill-gray-900 text-brand-dark' : 'fill-transparent text-gray-300'}`} />
                       </button>
                     ))}
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Written Review</label>
+                  <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-3">Written Review</label>
                   <textarea
                     rows={4}
                     value={reviewForm.comment}
                     onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                     placeholder="Share the details of your stay..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all resize-none"
+                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-brand-dark focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all resize-none"
                   ></textarea>
                 </div>
 
@@ -461,14 +461,14 @@ export default function HotelDetails() {
           <div className="w-full lg:w-2/3 space-y-10">
             <div>
               <div className="flex justify-between items-start mb-4">
-                <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                <h1 className="text-3xl md:text-5xl font-display font-bold text-brand-dark tracking-tight leading-tight">
                   {hotel.title}
                 </h1>
                 <div className="hidden md:flex flex-col items-end ml-4">
-                  <div className="bg-brand-primary text-white font-black text-xl px-4 py-2 rounded-xl shadow-sm">
+                  <div className="bg-brand-primary text-white font-display font-bold text-xl px-4 py-2 rounded-xl shadow-sm">
                     {hotel.reviewsCount > 0 ? hotel.rating?.toFixed(1) : 'New'}
                   </div>
-                  <span className="text-sm font-bold text-gray-500 mt-1">
+                  <span className="text-sm font-bold text-brand-text-secondary mt-1">
                     {hotel.reviewsCount || 0} review{hotel.reviewsCount !== 1 ? 's' : ''}
                   </span>
                 </div>
@@ -483,7 +483,7 @@ export default function HotelDetails() {
             <hr className="border-gray-200" />
 
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">About this property</h2>
+              <h2 className="text-2xl font-bold text-brand-dark mb-4">About this property</h2>
               <p className="text-gray-600 leading-relaxed text-lg whitespace-pre-line">
                 {hotel.description}
               </p>
@@ -491,7 +491,7 @@ export default function HotelDetails() {
 
             {hotel.amenities && hotel.amenities.length > 0 && (
               <div>
-                <h2 className="text-2xl font-bold text-gray-900 mb-6">Premium Amenities</h2>
+                <h2 className="text-2xl font-bold text-brand-dark mb-6">Premium Amenities</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-y-6 gap-x-4">
                   {hotel.amenities.map((amenity, idx) => {
                     const Icon = getAmenityIcon(amenity);
@@ -512,8 +512,8 @@ export default function HotelDetails() {
 
             {/* BESPOKE DATE PICKER INJECTED HERE */}
             <div id="dates-section" className="pt-2 pb-4">
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">Select your dates</h2>
-              <p className="text-gray-500 text-sm font-medium mb-6">
+              <h2 className="text-2xl font-bold text-brand-dark mb-2">Select your dates</h2>
+              <p className="text-brand-text-secondary text-sm font-medium mb-6">
                 {checkInDate && checkOutDate 
                   ? `${nights} ${nights === 1 ? 'night' : 'nights'} in ${hotel.address?.city}`
                   : "Add your travel dates for exact pricing"}
@@ -527,8 +527,8 @@ export default function HotelDetails() {
                     onClick={() => openCalendar('checkIn')}
                     className={`flex-1 p-4 border-b sm:border-b-0 sm:border-r border-gray-300 cursor-pointer transition-colors ${calendarMode === 'checkIn' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
                   >
-                    <label className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Check-In</label>
-                    <div className={`text-sm sm:text-base ${checkInDate ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
+                    <label className="text-[10px] font-display font-bold text-brand-text-secondary uppercase tracking-widest mb-1 block">Check-In</label>
+                    <div className={`text-sm sm:text-base ${checkInDate ? 'font-bold text-brand-dark' : 'font-medium text-brand-text-muted'}`}>
                       {checkInDate ? new Date(checkInDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                     </div>
                   </div>
@@ -538,8 +538,8 @@ export default function HotelDetails() {
                     onClick={() => openCalendar('checkOut')}
                     className={`flex-1 p-4 cursor-pointer transition-colors ${calendarMode === 'checkOut' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
                   >
-                    <label className="text-[10px] font-extrabold text-gray-500 uppercase tracking-widest mb-1 block">Checkout</label>
-                    <div className={`text-sm sm:text-base ${checkOutDate ? 'font-bold text-gray-900' : 'font-medium text-gray-400'}`}>
+                    <label className="text-[10px] font-display font-bold text-brand-text-secondary uppercase tracking-widest mb-1 block">Checkout</label>
+                    <div className={`text-sm sm:text-base ${checkOutDate ? 'font-bold text-brand-dark' : 'font-medium text-brand-text-muted'}`}>
                       {checkOutDate ? new Date(checkOutDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                     </div>
                   </div>
@@ -547,15 +547,15 @@ export default function HotelDetails() {
 
                 {/* Calendar Popover */}
                 {showCalendar && (
-                  <div className="absolute top-[85px] sm:top-[75px] left-0 mt-2 w-full sm:w-[320px] bg-white border border-gray-200 shadow-2xl rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+                  <div className="absolute top-[85px] sm:top-[75px] left-0 mt-2 w-full sm:w-[320px] bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
                     <div className="flex justify-between items-center mb-4">
                       <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
-                      <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
+                      <span className="font-display font-bold text-sm tracking-widest uppercase text-brand-dark">
                         {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                       </span>
                       <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
                     </div>
-                    <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
+                    <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-display font-bold text-brand-text-muted tracking-widest uppercase">
                       {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                     </div>
                     <div className="grid grid-cols-7 gap-y-2">
@@ -571,9 +571,9 @@ export default function HotelDetails() {
                         const isDisabledForCheckOut = calendarMode === 'checkOut' && checkInDate && dateStr <= checkInDate;
                         const disabled = isPast || isDisabledForCheckOut;
 
-                        let bgClass = 'hover:bg-gray-100 text-gray-900';
+                        let bgClass = 'hover:bg-gray-100 text-brand-dark';
                         if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
-                        if (isBetween) bgClass = 'bg-brand-primary/10 text-gray-900';
+                        if (isBetween) bgClass = 'bg-brand-primary/10 text-brand-dark';
                         if (isSelectedIn || isSelectedOut) bgClass = 'bg-brand-primary text-white shadow-md';
 
                         return (
@@ -590,12 +590,12 @@ export default function HotelDetails() {
                     </div>
                     
                     <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                      <span className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">
+                      <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">
                         Selecting: {calendarMode === 'checkIn' ? 'Check-in' : 'Check-out'}
                       </span>
                       <button 
                         onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
-                        className="text-xs font-bold text-gray-900 underline underline-offset-2 hover:text-brand-primary"
+                        className="text-xs font-bold text-brand-dark underline underline-offset-2 hover:text-brand-primary"
                       >
                         Close
                       </button>
@@ -608,7 +608,7 @@ export default function HotelDetails() {
             <hr className="border-gray-200" />
 
             <div id="rooms-section">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Suites</h2>
+              <h2 className="text-2xl font-bold text-brand-dark mb-6">Available Suites</h2>
               <div className="space-y-6">
                 {hotel.roomTypes?.map((room) => {
                   const isSelected = selectedRoom === room._id;
@@ -628,12 +628,12 @@ export default function HotelDetails() {
                       <div className="p-6 flex-1 flex flex-col justify-between">
                         <div>
                           <div className="flex justify-between items-start">
-                            <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
+                            <h3 className="text-xl font-bold text-brand-dark">{room.name}</h3>
                             <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-brand-primary bg-brand-primary' : 'border-gray-300'}`}>
                               {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
                             </div>
                           </div>
-                          <div className="flex items-center text-gray-500 text-sm mt-2 mb-4 space-x-4">
+                          <div className="flex items-center text-brand-text-secondary text-sm mt-2 mb-4 space-x-4">
                             <span className="flex items-center"><Users className="w-4 h-4 mr-1" /> {room.capacity?.adults || 2} Guests</span>
                             <span className="flex items-center"><Bed className="w-4 h-4 mr-1" /> Suite</span>
                           </div>
@@ -647,8 +647,8 @@ export default function HotelDetails() {
                           </div>
                         </div>
                         <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-end">
-                          <span className="text-2xl font-black text-gray-900 tracking-tight">
-                            ₦{room.pricePerNight.toLocaleString()} <span className="text-sm font-medium text-gray-500">/ night</span>
+                          <span className="text-2xl font-display font-bold text-brand-dark tracking-tight">
+                            ₦{room.pricePerNight.toLocaleString()} <span className="text-sm font-medium text-brand-text-secondary">/ night</span>
                           </span>
                         </div>
                       </div>
@@ -664,8 +664,8 @@ export default function HotelDetails() {
             <div id="reviews-section" className="pt-4 pb-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-3">
-                  <Star className="w-6 h-6 fill-gray-900 text-gray-900" />
-                  <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">
+                  <Star className="w-6 h-6 fill-gray-900 text-brand-dark" />
+                  <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight">
                     {hotel.reviewsCount === 0 || !hotel.reviewsCount ? 'No reviews yet' : `${hotel.rating?.toFixed(1) || '5.0'} | ${hotel.reviewsCount} review${hotel.reviewsCount !== 1 ? 's' : ''}`}
                   </h3>
                 </div>
@@ -681,22 +681,22 @@ export default function HotelDetails() {
                       showToast('Only guest accounts can submit reviews.');
                     }
                   }}
-                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                  className="px-5 py-2.5 bg-gray-50 border border-gray-200 text-brand-dark hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors shadow-sm"
                 >
                   Write a Review
                 </button>
               </div>
 
               {reviewsLoading ? (
-                <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm">
+                <div className="flex items-center space-x-2 text-brand-text-secondary font-medium text-sm">
                   <Loader2 className="w-4 h-4 animate-spin" />
                   <span>Loading guest feedback...</span>
                 </div>
               ) : reviews.length === 0 ? (
                 <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 flex flex-col items-center text-center">
                   <MessageSquare className="w-8 h-8 text-gray-300 mb-3" />
-                  <h4 className="text-gray-900 font-bold mb-1">Be the first to review</h4>
-                  <p className="text-sm font-medium text-gray-500 max-w-sm">Share your experience to help other travelers make informed decisions.</p>
+                  <h4 className="text-brand-dark font-bold mb-1">Be the first to review</h4>
+                  <p className="text-sm font-medium text-brand-text-secondary max-w-sm">Share your experience to help other travelers make informed decisions.</p>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
@@ -713,15 +713,15 @@ export default function HotelDetails() {
                           )}
                         </div>
                         <div>
-                          <div className="font-bold text-gray-900">{review.user?.firstName}</div>
-                          <div className="text-xs font-medium text-gray-500">
+                          <div className="font-bold text-brand-dark">{review.user?.firstName}</div>
+                          <div className="text-xs font-medium text-brand-text-secondary">
                             {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                           </div>
                         </div>
                       </div>
                       <div className="flex space-x-1">
                         {[1, 2, 3, 4, 5].map((star) => (
-                          <Star key={star} className={`w-3 h-3 ${review.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
+                          <Star key={star} className={`w-3 h-3 ${review.rating >= star ? 'fill-gray-900 text-brand-dark' : 'fill-transparent text-gray-300'}`} />
                         ))}
                       </div>
                       <p className="text-gray-600 text-sm leading-relaxed font-medium">
@@ -736,7 +736,7 @@ export default function HotelDetails() {
             <hr className="border-gray-200" />
 
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">Location</h2>
+              <h2 className="text-2xl font-bold text-brand-dark mb-4">Location</h2>
               <div className="w-full h-[400px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm relative bg-gray-50">
                  <InteractiveMap address={hotel.address} type="HOTEL" /> 
               </div>
@@ -749,10 +749,10 @@ export default function HotelDetails() {
               
               <div className="mb-6 flex flex-col items-start border-b border-gray-100 pb-6">
                 <div className="flex items-baseline space-x-1">
-                  <span className="text-3xl font-black text-gray-900 tracking-tight">
+                  <span className="text-3xl font-display font-bold text-brand-dark tracking-tight">
                     ₦{totalPrice.toLocaleString()}
                   </span>
-                  <span className="text-gray-500 font-medium">total</span>
+                  <span className="text-brand-text-secondary font-medium">total</span>
                 </div>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-green-700 mt-2 bg-green-50/80 px-2 py-1 rounded-md border border-green-100">
                   Taxes & fees included
@@ -769,7 +769,7 @@ export default function HotelDetails() {
                   <span>Duration: <strong>{nights} {nights === 1 ? 'night' : 'nights'}</strong></span>
                 </div>
                 <div className="flex items-start text-sm text-gray-700">
-                  <Info className="w-4 h-4 text-gray-400 mr-2 mt-0.5 shrink-0" />
+                  <Info className="w-4 h-4 text-brand-text-muted mr-2 mt-0.5 shrink-0" />
                   <span>You won't be charged yet.</span>
                 </div>
               </div>
@@ -809,7 +809,7 @@ export default function HotelDetails() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-[60] flex justify-between items-center">
         <div className="flex flex-col max-w-[40%]">
           <span className="text-[10px] font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1 truncate">Taxes incl.</span>
-          <span className="text-lg sm:text-xl font-black text-gray-900 tracking-tight truncate">
+          <span className="text-lg sm:text-xl font-display font-bold text-brand-dark tracking-tight truncate">
             ₦{totalPrice.toLocaleString()}
           </span>
         </div>
@@ -839,7 +839,7 @@ export default function HotelDetails() {
       {/* PREMIUM TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed bottom-28 lg:bottom-10 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom-8 fade-in duration-300">
-          <div className="bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-2xl flex items-center space-x-3">
+          <div className="bg-gray-900 text-white px-5 py-3 rounded-2xl shadow-elevated flex items-center space-x-3">
             <AlertCircle className="w-5 h-5 text-brand-primary shrink-0" />
             <span className="font-medium text-sm tracking-wide">{toastMessage}</span>
           </div>

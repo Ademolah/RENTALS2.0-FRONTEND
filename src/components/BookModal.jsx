@@ -110,7 +110,7 @@ Please assist me with the escrow payment.`;
         onClick={onClose}
       />
 
-      <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+      <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-elevated overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
         
         <div className="bg-[#0A2540] p-6 text-white relative">
           <button 
@@ -125,7 +125,7 @@ Please assist me with the escrow payment.`;
               <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-black tracking-tight">Rentals Concierge</h3>
+              <h3 className="text-xl font-display font-bold tracking-tight">Rentals Concierge</h3>
               <p className="text-blue-200 text-xs font-medium uppercase tracking-wider">Secure Checkout</p>
             </div>
           </div>
@@ -138,7 +138,7 @@ Please assist me with the escrow payment.`;
               <Clock className="w-5 h-5 mr-2 animate-pulse" />
               <span className="text-sm font-bold">Holding room for</span>
             </div>
-            <span className="text-lg font-black text-red-700 tabular-nums tracking-tight">
+            <span className="text-lg font-display font-bold text-red-700 tabular-nums tracking-tight">
               {timeString}
             </span>
           </div>
@@ -151,19 +151,19 @@ Please assist me with the escrow payment.`;
                 className="w-24 h-24 object-cover rounded-xl shadow-sm"
               />
               <div className="flex flex-col justify-center">
-                <h4 className="font-bold text-gray-900 leading-tight mb-1">{roomData.name}</h4>
-                <span className="flex items-center text-xs font-medium text-gray-500 mb-1">
+                <h4 className="font-bold text-brand-dark leading-tight mb-1">{roomData.name}</h4>
+                <span className="flex items-center text-xs font-medium text-brand-text-secondary mb-1">
                   <MapPin className="w-3.5 h-3.5 mr-1" /> {hotelData.title}
                 </span>
-                <span className="flex items-center text-xs font-medium text-gray-500">
+                <span className="flex items-center text-xs font-medium text-brand-text-secondary">
                   <CalendarDays className="w-3.5 h-3.5 mr-1" /> {nights} {nights === 1 ? 'Night' : 'Nights'}
                 </span>
               </div>
             </div>
 
             <div className="mt-4 pt-4 border-t border-gray-200 flex justify-between items-end">
-              <span className="text-sm font-bold text-gray-500">Total Price</span>
-              <span className="text-2xl font-black text-gray-900">₦{totalPrice.toLocaleString()}</span>
+              <span className="text-sm font-bold text-brand-text-secondary">Total Price</span>
+              <span className="text-2xl font-display font-bold text-brand-dark">₦{totalPrice.toLocaleString()}</span>
             </div>
           </div>
 
@@ -179,7 +179,7 @@ Please assist me with the escrow payment.`;
 
           {!isLoggedIn ? (
             <div className="text-center py-4 bg-gray-50 rounded-xl border border-gray-200">
-              <p className="text-sm font-bold text-gray-900 mb-3">Log in to complete your reservation</p>
+              <p className="text-sm font-bold text-brand-dark mb-3">Log in to complete your reservation</p>
               <button className="bg-gray-900 text-white font-bold px-8 py-3 rounded-xl hover:bg-black transition-colors w-full">
                 Sign In
               </button>

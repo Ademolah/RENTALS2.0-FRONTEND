@@ -110,7 +110,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-elevated overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* Header Section */}
         <div className="px-8 pt-8 pb-6 text-center">
@@ -119,10 +119,10 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Check your email</h2>
-          <p className="text-sm text-gray-500 leading-relaxed">
+          <h2 className="text-2xl font-semibold text-brand-dark mb-2">Check your email</h2>
+          <p className="text-sm text-brand-text-secondary leading-relaxed">
             We sent a 6-digit verification code to <br />
-            <span className="font-medium text-gray-900">{email}</span>
+            <span className="font-medium text-brand-dark">{email}</span>
           </p>
         </div>
 
@@ -140,7 +140,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
                 onChange={(e) => handleChange(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 disabled={isLoading}
-                className="w-12 h-14 text-center text-2xl font-semibold text-gray-900 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all disabled:opacity-50"
+                className="w-12 h-14 text-center text-2xl font-semibold text-brand-dark bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all disabled:opacity-50"
               />
             ))}
           </div>
@@ -169,11 +169,11 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
           {/* Footer Timer / Resend Section */}
           <div className="mt-8 text-center text-sm">
             {timeLeft > 0 ? (
-              <p className="text-gray-500">
-                Code expires in <span className="font-semibold text-gray-900">{formattedTime}</span>
+              <p className="text-brand-text-secondary">
+                Code expires in <span className="font-semibold text-brand-dark">{formattedTime}</span>
               </p>
             ) : (
-              <p className="text-gray-500">
+              <p className="text-brand-text-secondary">
                 Code has expired.{' '}
                 <button
                   type="button"

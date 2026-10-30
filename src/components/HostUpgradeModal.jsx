@@ -85,13 +85,13 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
       <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
         <Clock className="w-10 h-10 text-amber-500" />
       </div>
-      <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Application Under Review</h3>
-      <p className="text-sm text-gray-500 leading-relaxed max-w-xs mx-auto mb-8">
+      <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-3">Application Under Review</h3>
+      <p className="text-sm text-brand-text-secondary leading-relaxed max-w-xs mx-auto mb-8">
         Your portfolio application is currently being evaluated by our concierge team. We will notify you via email once your landlord status is verified.
       </p>
       <button 
         onClick={onClose}
-        className="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl font-bold text-sm transition-all"
+        className="w-full py-3.5 bg-gray-100 hover:bg-gray-200 text-brand-dark rounded-xl font-bold text-sm transition-all"
       >
         Return to Dashboard
       </button>
@@ -103,8 +103,8 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
       <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
         <XCircle className="w-10 h-10 text-red-500" />
       </div>
-      <h3 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Verification Failed</h3>
-      <p className="text-sm text-gray-500 leading-relaxed max-w-sm mx-auto mb-2">
+      <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-3">Verification Failed</h3>
+      <p className="text-sm text-brand-text-secondary leading-relaxed max-w-sm mx-auto mb-2">
         We were unable to upgrade your account at this time. The National Identification Number (NIN) provided could not be verified or was incorrect.
       </p>
       {error && <p className="text-xs font-bold text-red-500 mt-2 mb-6">Error: {error}</p>}
@@ -112,7 +112,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
       <div className="flex w-full space-x-3 mt-4">
         <button 
           onClick={onClose}
-          className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-900 rounded-xl font-bold text-sm transition-all"
+          className="flex-1 py-3.5 bg-gray-100 hover:bg-gray-200 text-brand-dark rounded-xl font-bold text-sm transition-all"
         >
           Cancel
         </button>
@@ -129,10 +129,10 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
   const renderFormState = () => (
     <div className="animate-in fade-in duration-300">
       <div className="mb-8 pr-6">
-        <h2 className="text-2xl sm:text-3xl font-black text-gray-900 tracking-tight">
+        <h2 className="text-2xl sm:text-3xl font-display font-bold text-brand-dark tracking-tight">
           Host Portfolio.
         </h2>
-        <p className="text-xs sm:text-sm text-gray-500 mt-2 font-medium leading-relaxed">
+        <p className="text-xs sm:text-sm text-brand-text-secondary mt-2 font-medium leading-relaxed">
           Upgrade your account to list premium properties and vehicles. We require identity verification to maintain the exclusivity of our platform.
         </p>
       </div>
@@ -141,7 +141,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
         
         {/* Street Address */}
         <div>
-          <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5 flex items-center">
+          <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
             <Building className="w-3 h-3 mr-1.5" /> Residential Address
           </label>
           <input 
@@ -158,7 +158,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
         {/* City & State Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5 flex items-center">
+            <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
               <MapPin className="w-3 h-3 mr-1.5" /> City
             </label>
             <input 
@@ -172,7 +172,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">
+            <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5">
               State
             </label>
             <select 
@@ -191,7 +191,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
 
         {/* NIN Verification */}
         <div className="pt-2">
-          <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5 flex items-center">
+          <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
             <CreditCard className="w-3 h-3 mr-1.5" /> National ID (NIN)
           </label>
           <div className="relative">
@@ -224,13 +224,13 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
 
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-      <div className="bg-white rounded-3xl max-w-[440px] w-full p-6 sm:p-8 shadow-2xl relative max-h-[90vh] overflow-y-auto no-scrollbar">
+      <div className="bg-white rounded-3xl max-w-[440px] w-full p-6 sm:p-8 shadow-elevated relative max-h-[90vh] overflow-y-auto no-scrollbar">
         
         <button 
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
         >
-          <X className="w-5 h-5 text-gray-400 hover:text-gray-600" />
+          <X className="w-5 h-5 text-brand-text-muted hover:text-gray-600" />
         </button>
 
         {appStatus === 'IDLE' || appStatus === 'LOADING' ? renderFormState() : null}

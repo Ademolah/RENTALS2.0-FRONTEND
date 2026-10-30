@@ -315,7 +315,7 @@ export default function CarDetails() {
   // --- EARLY RETURNS (MUST BE AFTER ALL HOOKS) ---
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center text-gray-400">
+      <div className="min-h-screen flex flex-col items-center justify-center text-brand-text-muted">
         <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
         <p className="font-medium">Preparing vehicle details...</p>
       </div>
@@ -325,7 +325,7 @@ export default function CarDetails() {
   if (!car) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <h2 className="text-2xl font-bold text-gray-900">Vehicle not found</h2>
+        <h2 className="text-2xl font-bold text-brand-dark">Vehicle not found</h2>
       </div>
     );
   }
@@ -364,7 +364,7 @@ export default function CarDetails() {
             <img 
               src={images[lightboxIndex]} 
               alt="Expanded view" 
-              className="max-h-[85vh] max-w-full object-contain select-none rounded-xl shadow-2xl" 
+              className="max-h-[85vh] max-w-full object-contain select-none rounded-xl shadow-elevated" 
               onClick={(e) => e.stopPropagation()} 
             />
 
@@ -382,7 +382,7 @@ export default function CarDetails() {
 
       <button 
         onClick={() => navigate(-1)}
-        className="flex items-center text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors mb-6 group w-fit"
+        className="flex items-center text-sm font-bold text-brand-text-secondary hover:text-brand-dark transition-colors mb-6 group w-fit"
       >
         <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
         Back
@@ -393,10 +393,10 @@ export default function CarDetails() {
         <div className="flex items-center space-x-2 text-xs font-bold tracking-widest text-brand-primary uppercase mb-2">
           <span>{car.category || 'Premium Vehicle'}</span>
           <span className="text-gray-300">|</span>
-          <span className="text-gray-500 flex items-center"><MapPin className="w-3 h-3 mr-1"/> {car.location?.city}, {car.location?.state}</span>
+          <span className="text-brand-text-secondary flex items-center"><MapPin className="w-3 h-3 mr-1"/> {car.location?.city}, {car.location?.state}</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-extrabold text-gray-900 tracking-tight">
-          {car.make} {car.model} <span className="text-gray-400 font-medium ml-2">{car.year}</span>
+        <h1 className="text-3xl md:text-5xl font-display font-bold text-brand-dark tracking-tight">
+          {car.make} {car.model} <span className="text-brand-text-muted font-medium ml-2">{car.year}</span>
         </h1>
       </div>
 
@@ -478,8 +478,8 @@ export default function CarDetails() {
                   </div>
                   {images.length > 3 && (
                     <>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
+                      <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
+                      <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
                     </>
                   )}
                 </div>
@@ -496,30 +496,30 @@ export default function CarDetails() {
         <div className="lg:col-span-2 space-y-10">
           <div className="flex flex-wrap gap-4 pb-8 border-b border-gray-200">
             <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
-              <Users className="w-5 h-5 text-gray-500" />
+              <Users className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Seats</span>
-                <span className="text-sm font-semibold text-gray-900">{car.seatNumber || 4} Passengers</span>
+                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Seats</span>
+                <span className="text-sm font-semibold text-brand-dark">{car.seatNumber || 4} Passengers</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
-              <Settings2 className="w-5 h-5 text-gray-500" />
+              <Settings2 className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Transmission</span>
-                <span className="text-sm font-semibold text-gray-900 capitalize">{car.transmission || 'Automatic'}</span>
+                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Transmission</span>
+                <span className="text-sm font-semibold text-brand-dark capitalize">{car.transmission || 'Automatic'}</span>
               </div>
             </div>
             <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
-              <Gauge className="w-5 h-5 text-gray-500" />
+              <Gauge className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Class</span>
-                <span className="text-sm font-semibold text-gray-900 capitalize">{car.category || 'Luxury'}</span>
+                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Class</span>
+                <span className="text-sm font-semibold text-brand-dark capitalize">{car.category || 'Luxury'}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xl font-bold text-gray-900 mb-4">About this vehicle</h3>
+            <h3 className="text-xl font-bold text-brand-dark mb-4">About this vehicle</h3>
             <p className="text-gray-600 leading-relaxed whitespace-pre-line">
               {car.description || "A premium, meticulously maintained vehicle ready for your travel needs."}
             </p>
@@ -527,7 +527,7 @@ export default function CarDetails() {
 
           {car.features && car.features.length > 0 && (
             <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Features & Amenities</h3>
+              <h3 className="text-xl font-bold text-brand-dark mb-4">Features & Amenities</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4">
                 {car.features.map((feature, i) => (
                   <div key={i} className="flex items-center space-x-3">
@@ -543,8 +543,8 @@ export default function CarDetails() {
           {car.video && (
             <div className="pt-4 pb-8">
               <div className="flex items-center space-x-2 mb-4">
-                <Video className="w-5 h-5 text-gray-900" />
-                <h3 className="text-xl font-bold text-gray-900">Cinematic Tour</h3>
+                <Video className="w-5 h-5 text-brand-dark" />
+                <h3 className="text-xl font-bold text-brand-dark">Cinematic Tour</h3>
               </div>
               <div className="w-full relative rounded-2xl overflow-hidden bg-black shadow-lg group">
                 <video 
@@ -565,10 +565,10 @@ export default function CarDetails() {
             
             {/* REACTIVE TOP PRICE */}
             <div className="flex items-baseline space-x-1 mb-5 pb-5 border-b border-gray-100 transition-all duration-300">
-              <span className="text-3xl font-extrabold text-gray-900 tracking-tight">
+              <span className="text-3xl font-display font-bold text-brand-dark tracking-tight">
                 ₦{pricing ? pricing.subtotal.toLocaleString() : Number(car.pricePer12Hours).toLocaleString()}
               </span>
-              <span className="text-gray-500 text-sm font-medium">
+              <span className="text-brand-text-secondary text-sm font-medium">
                 {pricing && durationSlots > 1 ? '/ total' : '/ 12 hrs'}
               </span>
             </div>
@@ -586,30 +586,30 @@ export default function CarDetails() {
                 {/* BESPOKE DATE PICKER */}
                 <div className="relative">
                   <div className="flex items-center space-x-2 mb-2.5">
-                    <CalendarIcon className="w-3.5 h-3.5 text-gray-400" />
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Pickup Date</label>
+                    <CalendarIcon className="w-3.5 h-3.5 text-brand-text-muted" />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-brand-dark">Pickup Date</label>
                   </div>
                   
                   <div 
                     onClick={() => setShowCalendar(!showCalendar)}
                     className={`w-full bg-white border rounded-xl py-3.5 pl-4 pr-4 cursor-pointer transition-colors flex items-center justify-between ${showCalendar ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <span className={pickupDate ? 'text-gray-900 font-bold text-sm' : 'text-gray-400 font-medium text-sm'}>
+                    <span className={pickupDate ? 'text-brand-dark font-bold text-sm' : 'text-brand-text-muted font-medium text-sm'}>
                       {pickupDate ? new Date(pickupDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Select Date'}
                     </span>
                   </div>
 
                   {/* Calendar Popover */}
                   {showCalendar && (
-                    <div className="absolute top-[70px] left-0 w-full bg-white border border-gray-200 shadow-2xl rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+                    <div className="absolute top-[70px] left-0 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
                       <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
-                        <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
+                        <span className="font-display font-bold text-sm tracking-widest uppercase text-brand-dark">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
                         <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-display font-bold text-brand-text-muted tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-y-2">
@@ -620,7 +620,7 @@ export default function CarDetails() {
                           const isPast = dateObj < todayDateObj;
                           const isSelected = dateStr === pickupDate;
                           
-                          let bgClass = 'hover:bg-gray-100 text-gray-900';
+                          let bgClass = 'hover:bg-gray-100 text-brand-dark';
                           if (isPast) bgClass = 'text-gray-300 cursor-not-allowed';
                           if (isSelected) bgClass = 'bg-gray-900 text-white shadow-md';
 
@@ -639,7 +639,7 @@ export default function CarDetails() {
                       <div className="mt-4 pt-3 border-t border-gray-100 text-right">
                         <button 
                           onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
-                          className="text-xs font-bold text-gray-900 underline underline-offset-2"
+                          className="text-xs font-bold text-brand-dark underline underline-offset-2"
                         >
                           Close
                         </button>
@@ -653,8 +653,8 @@ export default function CarDetails() {
                 {/* COMPACT Time Selector */}
                 <div>
                   <div className="flex items-center space-x-2 mb-2.5">
-                    <Clock className="w-3.5 h-3.5 text-gray-400" />
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-gray-900">Pickup Time</label>
+                    <Clock className="w-3.5 h-3.5 text-brand-text-muted" />
+                    <label className="text-[10px] font-bold uppercase tracking-widest text-brand-dark">Pickup Time</label>
                   </div>
                   <div className="flex overflow-x-auto gap-2 pb-2 custom-scrollbar snap-x">
                     {CONCIERGE_TIME_SLOTS.map((time) => {
@@ -665,7 +665,7 @@ export default function CarDetails() {
                           type="button"
                           onClick={() => setPickupTime(time)}
                           className={`snap-start shrink-0 px-4 py-2 rounded-xl text-xs font-bold transition-all duration-300 border ${
-                            isSelected ? 'bg-gray-900 border-gray-900 text-white shadow-md scale-[1.02]' : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-900'
+                            isSelected ? 'bg-gray-900 border-gray-900 text-white shadow-md scale-[1.02]' : 'bg-white border-gray-200 text-brand-text-secondary hover:border-gray-400 hover:text-brand-dark'
                           }`}
                         >
                           {time}
@@ -677,11 +677,11 @@ export default function CarDetails() {
 
                 {/* COMPACT Duration Dropdown */}
                 <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
-                  <label className="text-[9px] font-extrabold uppercase tracking-widest text-gray-500 block mb-0.5">Rental Duration</label>
+                  <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-0.5">Rental Duration</label>
                   <select 
                     value={durationSlots}
                     onChange={(e) => setDurationSlots(Number(e.target.value))}
-                    className="w-full text-sm outline-none bg-transparent font-bold cursor-pointer text-gray-900"
+                    className="w-full text-sm outline-none bg-transparent font-bold cursor-pointer text-brand-dark"
                   >
                     <option value={1}>12 Hours (Half Day)</option>
                     <option value={2}>24 Hours (Full Day)</option>
@@ -700,12 +700,12 @@ export default function CarDetails() {
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className={`p-2 rounded-full ${needsChauffeur ? 'bg-brand-primary text-white' : 'bg-gray-100 text-gray-400'}`}>
+                  <div className={`p-2 rounded-full ${needsChauffeur ? 'bg-brand-primary text-white' : 'bg-gray-100 text-brand-text-muted'}`}>
                     <User className="w-4 h-4" />
                   </div>
                   <div>
                     <div className={`text-sm font-bold ${needsChauffeur ? 'text-brand-dark' : 'text-gray-700'}`}>Add Chauffeur</div>
-                    <div className="text-xs text-gray-500 font-medium">₦25,000 / day</div>
+                    <div className="text-xs text-brand-text-secondary font-medium">₦25,000 / day</div>
                   </div>
                 </div>
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${needsChauffeur ? 'border-brand-primary' : 'border-gray-300'}`}>
@@ -734,7 +734,7 @@ export default function CarDetails() {
                     type="button"
                     onClick={handleCheckAvailability}
                     disabled={isCheckingAvailability}
-                    className="w-1/2 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-900 rounded-xl font-bold text-sm transition-all flex items-center justify-center shadow-sm disabled:opacity-70 active:scale-95 duration-200"
+                    className="w-1/2 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-brand-dark rounded-xl font-bold text-sm transition-all flex items-center justify-center shadow-sm disabled:opacity-70 active:scale-95 duration-200"
                   >
                     {isCheckingAvailability ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -779,7 +779,7 @@ export default function CarDetails() {
               </div>
             </form>
 
-            <div className="flex items-center justify-center space-x-1.5 text-gray-500 mt-4">
+            <div className="flex items-center justify-center space-x-1.5 text-brand-text-secondary mt-4">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               <span className="text-[10px] font-bold uppercase tracking-wider">Platform Escrow Protection</span>
             </div>
@@ -791,22 +791,22 @@ export default function CarDetails() {
                   <span className="underline decoration-gray-300 underline-offset-4">
                     ₦{pricing.baseRate.toLocaleString()} x {durationSlots} slots
                   </span>
-                  <span className="font-bold text-gray-900">₦{pricing.rentalTotal.toLocaleString()}</span>
+                  <span className="font-bold text-brand-dark">₦{pricing.rentalTotal.toLocaleString()}</span>
                 </div>
                 
                 {needsChauffeur && (
                   <div className="flex justify-between text-gray-600 text-xs animate-in slide-in-from-top-1 duration-200">
                     <span className="underline decoration-gray-300 underline-offset-4 flex items-center"> Chauffeur Fee</span>
-                    <span className="font-bold text-gray-900">₦{pricing.chauffeurRate.toLocaleString()}</span>
+                    <span className="font-bold text-brand-dark">₦{pricing.chauffeurRate.toLocaleString()}</span>
                   </div>
                 )}
                 
                 <div className="flex justify-between text-gray-600 text-xs">
                   <span className="underline decoration-gray-300 underline-offset-4">Platform Escrow Fee</span>
-                  <span className="font-bold text-gray-900">₦{pricing.platformFee.toLocaleString()}</span>
+                  <span className="font-bold text-brand-dark">₦{pricing.platformFee.toLocaleString()}</span>
                 </div>
                 
-                <div className="flex justify-between font-extrabold text-gray-900 text-base pt-3 border-t border-gray-200 mt-2">
+                <div className="flex justify-between font-display font-bold text-brand-dark text-base pt-3 border-t border-gray-200 mt-2">
                   <span>Total</span>
                   <span>₦{pricing.grandTotal.toLocaleString()}</span>
                 </div>
@@ -821,8 +821,8 @@ export default function CarDetails() {
         <div className="mt-12 pt-16 border-t border-gray-100">
           <div className="flex justify-between items-end mb-8">
             <div>
-              <h3 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight">More luxury vehicles</h3>
-              <p className="text-gray-500 font-medium mt-1">Similar premium cars available in {car.location?.city}</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">More luxury vehicles</h3>
+              <p className="text-brand-text-secondary font-medium mt-1">Similar premium cars available in {car.location?.city}</p>
             </div>
           </div>
 
@@ -839,22 +839,22 @@ export default function CarDetails() {
                     alt={`${simCar.make} ${simCar.model}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-bold text-gray-900 uppercase tracking-wider">
+                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-bold text-brand-dark uppercase tracking-wider">
                     {simCar.category || 'Luxury'}
                   </div>
                 </div>
                 
                 <div className="p-5">
-                  <h4 className="font-bold text-gray-900 text-base truncate mb-1 group-hover:text-brand-primary transition-colors">
+                  <h4 className="font-bold text-brand-dark text-base truncate mb-1 group-hover:text-brand-primary transition-colors">
                     {simCar.make} {simCar.model}
                   </h4>
-                  <p className="text-sm text-gray-500 mb-3 flex items-center">
+                  <p className="text-sm text-brand-text-secondary mb-3 flex items-center">
                     <MapPin className="w-3.5 h-3.5 mr-1" />
                     {simCar.location?.city}
                   </p>
                   <div className="flex items-baseline space-x-1 pt-3 border-t border-gray-100">
-                    <span className="font-extrabold text-gray-900 text-lg">₦{(simCar.pricePer12Hours || 0).toLocaleString()}</span>
-                    <span className="text-xs text-gray-500 font-medium">/ day</span>
+                    <span className="font-display font-bold text-brand-dark text-lg">₦{(simCar.pricePer12Hours || 0).toLocaleString()}</span>
+                    <span className="text-xs text-brand-text-secondary font-medium">/ day</span>
                   </div>
                 </div>
               </Link>

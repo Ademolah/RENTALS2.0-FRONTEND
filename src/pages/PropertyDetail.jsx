@@ -184,9 +184,9 @@ export default function PropertyDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50">
-        <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
-        <p className="text-gray-500 font-medium tracking-wide">Preparing property details...</p>
+      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-light">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-3" />
+        <p className="text-brand-text-secondary font-medium">Preparing property details...</p>
       </div>
     );
   }
@@ -327,7 +327,7 @@ export default function PropertyDetail() {
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-extrabold text-gray-900 tracking-tight mb-2">
+          <h1 className="text-3xl md:text-4xl font-display font-bold text-brand-dark tracking-tight mb-2">
             {property.title}
           </h1>
           <div className="flex items-center space-x-4 text-sm text-gray-900 font-bold">

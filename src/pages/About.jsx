@@ -66,7 +66,7 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
+    <div className="min-h-screen bg-white text-brand-dark flex flex-col font-sans">
       
       {/* 1. EDITORIAL HERO SECTION */}
       <section className="relative pt-16 pb-20 md:pt-28 md:pb-32 bg-gradient-to-b from-gray-50/90 via-white to-white overflow-hidden">
@@ -77,12 +77,12 @@ export default function About() {
           <div className="text-center max-w-4xl mx-auto space-y-6">
             <div className="flex items-center space-x-3 animate-in fade-in duration-500">
               <div className="h-4 w-0.5 bg-brand-primary"></div>
-              <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
+              <span className="text-[11px] font-display font-bold text-brand-primary uppercase tracking-[0.25em]">
                 Redefining African Mobility & Hospitality
               </span>
             </div>
 
-            <h1 className="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-gray-900 leading-[1.12]">
+            <h1 className="text-4xl sm:text-6xl md:text-7xl font-display font-bold tracking-tight text-brand-dark leading-[1.12]">
               Elevating how Africa stays, moves, and <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary via-blue-600 to-indigo-600">experiences luxury.</span>
             </h1>
 
@@ -109,10 +109,10 @@ export default function About() {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
             {metrics.map((m, idx) => (
               <div key={idx} className="text-center p-4">
-                <div className="text-3xl sm:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-brand-primary mb-2">
+                <div className="text-3xl sm:text-5xl font-display font-bold text-transparent bg-clip-text bg-gradient-to-r from-white via-gray-100 to-brand-primary mb-2">
                   {m.value}
                 </div>
-                <div className="text-xs sm:text-sm font-semibold text-gray-400 uppercase tracking-wider">
+                <div className="text-xs sm:text-sm font-semibold text-brand-text-muted uppercase tracking-wider">
                   {m.label}
                 </div>
               </div>
@@ -150,7 +150,7 @@ export default function About() {
                   <div className="bg-gradient-to-br from-brand-primary to-blue-600 text-white p-6 rounded-3xl h-64 flex flex-col justify-between shadow-xl">
                     <Building2 className="w-8 h-8 opacity-80" />
                     <div>
-                      <p className="text-2xl font-black leading-tight">Lagos & Abuja</p>
+                      <p className="text-2xl font-display font-bold leading-tight">Lagos & Abuja</p>
                       <p className="text-xs text-white/80 font-medium mt-1">Curated for business & lifestyle</p>
                     </div>
                   </div>
@@ -161,7 +161,7 @@ export default function About() {
             {/* Narrative Content */}
             <div className="lg:col-span-6 space-y-6">
               <span className="text-xs font-bold text-brand-primary uppercase tracking-widest">Our Vision</span>
-              <h2 className="text-3xl sm:text-5xl font-extrabold text-gray-900 tracking-tight leading-tight">
+              <h2 className="text-3xl sm:text-5xl font-display font-bold text-brand-dark tracking-tight leading-tight">
                 Born out of a need for reliability and world-class polish.
               </h2>
               <p className="text-gray-600 font-medium text-base leading-relaxed">
@@ -172,15 +172,15 @@ export default function About() {
               </p>
 
               <div className="pt-4 space-y-3">
-                <div className="flex items-center space-x-3 text-sm font-bold text-gray-900">
+                <div className="flex items-center space-x-3 text-sm font-bold text-brand-dark">
                   <CheckCircle2 className="w-5 h-5 text-brand-primary" />
                   <span>Integrated escrow payment systems for zero risk</span>
                 </div>
-                <div className="flex items-center space-x-3 text-sm font-bold text-gray-900">
+                <div className="flex items-center space-x-3 text-sm font-bold text-brand-dark">
                   <CheckCircle2 className="w-5 h-5 text-brand-primary" />
                   <span>24/7 dedicated concierge & emergency support</span>
                 </div>
-                <div className="flex items-center space-x-3 text-sm font-bold text-gray-900">
+                <div className="flex items-center space-x-3 text-sm font-bold text-brand-dark">
                   <CheckCircle2 className="w-5 h-5 text-brand-primary" />
                   <span>100% verified asset conditions and hosts</span>
                 </div>
@@ -197,7 +197,7 @@ export default function About() {
           
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-bold text-brand-primary uppercase tracking-widest">Why We Stand Out</span>
-            <h2 className="text-3xl font-extrabold text-gray-900 mt-2">Built on three uncompromising pillars</h2>
+            <h2 className="text-3xl font-display font-bold text-brand-dark mt-2">Built on three uncompromising pillars</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -209,12 +209,12 @@ export default function About() {
                     <div className="w-12 h-12 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary group-hover:bg-brand-primary group-hover:text-white transition-colors duration-300">
                       <Icon className="w-6 h-6" />
                     </div>
-                    <span className="text-[10px] font-extrabold uppercase tracking-widest px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
+                    <span className="text-[10px] font-display font-bold uppercase tracking-widest px-3 py-1 bg-gray-100 text-gray-600 rounded-full">
                       {pillar.tag}
                     </span>
                   </div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">{pillar.title}</h3>
-                  <p className="text-gray-500 text-sm font-medium leading-relaxed">{pillar.desc}</p>
+                  <h3 className="text-xl font-bold text-brand-dark mb-3">{pillar.title}</h3>
+                  <p className="text-brand-text-secondary text-sm font-medium leading-relaxed">{pillar.desc}</p>
                 </div>
               );
             })}
@@ -229,7 +229,7 @@ export default function About() {
           
           <div className="text-center max-w-2xl mx-auto mb-16">
             <span className="text-xs font-bold text-brand-primary uppercase tracking-widest">Leadership</span>
-            <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Meet the team behind the vision</h2>
+            <h2 className="text-3xl sm:text-4xl font-display font-bold text-brand-dark mt-2">Meet the team behind the vision</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -244,9 +244,9 @@ export default function About() {
                   <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent"></div>
                 </div>
                 <div className="p-6">
-                  <h3 className="text-xl font-bold text-gray-900">{leader.name}</h3>
+                  <h3 className="text-xl font-bold text-brand-dark">{leader.name}</h3>
                   <p className="text-xs font-bold text-brand-primary uppercase tracking-wider mt-1 mb-3">{leader.role}</p>
-                  <p className="text-gray-500 text-xs font-medium leading-relaxed">{leader.bio}</p>
+                  <p className="text-brand-text-secondary text-xs font-medium leading-relaxed">{leader.bio}</p>
                 </div>
               </div>
             ))}
@@ -258,10 +258,10 @@ export default function About() {
       {/* 6. CALL TO ACTION BANNER */}
       <section className="py-20 bg-gray-900 text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-          <h2 className="text-3xl sm:text-5xl font-extrabold tracking-tight mb-6">
+          <h2 className="text-3xl sm:text-5xl font-display font-bold tracking-tight mb-6">
             Ready to experience the future of African rentals?
           </h2>
-          <p className="text-gray-400 text-base max-w-xl mx-auto mb-8 font-medium">
+          <p className="text-brand-text-muted text-base max-w-xl mx-auto mb-8 font-medium">
             Whether you are booking your next stay or listing your fleet, Rentals Africa is ready for you.
           </p>
           <div className="flex flex-col sm:flex-row justify-center gap-4">

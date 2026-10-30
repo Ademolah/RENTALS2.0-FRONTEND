@@ -76,10 +76,10 @@ export default function VipListingView({ defaultLocation }) {
         <div className="bg-gray-100 p-1.5 rounded-2xl inline-flex space-x-1 shadow-inner border border-gray-200">
           <button
             onClick={() => setActiveTab('venues')}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all duration-300 ${
+            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-display font-bold tracking-widest uppercase transition-all duration-300 ${
               activeTab === 'venues' 
                 ? 'bg-black text-amber-400 shadow-md' 
-                : 'text-gray-500 hover:text-gray-900'
+                : 'text-brand-text-secondary hover:text-brand-dark'
             }`}
           >
             <Building className="w-4 h-4" />
@@ -87,10 +87,10 @@ export default function VipListingView({ defaultLocation }) {
           </button>
           <button
             onClick={() => setActiveTab('services')}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-black tracking-widest uppercase transition-all duration-300 ${
+            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-display font-bold tracking-widest uppercase transition-all duration-300 ${
               activeTab === 'services' 
                 ? 'bg-black text-amber-400 shadow-md' 
-                : 'text-gray-500 hover:text-gray-900'
+                : 'text-brand-text-secondary hover:text-brand-dark'
             }`}
           >
             <ShieldCheck className="w-4 h-4" />
@@ -100,13 +100,13 @@ export default function VipListingView({ defaultLocation }) {
       </div>
 
       {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-gray-400">
+        <div className="flex flex-col items-center justify-center py-20 text-brand-text-muted">
           <Loader2 className="w-10 h-10 animate-spin text-amber-400 mb-4" />
           <p className="font-medium text-sm uppercase tracking-widest">Curating Portfolio...</p>
         </div>
       ) : activeList.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50">
-          <p className="text-gray-500 font-bold">No exclusive {activeTab} available in {selectedLocation} yet.</p>
+          <p className="text-brand-text-secondary font-bold">No exclusive {activeTab} available in {selectedLocation} yet.</p>
           <button 
             onClick={() => setSelectedLocation(null)}
             className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-black transition-colors"
@@ -117,7 +117,7 @@ export default function VipListingView({ defaultLocation }) {
       ) : (
         <>
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-gray-900 tracking-tight capitalize">
+            <h3 className="text-xl font-bold text-brand-dark tracking-tight capitalize">
               {activeTab} in {selectedLocation}
             </h3>
             <button 

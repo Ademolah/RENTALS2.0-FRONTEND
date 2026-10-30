@@ -253,15 +253,15 @@ export default function VipServiceDetails() {
           
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-[10px] font-display font-bold uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                 <ShieldCheck className="w-3 h-3 mr-1.5" />
                 {formattedType}
               </span>
             </div>
-            <h1 className="text-4xl md:text-6xl font-black text-white tracking-tighter mb-4 leading-none">
+            <h1 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter mb-4 leading-none">
               {service.title}
             </h1>
-            <div className="flex items-center text-gray-400 text-sm font-medium">
+            <div className="flex items-center text-brand-text-muted text-sm font-medium">
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {service.address?.street && `${service.address.street}, `}{service.address?.city}, {service.address?.state}
             </div>
@@ -275,13 +275,13 @@ export default function VipServiceDetails() {
                <UserCheck className="w-6 h-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-500 uppercase tracking-widest mb-0.5">Provided By</p>
+              <p className="text-[10px] font-bold text-brand-text-secondary uppercase tracking-widest mb-0.5">Provided By</p>
               <p className="text-sm font-bold text-white tracking-wide">{providerName}</p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">Service Overview</h3>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">Service Overview</h3>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed font-medium">
               {service.description}
             </p>
@@ -290,7 +290,7 @@ export default function VipServiceDetails() {
           {/* What's Included (Services Array) */}
           {service.services && service.services.length > 0 && (
             <div className="bg-white/5 border border-white/10 p-8 rounded-3xl">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-gray-500 mb-6">What's Included</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">What's Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                 {service.services.map((inclusion, idx) => (
                   <div key={idx} className="flex items-start space-x-3 text-gray-300">
@@ -305,16 +305,16 @@ export default function VipServiceDetails() {
 
         {/* RIGHT COLUMN: STICKY ESCROW CARD */}
         <div className="w-full lg:w-[420px] shrink-0">
-          <div className="sticky top-32 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 shadow-2xl relative overflow-visible">
+          <div className="sticky top-32 bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 shadow-elevated relative overflow-visible">
             
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-amber-500/20 blur-[60px] rounded-full pointer-events-none"></div>
 
             <div className="relative z-10">
               <div className="mb-8">
-                <span className="block text-[10px] font-black uppercase tracking-widest text-amber-500 mb-2">Daily Rate</span>
+                <span className="block text-[10px] font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Daily Rate</span>
                 <div className="flex items-baseline text-white">
-                  <span className="text-4xl font-black tracking-tighter">₦{dailyRate.toLocaleString()}</span>
-                  <span className="text-gray-500 text-sm ml-2 font-bold">/ day</span>
+                  <span className="text-4xl font-display font-bold tracking-tighter">₦{dailyRate.toLocaleString()}</span>
+                  <span className="text-brand-text-secondary text-sm ml-2 font-bold">/ day</span>
                 </div>
               </div>
 
@@ -334,8 +334,8 @@ export default function VipServiceDetails() {
                     className="w-full bg-black/50 border border-white/10 text-white rounded-2xl py-4 pl-12 pr-4 cursor-pointer hover:border-amber-500/50 transition-colors flex items-center justify-between"
                   >
                     <div className="flex items-center">
-                      <CalendarIcon className="w-5 h-5 text-gray-400 absolute left-4" />
-                      <span className={startDate ? 'text-white' : 'text-gray-500'}>
+                      <CalendarIcon className="w-5 h-5 text-brand-text-muted absolute left-4" />
+                      <span className={startDate ? 'text-white' : 'text-brand-text-secondary'}>
                         {startDate ? new Date(startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select Start Date'}
                       </span>
                     </div>
@@ -343,7 +343,7 @@ export default function VipServiceDetails() {
 
                   {/* Calendar Popover */}
                   {showCalendar && (
-                    <div className="absolute top-full left-0 mt-2 w-full bg-gray-900 border border-white/10 rounded-2xl shadow-2xl p-5 z-50 animate-in fade-in zoom-in-95">
+                    <div className="absolute top-full left-0 mt-2 w-full bg-gray-900 border border-white/10 rounded-2xl shadow-elevated p-5 z-50 animate-in fade-in zoom-in-95">
                       <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronLeft className="w-5 h-5"/></button>
                         <span className="font-bold text-sm tracking-widest uppercase text-white">
@@ -351,7 +351,7 @@ export default function VipServiceDetails() {
                         </span>
                         <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronRight className="w-5 h-5"/></button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-gray-500 tracking-widest uppercase">
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-brand-text-secondary tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
@@ -381,7 +381,7 @@ export default function VipServiceDetails() {
 
                 {/* DURATION PICKER */}
                 <div className="relative w-full">
-                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-gray-400 z-10">
+                  <div className="absolute inset-y-0 left-4 flex items-center pointer-events-none text-brand-text-muted z-10">
                     <Clock className="w-5 h-5" />
                   </div>
                   <select 
@@ -395,23 +395,23 @@ export default function VipServiceDetails() {
                       </option>
                     ))}
                   </select>
-                  <ChevronRight className="w-4 h-4 text-gray-500 absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none rotate-90" />
+                  <ChevronRight className="w-4 h-4 text-brand-text-secondary absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none rotate-90" />
                 </div>
               </div>
 
               {/* Escrow Math */}
               <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-sm font-medium">
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-brand-text-muted">
                   <span>₦{dailyRate.toLocaleString()} x {durationDays} day{durationDays > 1 ? 's' : ''}</span>
                   <span className="text-white">₦{subtotal.toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between text-gray-400">
+                <div className="flex justify-between text-brand-text-muted">
                   <span>Platform Fee (5%)</span>
                   <span className="text-white">₦{platformFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
                   <span className="text-white font-bold">Total Escrow</span>
-                  <span className="text-xl font-black text-amber-500">₦{grandTotal.toLocaleString()}</span>
+                  <span className="text-xl font-display font-bold text-amber-500">₦{grandTotal.toLocaleString()}</span>
                 </div>
               </div>
 
@@ -436,7 +436,7 @@ export default function VipServiceDetails() {
                 </button>
               </div>
 
-              <div className="mt-6 flex items-start gap-3 text-xs text-gray-500 leading-relaxed font-medium">
+              <div className="mt-6 flex items-start gap-3 text-xs text-brand-text-secondary leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
                 <p>Payment is securely held in platform escrow and is only released to the provider upon confirmed delivery of service.</p>
               </div>

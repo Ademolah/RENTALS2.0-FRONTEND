@@ -284,19 +284,19 @@ export default function LandlordDashboard() {
             <div>
               <div className="flex items-center space-x-3 mb-2">
                 <div className="h-[2px] w-8 bg-brand-primary"></div>
-                <span className="text-brand-primary text-[10px] font-extrabold uppercase tracking-[0.2em]">
+                <span className="text-brand-primary text-[10px] font-display font-bold uppercase tracking-[0.2em]">
                   Host Portal
                 </span>
               </div>
-              <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter">Portfolio</h1>
+              <h1 className="text-4xl md:text-5xl font-display font-bold text-brand-dark tracking-tighter">Portfolio</h1>
             </div>
             
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full md:w-auto">
               <button 
                 onClick={() => setIsBankModalOpen(true)}
-                className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-gray-200 hover:border-brand-primary hover:text-brand-primary text-gray-900 text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group rounded-xl"
+                className="w-full sm:w-auto px-6 py-4 bg-white border-2 border-gray-200 hover:border-brand-primary hover:text-brand-primary text-brand-dark text-sm font-bold uppercase tracking-widest transition-all flex items-center justify-center space-x-3 group rounded-xl"
               >
-                <Landmark className="w-4 h-4 text-gray-400 group-hover:text-brand-primary transition-colors" />
+                <Landmark className="w-4 h-4 text-brand-text-muted group-hover:text-brand-primary transition-colors" />
                 <span>Setup Payouts</span>
               </button>
 
@@ -310,33 +310,33 @@ export default function LandlordDashboard() {
                 </button>
 
                 {isListMenuOpen && (
-                  <div className="absolute right-0 mt-3 w-full sm:w-72 bg-white border border-gray-100 shadow-2xl z-50 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
+                  <div className="absolute right-0 mt-3 w-full sm:w-72 bg-white border border-gray-100 shadow-elevated z-50 rounded-2xl overflow-hidden animate-in fade-in slide-in-from-top-2">
                     <button onClick={() => handleAssetMenuClick('PROPERTY')} className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-50 transition-colors group">
-                      <Building className="w-5 h-5 text-gray-400 group-hover:text-brand-primary transition-colors" />
+                      <Building className="w-5 h-5 text-brand-text-muted group-hover:text-brand-primary transition-colors" />
                       <div className="text-left">
-                        <div className="text-sm font-bold text-gray-900">Property</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Apartment • Shortlet</div>
+                        <div className="text-sm font-bold text-brand-dark">Property</div>
+                        <div className="text-[10px] text-brand-text-secondary uppercase tracking-wider mt-0.5">Apartment • Shortlet</div>
                       </div>
                     </button>
                     <button onClick={() => handleAssetMenuClick('CAR')} className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-50 transition-colors group">
-                      <Car className="w-5 h-5 text-gray-400 group-hover:text-brand-primary transition-colors" />
+                      <Car className="w-5 h-5 text-brand-text-muted group-hover:text-brand-primary transition-colors" />
                       <div className="text-left">
-                        <div className="text-sm font-bold text-gray-900">Vehicle</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
+                        <div className="text-sm font-bold text-brand-dark">Vehicle</div>
+                        <div className="text-[10px] text-brand-text-secondary uppercase tracking-wider mt-0.5">Rental • Chauffeur</div>
                       </div>
                     </button>
                     <button onClick={() => handleAssetMenuClick('HOTEL')} className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 border-b border-gray-50 transition-colors group">
-                      <Hotel className="w-5 h-5 text-gray-400 group-hover:text-brand-primary transition-colors" />
+                      <Hotel className="w-5 h-5 text-brand-text-muted group-hover:text-brand-primary transition-colors" />
                       <div className="text-left">
-                        <div className="text-sm font-bold text-gray-900">Hotel</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Boutique • Resort</div>
+                        <div className="text-sm font-bold text-brand-dark">Hotel</div>
+                        <div className="text-[10px] text-brand-text-secondary uppercase tracking-wider mt-0.5">Boutique • Resort</div>
                       </div>
                     </button>
                     <button onClick={() => handleAssetMenuClick('VIP')} className="w-full flex items-center space-x-4 px-6 py-5 hover:bg-gray-50 transition-colors group">
                       <Crown className="w-5 h-5 text-amber-500 group-hover:text-amber-600 transition-colors" />
                       <div className="text-left">
-                        <div className="text-sm font-bold text-gray-900">VIP Asset</div>
-                        <div className="text-[10px] text-gray-500 uppercase tracking-wider mt-0.5">Venue • Service • Security</div>
+                        <div className="text-sm font-bold text-brand-dark">VIP Asset</div>
+                        <div className="text-[10px] text-brand-text-secondary uppercase tracking-wider mt-0.5">Venue • Service • Security</div>
                       </div>
                     </button>
                   </div>
@@ -355,8 +355,8 @@ export default function LandlordDashboard() {
               <Wallet className="w-6 h-6 text-green-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Total Cleared Earnings</p>
-              <h3 className="text-2xl font-black text-gray-900 tracking-tight">₦{totalClearedEarnings.toLocaleString()}</h3>
+              <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest mb-1">Total Cleared Earnings</p>
+              <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight">₦{totalClearedEarnings.toLocaleString()}</h3>
             </div>
           </div>
           <div className="bg-white border border-gray-200 rounded-2xl p-6 flex items-center shadow-sm">
@@ -364,8 +364,8 @@ export default function LandlordDashboard() {
               <TrendingUp className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending in Escrow</p>
-              <h3 className="text-2xl font-black text-gray-900 tracking-tight">₦{pendingEscrow.toLocaleString()}</h3>
+              <p className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest mb-1">Pending in Escrow</p>
+              <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight">₦{pendingEscrow.toLocaleString()}</h3>
             </div>
           </div>
         </div>
@@ -379,7 +379,7 @@ export default function LandlordDashboard() {
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`pb-3 whitespace-nowrap text-xs font-bold uppercase tracking-[0.15em] transition-colors relative ${
-                activeTab === tab ? 'text-gray-900' : 'text-gray-400 hover:text-gray-900'
+                activeTab === tab ? 'text-brand-dark' : 'text-brand-text-muted hover:text-brand-dark'
               }`}
             >
               {tab === 'ACTION_FEED' ? 'Ledger & Actions' : tab === 'VIP ASSETS' ? 'VIP ASSETS' : `My ${tab}`}
@@ -396,7 +396,7 @@ export default function LandlordDashboard() {
         {isLoading ? (
           <div className="py-32 flex flex-col items-center justify-center">
             <Loader2 className="w-10 h-10 animate-spin text-brand-primary" />
-            <p className="mt-6 text-sm font-bold uppercase tracking-widest text-gray-400">Syncing Ledger...</p>
+            <p className="mt-6 text-sm font-bold uppercase tracking-widest text-brand-text-muted">Syncing Ledger...</p>
           </div>
         ) : activeTab === 'ACTION_FEED' && ledgerEntries.length > 0 ? (
           <div className="space-y-6">
@@ -413,7 +413,7 @@ export default function LandlordDashboard() {
               return (
                 <div key={booking._id} className="bg-white border border-gray-100 hover:border-gray-300 hover:shadow-xl transition-all p-6 relative group flex flex-col lg:flex-row gap-8 rounded-2xl overflow-hidden">
                   
-                  <div className={`absolute top-4 left-4 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg z-10 shadow-sm ${(isVip || isVipService) ? 'bg-amber-400 text-gray-900' : 'bg-gray-900/90 text-white'}`}>
+                  <div className={`absolute top-4 left-4 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg z-10 shadow-sm ${(isVip || isVipService) ? 'bg-amber-400 text-brand-dark' : 'bg-gray-900/90 text-white'}`}>
                     {isCar ? 'Vehicle' : isHotel ? 'Hotel Room' : isVipService ? 'VIP Service' : isVip ? 'VIP Reservation' : 'Property'}
                   </div>
 
@@ -428,23 +428,23 @@ export default function LandlordDashboard() {
                   <div className="flex-1 flex flex-col justify-between py-1">
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                       <div>
-                        <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight group-hover:text-brand-primary transition-colors">{booking.asset.title}</h3>
-                        <div className="flex items-center text-gray-500 text-sm font-medium">
-                          <MapPin className="w-4 h-4 mr-1.5 text-gray-400" /> {booking.asset.location}
+                        <h3 className="text-2xl font-display font-bold text-brand-dark mb-2 leading-tight group-hover:text-brand-primary transition-colors">{booking.asset.title}</h3>
+                        <div className="flex items-center text-brand-text-secondary text-sm font-medium">
+                          <MapPin className="w-4 h-4 mr-1.5 text-brand-text-muted" /> {booking.asset.location}
                         </div>
                       </div>
                       
                       <div className="space-y-5 bg-gray-50 rounded-xl p-5 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Client</div>
+                          <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Client</div>
                           <div className="text-right">
-                            <div className="text-sm font-bold text-gray-900">{booking.guest.firstName} {booking.guest.lastName}</div>
-                            <div className="text-xs text-gray-500 font-medium">{booking.guest.phone}</div>
+                            <div className="text-sm font-bold text-brand-dark">{booking.guest.firstName} {booking.guest.lastName}</div>
+                            <div className="text-xs text-brand-text-secondary font-medium">{booking.guest.phone}</div>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Dates / Time</div>
-                          <div className="text-sm font-bold text-gray-900">{booking.dates}</div>
+                          <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">Dates / Time</div>
+                          <div className="text-sm font-bold text-brand-dark">{booking.dates}</div>
                         </div>
                       </div>
                     </div>
@@ -452,8 +452,8 @@ export default function LandlordDashboard() {
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-5 border-t border-gray-100 gap-4">
                        <div className="flex flex-wrap items-center gap-4 sm:gap-6">
                          <div>
-                           <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-0.5">Payout Amount</div>
-                           <div className="text-2xl font-black text-gray-900 tracking-tight">₦{booking.payoutAmount.toLocaleString()}</div>
+                           <div className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest mb-0.5">Payout Amount</div>
+                           <div className="text-2xl font-display font-bold text-brand-dark tracking-tight">₦{booking.payoutAmount.toLocaleString()}</div>
                          </div>
 
                          {isReleased ? (
@@ -509,18 +509,18 @@ export default function LandlordDashboard() {
                       alt={booking.asset.title} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
                     />
-                    <div className={`absolute top-4 right-4 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm ${booking.type === 'VIP_SERVICE' ? 'bg-amber-400 text-gray-900' : 'bg-white/90 text-gray-900'}`}>
+                    <div className={`absolute top-4 right-4 backdrop-blur-md px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-widest shadow-sm ${booking.type === 'VIP_SERVICE' ? 'bg-amber-400 text-brand-dark' : 'bg-white/90 text-brand-dark'}`}>
                       {booking.type === 'VIP_SERVICE' ? 'Service' : 'Venue'}
                     </div>
                 </div>
                 <div className="p-5">
-                  <h4 className="text-lg font-black text-gray-900 leading-tight mb-2 truncate group-hover:text-brand-primary transition-colors">{booking.asset.title}</h4>
-                  <div className="flex items-center text-gray-500 text-xs font-medium mb-4">
-                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-gray-400" /> <span className="truncate">{booking.asset.location}</span>
+                  <h4 className="text-lg font-display font-bold text-brand-dark leading-tight mb-2 truncate group-hover:text-brand-primary transition-colors">{booking.asset.title}</h4>
+                  <div className="flex items-center text-brand-text-secondary text-xs font-medium mb-4">
+                    <MapPin className="w-3.5 h-3.5 mr-1.5 text-brand-text-muted" /> <span className="truncate">{booking.asset.location}</span>
                   </div>
                   <button 
                     onClick={() => handleManageAsset(booking)}
-                    className="text-[10px] font-bold text-gray-900 uppercase tracking-widest border-b-2 border-gray-900 pb-0.5 hover:text-brand-primary hover:border-brand-primary transition-colors w-full text-left"
+                    className="text-[10px] font-bold text-brand-dark uppercase tracking-widest border-b-2 border-gray-900 pb-0.5 hover:text-brand-primary hover:border-brand-primary transition-colors w-full text-left"
                   >
                     Manage Asset &rarr;
                   </button>
@@ -534,8 +534,8 @@ export default function LandlordDashboard() {
             <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mb-6 shadow-inner">
               <ShieldCheck className="w-10 h-10 text-gray-300" />
             </div>
-            <h3 className="text-2xl font-black text-gray-900 tracking-tight">No Active Ledger Entries</h3>
-            <p className="text-gray-500 mt-3 max-w-md mx-auto leading-relaxed">Your portfolio is currently empty. List a new property, vehicle, or VIP service to begin accepting premium reservations.</p>
+            <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight">No Active Ledger Entries</h3>
+            <p className="text-brand-text-secondary mt-3 max-w-md mx-auto leading-relaxed">Your portfolio is currently empty. List a new property, vehicle, or VIP service to begin accepting premium reservations.</p>
           </div>
         ) : null}
       </div>
