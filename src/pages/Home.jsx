@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
+import { CityBackdrop } from '../components/ui';
 import PropertyCard from '../components/PropertyCard';
 import CarCard from '../components/CarCard';
 import HotelListingView from '../components/HotelCard';
@@ -172,7 +173,7 @@ export default function Home({
       {/* Hero */}
       {!isVip && (
         <section className="relative overflow-hidden rounded-3xl bg-brand-dark text-white mb-8 px-6 py-10 md:px-12 md:py-14 animate-fade-up">
-          <div className="absolute -top-24 -right-24 w-96 h-96 rounded-full bg-brand-primary/15 blur-3xl" />
+          <CityBackdrop image={/abuja/i.test(activeCityContext) ? '/abuja.jpg' : '/lagos.jpg'} />
           <div className="relative max-w-3xl">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/10 rounded-full mb-5">
               <MapPin className="w-4 h-4 text-white" />

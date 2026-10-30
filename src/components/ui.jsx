@@ -41,10 +41,27 @@ export function Container({ className = '', children }) {
   return <div className={`max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 ${className}`}>{children}</div>;
 }
 
-export function PageHero({ eyebrow, title, subtitle, children }) {
+const CITY_IMAGES = ['/lagos.jpg', '/abuja.jpg'];
+
+export function cityFor(key = '') {
+  const n = [...String(key)].reduce((a, c) => a + c.charCodeAt(0), 0);
+  return CITY_IMAGES[n % CITY_IMAGES.length];
+}
+
+export function CityBackdrop({ seed = '', image }) {
+  return (
+    <>
+      <img src={image || cityFor(seed)} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
+      <div className="absolute inset-0 bg-gradient-to-r from-brand-dark/90 via-brand-dark/70 to-brand-dark/30" />
+      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand-dark/60 to-transparent" />
+    </>
+  );
+}
+
+export function PageHero({ eyebrow, title, subtitle, children, image }) {
   return (
     <section className="bg-brand-dark text-white relative overflow-hidden">
-      <div className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-brand-primary/20 blur-3xl" />
+      <CityBackdrop seed={title} image={image} />
       <Container className="relative py-16 md:py-24">
         {eyebrow && <p className="text-sm font-bold uppercase tracking-[0.2em] text-brand-primary mb-4">{eyebrow}</p>}
         <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight max-w-3xl">{title}</h1>

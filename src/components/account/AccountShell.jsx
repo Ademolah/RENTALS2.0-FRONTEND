@@ -1,7 +1,7 @@
 import { NavLink, Link } from 'react-router-dom';
 import { CalendarCheck, Heart, Bell, Settings, Crown, LogIn } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
-import { Container, Card, EmptyState, Button } from '../ui';
+import { Container, Card, EmptyState, Button, CityBackdrop } from '../ui';
 
 const NAV = [
   { to: '/trips', label: 'Trips', icon: CalendarCheck },
@@ -31,7 +31,7 @@ export function AccountShell({ title, subtitle, actions, children }) {
   return (
     <div className="bg-gray-50 min-h-screen pb-24">
       <section className="bg-brand-dark relative overflow-hidden">
-        <div className="absolute -top-32 -right-24 w-[26rem] h-[26rem] rounded-full bg-brand-primary/20 blur-3xl pointer-events-none" />
+        <CityBackdrop seed={title} />
         <Container className="relative py-10 md:py-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
           <div>
             <p className="text-sm font-bold uppercase tracking-[0.2em] text-brand-primary mb-2">Your account</p>
