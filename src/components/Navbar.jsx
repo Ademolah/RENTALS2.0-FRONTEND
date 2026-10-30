@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
   CarFront, Crown, ChevronRight, User as UserIcon,
@@ -10,6 +10,12 @@ import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
+  const navigate = useNavigate();
+  const selectCategory = (id) => {
+    onCategoryChange?.(id);
+    navigate('/');
+    window.scrollTo({ top: 0 });
+  };
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
   const [unread, setUnread] = useState(0);
@@ -73,7 +79,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   return (
                     <button
                       key={cat.id}
-                      onClick={() => onCategoryChange?.(cat.id)}
+                      onClick={() => selectCategory(cat.id)}
                       className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-base font-medium transition-all duration-200 ${
                         isActive
                           ? 'bg-white shadow-sm text-brand-dark font-semibold'
@@ -219,7 +225,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             return (
               <button
                 key={cat.id}
-                onClick={() => onCategoryChange?.(cat.id)}
+                onClick={() => selectCategory(cat.id)}
                 className="flex flex-col items-center justify-center w-full h-full gap-1"
               >
                 <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-brand-primary' : 'text-brand-text-muted'}`} />
