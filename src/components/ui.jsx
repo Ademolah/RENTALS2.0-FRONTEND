@@ -107,3 +107,21 @@ export function EmptyState({ icon: Icon, title, text, action }) {
 export function Skeleton({ className = '' }) {
   return <div className={`animate-pulse-soft bg-gray-100 rounded-xl ${className}`} />;
 }
+
+export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', danger = false, busy = false, onConfirm, onCancel }) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm animate-fade-up" onClick={onCancel}>
+      <div role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" className="w-full max-w-md bg-white rounded-3xl shadow-elevated p-8" onClick={(e) => e.stopPropagation()}>
+        <h2 id="confirm-title" className="text-2xl font-display font-bold text-brand-dark">{title}</h2>
+        {text && <p className="mt-3 text-base text-brand-text-secondary leading-relaxed">{text}</p>}
+        <div className="mt-8 flex gap-3 justify-end">
+          <Button variant="outline" onClick={onCancel} disabled={busy}>Cancel</Button>
+          <Button variant={danger ? 'dark' : 'primary'} onClick={onConfirm} disabled={busy} className={danger ? '!bg-red-600 hover:!bg-red-700' : ''}>
+            {busy ? 'Please wait...' : confirmLabel}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
