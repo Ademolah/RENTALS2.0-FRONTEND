@@ -1,4 +1,5 @@
 import { apiClient } from './client';
+import { getNotifications } from './notifications';
 
 export const toggleFavoriteApi = async (propertyId) => {
   const response = await apiClient.post(`/users/favorites/${propertyId}`); 
@@ -39,8 +40,6 @@ export const uploadAvatarApi = async (blob) => {
 };
 
 export const getUnreadCountApi = async () => {
-  const response = await apiClient.get('/notifications');
-  const d = response.data;
-  const list = Array.isArray(d) ? d : d?.data?.notifications || d?.data || d?.notifications || [];
-  return Array.isArray(list) ? list.filter((n) => !n.isRead && !n.read).length : 0;
+  const items = await getNotifications();
+  return items.filter((n) => !n.isRead).length;
 };
