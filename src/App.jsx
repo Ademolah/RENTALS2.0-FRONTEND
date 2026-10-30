@@ -62,7 +62,7 @@ function App() {
       )}
       
       {/* Header Wrapper */}
-      <div className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-gray-100/80 flex flex-col">
+      <div className="sticky top-0 z-50 bg-white flex flex-col">
         
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar 

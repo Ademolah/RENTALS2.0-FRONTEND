@@ -7,26 +7,36 @@ import { getProperties } from '../api/properties';
 import { getCars } from '../api/car';
 import {
   Loader2, Search, Key, Building2, CarFront, Crown,
-  ChevronRight, MapPin, Sparkles, ArrowRight
+  ChevronRight, MapPin, Sparkles, ArrowRight, Shield,
+  Star, Clock
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 
 const SERVICES = [
   { key: 'shortlet', label: 'Shortlets', icon: Key, color: 'bg-brand-primary-soft text-brand-primary', desc: 'Verified luxury apartments' },
-  { key: 'hotel', label: 'Hotels', icon: Building2, color: 'bg-brand-accent-soft text-brand-accent', desc: 'Premium hotel suites' },
+  { key: 'hotel', label: 'Hotels', icon: Building2, color: 'bg-blue-50 text-blue-600', desc: 'Premium hotel suites' },
   { key: 'car', label: 'Car Rentals', icon: CarFront, color: 'bg-brand-purple-soft text-brand-purple', desc: 'Affordable fleet rentals' },
-  { key: 'vip', label: 'VIP', icon: Crown, color: 'bg-brand-warning-soft text-brand-warning', desc: 'Exclusive concierge' },
+  { key: 'vip', label: 'VIP', icon: Crown, color: 'bg-amber-50 text-amber-600', desc: 'Exclusive concierge' },
 ];
 
-function SectionHeader({ title, action, onAction }) {
+const TRUST_BADGES = [
+  { icon: Shield, label: 'Verified listings', desc: 'Every property inspected' },
+  { icon: Star, label: 'Premium quality', desc: 'Curated selection only' },
+  { icon: Clock, label: 'Instant booking', desc: 'Confirm in seconds' },
+];
+
+function SectionHeader({ title, subtitle, action, onAction }) {
   return (
-    <div className="flex items-center justify-between mb-5">
-      <h2 className="text-xl font-display font-bold text-brand-dark tracking-tight">{title}</h2>
+    <div className="flex items-end justify-between mb-6">
+      <div>
+        <h2 className="text-[22px] font-display font-bold text-brand-dark tracking-tight">{title}</h2>
+        {subtitle && <p className="text-sm text-brand-text-secondary mt-0.5">{subtitle}</p>}
+      </div>
       {action && (
-        <button onClick={onAction} className="flex items-center space-x-1 text-sm font-semibold text-brand-primary hover:text-brand-hover transition-colors">
+        <button onClick={onAction} className="flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-hover transition-colors group">
           <span>{action}</span>
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
       )}
     </div>
@@ -135,41 +145,48 @@ export default function Home({
   const isVip = activeCategory.toLowerCase() === 'vip' || activeCategory.toLowerCase() === 'vip reservation';
   const isShortlet = activeCategory.toLowerCase() === 'shortlet';
   const isCar = activeCategory.toLowerCase() === 'car';
+  const showCuratedHome = isShortlet && (!searchFilters.location || searchFilters.location === activeCityContext);
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
+    <main className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">
 
-      {/* ─── City Bar (matches mobile dark gradient city selector) ─── */}
-      {isShortlet && !searchFilters.location && (
-        <div className="mb-6 rounded-2xl overflow-hidden bg-gradient-to-r from-brand-accent to-brand-dark p-4 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-brand-primary/20 flex items-center justify-center flex-shrink-0">
-            <MapPin className="w-5 h-5 text-brand-primary" />
+      {/* ─── City Context ─── */}
+      {showCuratedHome && (
+        <div className="mb-8 flex items-center gap-3 animate-fade-up">
+          <div className="flex items-center gap-2 px-4 py-2 bg-brand-accent-soft rounded-full">
+            <MapPin className="w-3.5 h-3.5 text-brand-primary" />
+            <span className="text-sm font-semibold text-brand-dark">{activeCityContext}, Nigeria</span>
           </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-text-muted">Browsing in</p>
-            <p className="text-white font-display font-bold text-base truncate">{activeCityContext}, Nigeria</p>
-          </div>
+          <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent"></div>
         </div>
       )}
 
-      {/* ─── Services Grid (matches mobile "Our services" row) ─── */}
-      {isShortlet && !searchFilters.location && (
-        <div className="mb-8">
-          <SectionHeader title="Our services" />
-          <div className="grid grid-cols-4 gap-3">
+      {/* ─── Services Grid ─── */}
+      {showCuratedHome && (
+        <div className="mb-10 animate-fade-up" style={{ animationDelay: '0.05s' }}>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             {SERVICES.map((s) => {
               const Icon = s.icon;
+              const isActive = activeCategory === s.key;
               return (
                 <button
                   key={s.key}
                   onClick={() => onCategoryChange?.(s.key)}
-                  className="flex flex-col items-center gap-2 py-4 px-2 rounded-2xl bg-white shadow-soft border border-gray-100/60 hover:shadow-card hover:border-gray-200 transition-all group"
+                  className={`relative flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 group ${
+                    isActive
+                      ? 'bg-brand-dark border-brand-dark text-white shadow-card'
+                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-card'
+                  }`}
                 >
-                  <div className={`w-12 h-12 rounded-full ${s.color} flex items-center justify-center group-hover:scale-105 transition-transform`}>
-                    <Icon className="w-5 h-5" />
+                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                    isActive ? 'bg-white/15' : s.color
+                  }`}>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
                   </div>
-                  <span className="text-xs font-semibold text-brand-dark">{s.label}</span>
-                  <span className="text-[10px] text-brand-text-muted hidden sm:block">{s.desc}</span>
+                  <div className="text-left min-w-0">
+                    <span className={`text-sm font-semibold block ${isActive ? 'text-white' : 'text-brand-dark'}`}>{s.label}</span>
+                    <span className={`text-[11px] block truncate ${isActive ? 'text-white/60' : 'text-brand-text-muted'}`}>{s.desc}</span>
+                  </div>
                 </button>
               );
             })}
@@ -187,13 +204,13 @@ export default function Home({
           defaultDate={searchFilters.date || searchFilters.checkIn}
         />
       ) : loading ? (
-        <div className="flex flex-col items-center justify-center py-24 text-brand-text-muted">
-          <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-3" />
-          <p className="text-sm font-medium">Finding available listings...</p>
+        <div className="flex flex-col items-center justify-center py-32 text-brand-text-muted">
+          <div className="w-10 h-10 border-2 border-gray-200 border-t-brand-primary rounded-full animate-spin mb-4"></div>
+          <p className="text-sm font-medium">Finding the best stays...</p>
         </div>
       ) : listings.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="bg-brand-accent-soft p-5 rounded-full mb-4">
+        <div className="flex flex-col items-center justify-center py-32 text-center">
+          <div className="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mb-5">
             <Search className="w-7 h-7 text-brand-text-muted" />
           </div>
           <h3 className="text-xl font-display font-bold text-brand-dark">No exact matches</h3>
@@ -203,9 +220,9 @@ export default function Home({
         </div>
       ) : (
         <>
-          {/* Car Hero Banner */}
+          {/* Car Hero */}
           {isCar && (
-            <div className="mb-8 text-center">
+            <div className="mb-10 text-center animate-fade-up">
               <h2 className="text-3xl md:text-4xl font-display font-bold text-brand-dark mb-3 tracking-tight">
                 Save More, <span className="text-brand-primary">Travel More.</span>
               </h2>
@@ -215,46 +232,66 @@ export default function Home({
             </div>
           )}
 
-          {/* Featured (first listing, highlighted) */}
-          {isShortlet && listings.length > 0 && !searchFilters.location && (
-            <div className="mb-8">
+          {/* Featured Hero Card */}
+          {showCuratedHome && listings.length > 0 && (
+            <div className="mb-10 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               <SectionHeader title="Featured" />
               <Link
                 to={`/property/${listings[0]._id}`}
-                className="block relative rounded-3xl overflow-hidden aspect-[16/9] md:aspect-[21/9] bg-gray-100 group"
+                className="block relative rounded-2xl overflow-hidden aspect-[2.2/1] bg-gray-100 group"
               >
                 <img
                   src={listings[0].images?.[0] || "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"}
                   alt={listings[0].title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700"
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-[800ms] ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
-                <div className="absolute bottom-0 left-0 right-0 p-5 md:p-8">
-                  <div className="flex items-center space-x-2 mb-2">
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
+                  <div className="flex items-center gap-2 mb-3">
                     <span className="bg-brand-primary text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md">Featured</span>
                     {listings[0].isVerified && (
                       <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md">Verified</span>
                     )}
                   </div>
-                  <h3 className="text-white font-display font-bold text-xl md:text-2xl mb-1 drop-shadow-md">{listings[0].title}</h3>
-                  <p className="text-white/80 text-sm font-medium">
+                  <h3 className="text-white font-display font-bold text-xl md:text-2xl mb-1">{listings[0].title}</h3>
+                  <p className="text-white/70 text-sm font-medium">
                     {listings[0].address?.city || activeCityContext}, {listings[0].address?.state || 'Nigeria'}
                   </p>
                   <p className="text-white font-display font-bold text-lg mt-2">
-                    ₦{Number(listings[0].pricePerNight || listings[0].price || 0).toLocaleString()} <span className="text-white/60 text-sm font-normal">/ night</span>
+                    ₦{Number(listings[0].pricePerNight || listings[0].price || 0).toLocaleString()} <span className="text-white/50 text-sm font-normal">/ night</span>
                   </p>
                 </div>
               </Link>
             </div>
           )}
 
-          {/* Recommended / Listings Grid */}
-          <div>
-            {isShortlet && !searchFilters.location && (
-              <SectionHeader title="Recommended for you" />
+          {/* Trust badges */}
+          {showCuratedHome && (
+            <div className="mb-10 grid grid-cols-3 gap-4 animate-fade-up" style={{ animationDelay: '0.15s' }}>
+              {TRUST_BADGES.map((badge) => {
+                const Icon = badge.icon;
+                return (
+                  <div key={badge.label} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50/80 border border-gray-100/60">
+                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-soft">
+                      <Icon className="w-4 h-4 text-brand-dark" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[13px] font-semibold text-brand-dark truncate">{badge.label}</p>
+                      <p className="text-[11px] text-brand-text-muted truncate">{badge.desc}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Listings Grid */}
+          <div className="animate-fade-up" style={{ animationDelay: '0.2s' }}>
+            {showCuratedHome && (
+              <SectionHeader title="Recommended for you" subtitle={`${(listings.length - 1)} stays in ${activeCityContext}`} />
             )}
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5 gap-y-8">
-              {(isShortlet && !searchFilters.location ? listings.slice(1) : listings).map((item) => (
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">
+              {(showCuratedHome ? listings.slice(1) : listings).map((item) => (
                 isCar ? (
                   <CarCard key={item._id} car={item} />
                 ) : (

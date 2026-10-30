@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X } from 'lucide-react';
+import { X, ArrowRight } from 'lucide-react';
 
 export default function WelcomeOverlay() {
   const [isVisible, setIsVisible] = useState(false);
@@ -19,49 +19,49 @@ export default function WelcomeOverlay() {
   if (!isVisible) return null;
 
   return (
-    <div className="fixed inset-0 z-[110] flex items-center justify-center bg-brand-dark/70 backdrop-blur-md p-4 transition-all duration-700">
-      <div className="bg-white rounded-3xl max-w-[360px] sm:max-w-md w-full shadow-elevated overflow-hidden relative animate-in fade-in zoom-in-95 slide-in-from-bottom-8 duration-700 ease-out">
-
-        {/* Image Header */}
-        <div className="relative h-48 sm:h-56 w-full bg-gray-100">
+    <div
+      className="fixed inset-0 z-[110] flex items-center justify-center bg-brand-dark/70 backdrop-blur-sm p-4"
+      onClick={handleClose}
+    >
+      <div
+        className="bg-white rounded-2xl max-w-[400px] w-full overflow-hidden shadow-elevated animate-fade-up"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Hero image */}
+        <div className="relative aspect-[16/10] overflow-hidden">
           <img
             src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=800&q=80"
             alt="Premium Hospitality"
-            className="absolute inset-0 w-full h-full object-cover"
+            className="w-full h-full object-cover"
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-white via-white/10 to-transparent" />
-
+          <div className="absolute inset-0 bg-gradient-to-t from-white via-transparent to-transparent" />
           <button
             onClick={handleClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-brand-dark/30 hover:bg-brand-dark/50 backdrop-blur-md text-white transition-all active:scale-95 z-20"
+            className="absolute top-3 right-3 w-8 h-8 bg-black/20 backdrop-blur-sm hover:bg-black/30 rounded-full flex items-center justify-center transition-colors"
             aria-label="Close"
           >
-            <X className="w-5 h-5" />
+            <X className="w-4 h-4 text-white" />
           </button>
         </div>
 
         {/* Content */}
-        <div className="px-6 pb-8 pt-2 sm:px-8 sm:pb-10 text-center relative z-10">
-          <div className="flex items-center justify-center space-x-3 mb-5">
-            <div className="h-px w-6 bg-brand-primary/50"></div>
-            <span className="text-brand-primary text-[10px] font-bold uppercase tracking-[0.25em]">
-              Premium Hospitality
-            </span>
-            <div className="h-px w-6 bg-brand-primary/50"></div>
-          </div>
-
-          <h2 className="text-2xl sm:text-3xl font-display font-bold text-brand-dark mb-3 tracking-tight">
+        <div className="px-6 pb-6 -mt-4 relative text-center">
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-primary mb-2">
+            Premium Hospitality
+          </p>
+          <h2 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-2">
             Welcome to Rentals
           </h2>
-          <p className="text-brand-text-secondary text-sm sm:text-base font-medium mb-8 leading-relaxed">
-            Discover verified apartments, luxury shortlets, and top-tier hotels across Nigeria.
+          <p className="text-sm text-brand-text-secondary leading-relaxed mb-5">
+            Discover verified apartments, luxury shortlets, and
+            top-tier hotels across Nigeria.
           </p>
-
           <button
             onClick={handleClose}
-            className="w-full py-3.5 bg-brand-primary hover:bg-brand-hover text-white rounded-xl text-sm font-bold uppercase tracking-wider transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20"
+            className="w-full flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-hover text-white py-3.5 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]"
           >
-            Start Exploring
+            <span>Start Exploring</span>
+            <ArrowRight className="w-4 h-4" />
           </button>
         </div>
       </div>
