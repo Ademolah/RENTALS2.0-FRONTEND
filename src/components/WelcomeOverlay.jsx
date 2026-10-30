@@ -46,19 +46,19 @@ export default function WelcomeOverlay() {
 
         {/* Content */}
         <div className="px-6 pb-6 -mt-4 relative text-center">
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-brand-primary mb-2">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand-primary mb-2">
             Premium Hospitality
           </p>
           <h2 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-2">
             Welcome to Rentals
           </h2>
-          <p className="text-sm text-brand-text-secondary leading-relaxed mb-5">
+          <p className="text-base text-brand-text-secondary leading-relaxed mb-5">
             Discover verified apartments, luxury shortlets, and
             top-tier hotels across Nigeria.
           </p>
           <button
             onClick={handleClose}
-            className="w-full flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-hover text-white py-3.5 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]"
+            className="w-full flex items-center justify-center gap-2 bg-brand-primary hover:bg-brand-hover text-white py-3.5 rounded-xl text-base font-semibold transition-colors active:scale-[0.98]"
           >
             <span>Start Exploring</span>
             <ArrowRight className="w-4 h-4" />

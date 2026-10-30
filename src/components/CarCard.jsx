@@ -19,7 +19,7 @@ export default function CarCard({ car }) {
         />
         <div className="absolute top-3 left-3 px-2 py-1 bg-white/95 backdrop-blur-sm shadow-sm rounded-lg flex items-center space-x-1">
           <span className="text-brand-primary font-display font-bold text-sm leading-none">R</span>
-          <span className="text-[9px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
+          <span className="text-[10px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
         </div>
       </div>
 
@@ -38,7 +38,7 @@ export default function CarCard({ car }) {
           <span className="font-display font-bold text-brand-dark text-lg">
             ₦{price.toLocaleString()}
           </span>
-          <span className="text-[11px] uppercase tracking-wider text-brand-text-muted font-semibold">
+          <span className="text-sm uppercase tracking-wider text-brand-text-muted font-semibold">
             / day
           </span>
         </div>

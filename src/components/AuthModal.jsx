@@ -217,7 +217,7 @@ export default function AuthModal({ isOpen, onClose }) {
           {!isLogin && (
             <>
               <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Account Type</label>
+                <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Account Type</label>
                 <div className="grid grid-cols-2 gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100">
                   <button
                     type="button"
@@ -242,16 +242,16 @@ export default function AuthModal({ isOpen, onClose }) {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">First Name</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">First Name</label>
                   <input type="text" name="firstName" required value={formData.firstName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
                 </div>
                 <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Last Name</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Last Name</label>
                   <input type="text" name="lastName" required value={formData.lastName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
                 </div>
                 
                 <div className="col-span-2">
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Phone Number</label>
+                  <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Phone Number</label>
                   <div className="flex">
                     <select value={dialCode} onChange={handleDialCodeChange} className="px-2 py-3 bg-gray-50 border border-gray-200 rounded-l-xl border-r-0 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-bold text-gray-700 cursor-pointer transition-all">
                       <option value="+234">🇳🇬 +234</option>
@@ -266,18 +266,18 @@ export default function AuthModal({ isOpen, onClose }) {
           )}
 
           <div>
-            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Email Address</label>
+            <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Email Address</label>
             <input type="email" name="email" required value={formData.email} onChange={handleChange} placeholder="name@example.com" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
           </div>
 
           <div>
             <div className="flex justify-between items-center mb-1.5">
-              <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400">Password</label>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400">Password</label>
               {isLogin && (
                 <button 
                   type="button" 
                   onClick={() => setShowForgot(true)}
-                  className="text-[10px] font-bold text-brand-primary hover:underline"
+                  className="text-xs font-bold text-brand-primary hover:underline"
                 >
                   Forgot?
                 </button>
@@ -293,7 +293,7 @@ export default function AuthModal({ isOpen, onClose }) {
 
           {!isLogin && (
             <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Confirm Password</label>
+              <label className="block text-xs font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Confirm Password</label>
               <div className="relative">
                 <input type={showConfirmPassword ? "text" : "password"} name="confirmPassword" required value={formData.confirmPassword} onChange={handleChange} placeholder="••••••••" className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all pr-12" />
                 <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 focus:outline-none">

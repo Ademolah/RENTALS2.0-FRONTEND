@@ -189,7 +189,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           ) : <div className="w-9"></div>}
         </div>
 
-        <div className="grid grid-cols-7 text-center text-[10px] font-bold text-brand-text-muted mb-4 uppercase tracking-widest">
+        <div className="grid grid-cols-7 text-center text-xs font-bold text-brand-text-muted mb-4 uppercase tracking-widest">
           {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(d => <div key={d}>{d}</div>)}
         </div>
         
@@ -255,16 +255,16 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         {isVip && (
           <>
             <button onClick={() => setActiveMenu('service')} className={`flex-1 text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'service' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Service</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Service</div>
               <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Date</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Date</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Select Date'}</div>
             </button>
             <div onClick={() => setActiveMenu('location')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left w-full">
-                <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
+                <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
                 <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5 pointer-events-none" />
               </div>
               <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
@@ -278,16 +278,16 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         {isCar && (
           <>
             <button onClick={() => setActiveMenu('location')} className={`flex-[1.2] text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Location</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Location</div>
               <input type="text" placeholder="Search city or airport" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Date</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Date</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
             <div onClick={() => setActiveMenu('checkOut')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left">
-                <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Drop-off Date</div>
+                <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Drop-off Date</div>
                 <div className={`text-sm font-medium mt-0.5 ${checkOut ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
               </div>
               <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
@@ -301,20 +301,20 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
         {isStandard && (
           <>
             <button onClick={() => setActiveMenu('location')} className={`flex-1 text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
               <input type="text" placeholder={isHotel ? "Search destinations or hotels" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Check in</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Check in</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
             <button onClick={() => setActiveMenu('checkOut')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
-              <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Check out</div>
+              <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Check out</div>
               <div className={`text-sm font-medium mt-0.5 ${checkOut ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
             <div onClick={() => setActiveMenu('guests')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'guests' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left">
-                <div className="text-[11px] font-display font-bold tracking-widest text-brand-dark uppercase">Who</div>
+                <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Who</div>
                 <div className={`text-sm font-medium mt-0.5 ${totalGuests > 1 ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{totalGuests > 1 ? `${totalGuests} guests` : 'Add guests'}</div>
               </div>
               <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
@@ -420,7 +420,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <span className="text-sm font-bold text-brand-dark">
             {isVip ? (serviceType || 'What service?') : (location || (isHotel ? 'Find a hotel' : 'Where to?'))}
           </span>
-          <span className="text-[11px] text-brand-text-secondary flex items-center space-x-1 font-medium mt-0.5">
+          <span className="text-xs text-brand-text-secondary flex items-center space-x-1 font-medium mt-0.5">
             <span>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Anywhere'}</span>
             {!isVip && (
               <>

@@ -70,23 +70,23 @@ export default function PropertyCard({ property }) {
             <>
               <button
                 onClick={prevImg}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               >
                 <ChevronLeft className="w-4 h-4 text-brand-dark" />
               </button>
               <button
                 onClick={nextImg}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
               >
                 <ChevronRight className="w-4 h-4 text-brand-dark" />
               </button>
               {/* Dots */}
-              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1">
+              <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {images.slice(0, 5).map((_, i) => (
                   <div
                     key={i}
                     className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                      i === imgIdx ? 'bg-white w-2.5' : 'bg-white/50'
+                      i === imgIdx ? 'bg-white w-3' : 'bg-white/50'
                     }`}
                   />
                 ))}
@@ -98,9 +98,9 @@ export default function PropertyCard({ property }) {
           <div className="absolute top-3 w-full px-3 flex justify-between items-start">
             <div>
               {(property.isRentalVerified ?? true) && (
-                <div className="bg-white shadow-sm px-2 py-1 rounded-md flex items-center gap-1">
+                <div className="bg-white shadow-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5">
                   <span className="text-brand-primary font-display font-bold text-sm leading-none">R</span>
-                  <span className="text-[9px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
+                  <span className="text-[10px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
                 </div>
               )}
             </div>
@@ -110,7 +110,7 @@ export default function PropertyCard({ property }) {
               className="hover:scale-110 active:scale-95 transition-transform z-10"
             >
               <Heart
-                className={`w-6 h-6 drop-shadow transition-colors duration-200 ${
+                className={`w-7 h-7 drop-shadow transition-colors duration-200 ${
                   isFavorited
                     ? "fill-brand-primary stroke-brand-primary"
                     : "fill-black/30 stroke-white stroke-[1.5]"
@@ -123,23 +123,23 @@ export default function PropertyCard({ property }) {
         {/* Details */}
         <div className="flex flex-col pt-3">
           <div className="flex justify-between items-start gap-2">
-            <h3 className="font-display font-semibold text-[15px] leading-snug text-brand-dark truncate">
+            <h3 className="font-display font-semibold text-base leading-snug text-brand-dark truncate">
               {property.location || `${property.address?.city}, ${property.address?.state}`}
             </h3>
             {property.numReviews > 0 ? (
               <div className="flex items-center gap-1 shrink-0">
-                <Star className="w-3.5 h-3.5 fill-brand-dark text-brand-dark" />
-                <span className="text-sm font-medium text-brand-dark">{(property.rating || 0).toFixed(1)}</span>
+                <Star className="w-4 h-4 fill-brand-dark text-brand-dark" />
+                <span className="text-sm font-semibold text-brand-dark">{(property.rating || 0).toFixed(1)}</span>
               </div>
             ) : (
-              <span className="text-[13px] text-brand-text-muted shrink-0">New</span>
+              <span className="text-sm text-brand-text-muted shrink-0">New</span>
             )}
           </div>
-          <p className="text-brand-text-secondary text-[13px] mt-0.5 truncate">{property.title}</p>
-          <p className="text-brand-text-muted text-[13px]">{property.dates}</p>
+          <p className="text-brand-text-secondary text-sm mt-0.5 truncate">{property.title}</p>
+          <p className="text-brand-text-muted text-sm">{property.dates}</p>
           <div className="mt-1.5 flex items-baseline gap-1">
-            <span className="font-display font-bold text-[15px] text-brand-dark">₦{Number(property.price || property.pricePerNight || 0).toLocaleString()}</span>
-            <span className="text-brand-text-muted text-[13px]">night</span>
+            <span className="font-display font-bold text-base text-brand-dark">₦{Number(property.price || property.pricePerNight || 0).toLocaleString()}</span>
+            <span className="text-brand-text-muted text-sm">night</span>
           </div>
         </div>
       </Link>

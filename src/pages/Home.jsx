@@ -14,10 +14,10 @@ import { Link } from 'react-router-dom';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 
 const SERVICES = [
-  { key: 'shortlet', label: 'Shortlets', icon: Key, color: 'bg-brand-primary-soft text-brand-primary', desc: 'Verified luxury apartments' },
-  { key: 'hotel', label: 'Hotels', icon: Building2, color: 'bg-blue-50 text-blue-600', desc: 'Premium hotel suites' },
-  { key: 'car', label: 'Car Rentals', icon: CarFront, color: 'bg-brand-purple-soft text-brand-purple', desc: 'Affordable fleet rentals' },
-  { key: 'vip', label: 'VIP', icon: Crown, color: 'bg-amber-50 text-amber-600', desc: 'Exclusive concierge' },
+  { key: 'shortlet', label: 'Shortlets', icon: Key, color: 'bg-brand-primary-soft text-brand-primary', desc: 'Luxury apartments' },
+  { key: 'hotel', label: 'Hotels', icon: Building2, color: 'bg-blue-50 text-blue-600', desc: 'Premium suites' },
+  { key: 'car', label: 'Car Rentals', icon: CarFront, color: 'bg-brand-purple-soft text-brand-purple', desc: 'Fleet rentals' },
+  { key: 'vip', label: 'VIP', icon: Crown, color: 'bg-amber-50 text-amber-600', desc: 'Concierge service' },
 ];
 
 const TRUST_BADGES = [
@@ -30,11 +30,11 @@ function SectionHeader({ title, subtitle, action, onAction }) {
   return (
     <div className="flex items-end justify-between mb-6">
       <div>
-        <h2 className="text-[22px] font-display font-bold text-brand-dark tracking-tight">{title}</h2>
-        {subtitle && <p className="text-sm text-brand-text-secondary mt-0.5">{subtitle}</p>}
+        <h2 className="text-2xl md:text-[28px] font-display font-bold text-brand-dark tracking-tight">{title}</h2>
+        {subtitle && <p className="text-base text-brand-text-secondary mt-1">{subtitle}</p>}
       </div>
       {action && (
-        <button onClick={onAction} className="flex items-center gap-1 text-sm font-semibold text-brand-primary hover:text-brand-hover transition-colors group">
+        <button onClick={onAction} className="flex items-center gap-1 text-base font-semibold text-brand-primary hover:text-brand-hover transition-colors group">
           <span>{action}</span>
           <ChevronRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
         </button>
@@ -155,7 +155,7 @@ export default function Home({
         <div className="mb-8 flex items-center gap-3 animate-fade-up">
           <div className="flex items-center gap-2 px-4 py-2 bg-brand-accent-soft rounded-full">
             <MapPin className="w-3.5 h-3.5 text-brand-primary" />
-            <span className="text-sm font-semibold text-brand-dark">{activeCityContext}, Nigeria</span>
+            <span className="text-base font-semibold text-brand-dark">{activeCityContext}, Nigeria</span>
           </div>
           <div className="h-px flex-1 bg-gradient-to-r from-gray-200 to-transparent"></div>
         </div>
@@ -184,8 +184,8 @@ export default function Home({
                     <Icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
                   </div>
                   <div className="text-left min-w-0">
-                    <span className={`text-sm font-semibold block ${isActive ? 'text-white' : 'text-brand-dark'}`}>{s.label}</span>
-                    <span className={`text-[11px] block truncate ${isActive ? 'text-white/60' : 'text-brand-text-muted'}`}>{s.desc}</span>
+                    <span className={`text-base font-semibold block ${isActive ? 'text-white' : 'text-brand-dark'}`}>{s.label}</span>
+                    <span className={`text-sm block truncate ${isActive ? 'text-white/60' : 'text-brand-text-muted'}`}>{s.desc}</span>
                   </div>
                 </button>
               );
@@ -206,7 +206,7 @@ export default function Home({
       ) : loading ? (
         <div className="flex flex-col items-center justify-center py-32 text-brand-text-muted">
           <div className="w-10 h-10 border-2 border-gray-200 border-t-brand-primary rounded-full animate-spin mb-4"></div>
-          <p className="text-sm font-medium">Finding the best stays...</p>
+          <p className="text-base font-medium">Finding the best stays...</p>
         </div>
       ) : listings.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-32 text-center">
@@ -214,7 +214,7 @@ export default function Home({
             <Search className="w-7 h-7 text-brand-text-muted" />
           </div>
           <h3 className="text-xl font-display font-bold text-brand-dark">No exact matches</h3>
-          <p className="text-brand-text-secondary text-sm mt-2 mb-8 max-w-sm mx-auto leading-relaxed">
+          <p className="text-brand-text-secondary text-base mt-2 mb-8 max-w-sm mx-auto leading-relaxed">
             We couldn't find listings matching your criteria in {activeCityContext}. Try adjusting your search.
           </p>
         </div>
@@ -248,17 +248,17 @@ export default function Home({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 md:p-8">
                   <div className="flex items-center gap-2 mb-3">
-                    <span className="bg-brand-primary text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md">Featured</span>
+                    <span className="bg-brand-primary text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md">Featured</span>
                     {listings[0].isVerified && (
-                      <span className="bg-white/20 backdrop-blur-sm text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-md">Verified</span>
+                      <span className="bg-white/20 backdrop-blur-sm text-white text-xs font-bold uppercase tracking-wider px-3 py-1.5 rounded-md">Verified</span>
                     )}
                   </div>
-                  <h3 className="text-white font-display font-bold text-xl md:text-2xl mb-1">{listings[0].title}</h3>
-                  <p className="text-white/70 text-sm font-medium">
+                  <h3 className="text-white font-display font-bold text-2xl md:text-3xl mb-1">{listings[0].title}</h3>
+                  <p className="text-white/70 text-base font-medium">
                     {listings[0].address?.city || activeCityContext}, {listings[0].address?.state || 'Nigeria'}
                   </p>
-                  <p className="text-white font-display font-bold text-lg mt-2">
-                    ₦{Number(listings[0].pricePerNight || listings[0].price || 0).toLocaleString()} <span className="text-white/50 text-sm font-normal">/ night</span>
+                  <p className="text-white font-display font-bold text-xl mt-2">
+                    ₦{Number(listings[0].pricePerNight || listings[0].price || 0).toLocaleString()} <span className="text-white/50 text-base font-normal">/ night</span>
                   </p>
                 </div>
               </Link>
@@ -276,8 +276,8 @@ export default function Home({
                       <Icon className="w-4 h-4 text-brand-dark" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[13px] font-semibold text-brand-dark truncate">{badge.label}</p>
-                      <p className="text-[11px] text-brand-text-muted truncate">{badge.desc}</p>
+                      <p className="text-sm font-bold text-brand-dark truncate">{badge.label}</p>
+                      <p className="text-sm text-brand-text-muted truncate">{badge.desc}</p>
                     </div>
                   </div>
                 );
