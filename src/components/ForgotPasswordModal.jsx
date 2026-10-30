@@ -55,12 +55,12 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
         <div className="p-8">
           <div className="flex items-center space-x-3 mb-6">
             <div className="h-4 w-0.5 bg-brand-primary"></div>
-            <span className="text-[11px] font-display font-bold text-brand-primary uppercase tracking-[0.25em]">
+            <span className="text-xs font-display font-bold text-brand-primary uppercase tracking-[0.2em]">
               Account Recovery
             </span>
           </div>
 
-          <h3 className="text-2xl font-display font-bold text-brand-dark tracking-tight mb-2">
+          <h3 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-2">
             Reset your password
           </h3>
           
@@ -69,20 +69,20 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
               </div>
-              <h4 className="text-lg font-bold text-brand-dark mb-2">Check your inbox</h4>
-              <p className="text-sm font-medium text-brand-text-secondary leading-relaxed mb-8">
+              <h4 className="text-xl font-display font-bold text-brand-dark mb-2">Check your inbox</h4>
+              <p className="text-base text-brand-text-secondary leading-relaxed mb-8">
                 We've sent a secure recovery link to <span className="text-brand-dark font-bold">{email}</span>. The link will expire in 15 minutes.
               </p>
               <button 
                 onClick={handleClose}
-                className="w-full bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition-all active:scale-[0.98]"
+                className="w-full bg-brand-dark text-white text-base font-semibold py-4 rounded-xl hover:bg-brand-accent transition-all active:scale-[0.98]"
               >
                 Close Window
               </button>
             </div>
           ) : (
             <>
-              <p className="text-sm font-medium text-brand-text-secondary mb-8">
+              <p className="text-base text-brand-text-secondary mb-8">
                 Enter the email address associated with your Rentals Africa account, and we'll send you a secure link to reset your password.
               </p>
 
@@ -99,7 +99,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                       type="email"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="block w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-brand-dark focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
+                      className="block w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-brand-dark focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
                       placeholder="guest@example.com"
                       disabled={isLoading}
                     />
@@ -107,7 +107,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                 </div>
 
                 {error && (
-                  <div className="flex items-start bg-red-50 text-red-600 text-xs font-bold p-3 rounded-lg border border-red-100 animate-in fade-in">
+                  <div className="flex items-start bg-red-50 text-red-600 text-sm font-semibold p-3 rounded-lg border border-red-100 animate-in fade-in">
                     <AlertCircle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
                     <span>{error}</span>
                   </div>
@@ -116,7 +116,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full flex items-center justify-center bg-brand-primary text-white font-bold text-sm py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20 disabled:opacity-70"
+                  className="w-full flex items-center justify-center bg-brand-primary text-white font-semibold text-base py-4 rounded-xl hover:bg-brand-hover transition-all active:scale-[0.98] shadow-glow disabled:opacity-70"
                 >
                   {isLoading ? (
                     <Loader2 className="w-5 h-5 animate-spin" />
@@ -132,7 +132,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
               <div className="mt-8 text-center">
                 <button 
                   onClick={onBackToLogin}
-                  className="text-xs font-bold text-brand-text-secondary hover:text-brand-dark transition-colors"
+                  className="text-sm font-semibold text-brand-text-secondary hover:text-brand-dark transition-colors"
                 >
                   Wait, I remember my password
                 </button>

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from 'react';
 import { 
   Share, Heart, ArrowLeft, Loader2, 
   ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, PlayCircle, Video 
+  X, Star, MessageSquare, PlayCircle, Video, Grid3x3, BedDouble, Bath, Users, ShieldCheck, Check 
 } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -11,6 +11,9 @@ import { getPropertyById, getProperties } from "../api/properties";
 import { getPropertyReviewsApi, createPropertyReviewApi } from "../api/reviews";
 import { useAuth } from '../context/AuthContext'; 
 import FloatingPriceTag from '../components/FloatingPriceTag';
+import { Container, Card, Badge, Button } from '../components/ui';
+import { useDocumentMeta } from '../lib/seo';
+import { toggleFavoriteApi } from '../api/user';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -31,8 +34,22 @@ export default function PropertyDetail() {
 
   // --- LIGHTBOX STATE ---
   const [lightboxIndex, setLightboxIndex] = useState(null);
+  const [copied, setCopied] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  useDocumentMeta(property?.title, property?.description?.slice(0, 160));
+
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(window.location.href); setCopied(true); setTimeout(() => setCopied(false), 2000); } catch { window.prompt('Copy this link', window.location.href); }
+  };
+
+  const toggleSave = async () => {
+    if (!user) { setShowAuthModal?.(true); return; }
+    const prev = saved;
+    setSaved(!prev);
+    try { await toggleFavoriteApi(property.id || property._id || id); } catch { setSaved(prev); }
+  };
   const mobileScrollRef = useRef(null);
-  const desktopScrollRef = useRef(null);
   
   const scrollGallery = (ref, direction) => {
     if (ref.current) {
@@ -184,438 +201,396 @@ export default function PropertyDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center bg-brand-light">
-        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-3" />
-        <p className="text-brand-text-secondary font-medium">Preparing property details...</p>
+      <div className="min-h-[60vh] flex flex-col items-center justify-center bg-white">
+        <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
+        <p className="text-base text-brand-text-secondary font-medium">Preparing property details...</p>
       </div>
     );
   }
 
   if (!property) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50/50 text-gray-500 font-bold">
+      <div className="min-h-[60vh] flex items-center justify-center text-lg text-brand-text-secondary font-semibold">
         Property not found or is no longer available.
       </div>
     );
   }
 
+  const imgs = property.images;
+  const fact = (Icon, label) => (
+    <div className="flex items-center gap-2.5 px-4 py-2.5 rounded-xl bg-brand-accent-soft text-brand-dark font-semibold text-base">
+      <Icon className="w-5 h-5 text-brand-primary" /> {label}
+    </div>
+  );
+
   return (
-    <main className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
-      
-      {/* REVIEW SUBMISSION MODAL */}
-      {showReviewModal && (
-        <div className="fixed inset-0 z-[1000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl relative">
-            <button 
-              onClick={() => setShowReviewModal(false)}
-              className="absolute top-5 right-5 text-gray-400 hover:text-gray-900 transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            
-            <div className="p-8">
-              <div className="flex items-center space-x-3 mb-6">
-                <div className="h-4 w-0.5 bg-brand-primary"></div>
-                <span className="text-[11px] font-extrabold text-brand-primary uppercase tracking-[0.25em]">
-                  Guest Feedback
-                </span>
-              </div>
-              
-              <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight mb-2">Rate your experience</h3>
-              <p className="text-sm font-medium text-gray-500 mb-8">Your feedback helps maintain our world-class standard.</p>
+    <main className="animate-fade-up pb-24 lg:pb-12">
+      <Container className="py-6 relative">
 
-              <form onSubmit={handleReviewSubmit} className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Overall Rating</label>
-                  <div className="flex space-x-2">
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <button
-                        key={star}
-                        type="button"
-                        onClick={() => setReviewForm({ ...reviewForm, rating: star })}
-                        className="focus:outline-none transition-transform active:scale-90"
-                      >
-                        <Star className={`w-8 h-8 ${reviewForm.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-xs font-bold text-gray-900 uppercase tracking-wider mb-3">Written Review</label>
-                  <textarea
-                    rows={4}
-                    value={reviewForm.comment}
-                    onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
-                    placeholder="Share the details of your stay..."
-                    className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-sm font-medium text-gray-900 focus:ring-2 focus:ring-black focus:border-black outline-none transition-all resize-none"
-                  ></textarea>
-                </div>
-
-                {reviewError && (
-                  <div className="p-3 bg-red-50 text-red-600 text-xs font-bold rounded-lg border border-red-100">
-                    {reviewError}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmittingReview}
-                  className="w-full py-4 bg-black hover:bg-gray-900 text-white rounded-xl text-sm font-bold tracking-wider uppercase transition-all active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-                >
-                  {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit Review'}
-                </button>
-              </form>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 💡 UPDATED: LIGHTBOX NOW SUPPORTS IN-PLACE NAVIGATION */}
-      {lightboxIndex !== null && (
-        <div 
-          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in duration-200"
-          onClick={() => setLightboxIndex(null)}
-        >
-          {/* Top Bar Navigation */}
-          <div className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
-            <div className="text-white font-bold text-sm bg-black/50 px-4 py-2 rounded-full">
-              {lightboxIndex + 1} / {property.images.length}
-            </div>
-            <button 
-              onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }} 
-              className="text-white hover:bg-white/20 bg-white/10 rounded-full p-2.5 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-          </div>
-
-          {/* Image Container with Nav Arrows */}
-          <div className="relative w-full max-w-7xl px-4 flex items-center justify-center">
-            {property.images.length > 1 && (
-              <button 
-                onClick={prevLightboxImage} 
-                className="absolute left-4 md:left-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
+        {/* REVIEW SUBMISSION MODAL */}
+        {showReviewModal && (
+          <div className="fixed inset-0 z-[1000] bg-brand-dark/70 backdrop-blur-sm flex items-center justify-center p-4">
+            <div className="bg-white rounded-3xl w-full max-w-lg overflow-hidden shadow-elevated relative animate-fade-up">
+              <button
+                onClick={() => setShowReviewModal(false)}
+                className="absolute top-5 right-5 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-brand-dark transition-colors"
+                aria-label="Close"
               >
-                <ChevronLeft className="w-8 h-8" />
+                <X className="w-5 h-5" />
               </button>
-            )}
 
-            <img 
-              src={property.images[lightboxIndex]} 
-              alt="Expanded view" 
-              className="max-h-[85vh] max-w-full object-contain select-none rounded-xl shadow-2xl" 
-              onClick={(e) => e.stopPropagation()} 
-            />
+              <div className="p-8">
+                <p className="text-sm font-bold text-brand-primary uppercase tracking-[0.2em] mb-3">Guest feedback</p>
+                <h3 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-2">Rate your experience</h3>
+                <p className="text-base text-brand-text-secondary mb-8">Your feedback helps maintain our world-class standard.</p>
 
-            {property.images.length > 1 && (
-              <button 
-                onClick={nextLightboxImage} 
-                className="absolute right-4 md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
-              >
-                <ChevronRight className="w-8 h-8" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
-
-      <button onClick={() => navigate(-1)} className="inline-flex items-center space-x-2 text-sm font-bold text-gray-500 hover:text-gray-900 mb-6 transition-all group w-fit">
-        <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-        <span>Back to listings</span>
-      </button>
-
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
-        <div>
-          <h1 className="text-3xl md:text-4xl font-display font-bold text-brand-dark tracking-tight mb-2">
-            {property.title}
-          </h1>
-          <div className="flex items-center space-x-4 text-sm text-gray-900 font-bold">
-            {property.numReviews > 0 && (
-              <span className="flex items-center space-x-1 text-gray-900">
-                <Star className="w-4 h-4 fill-gray-900" />
-                <span>{property.rating} · {property.numReviews} review{property.numReviews !== 1 ? 's' : ''}</span>
-              </span>
-            )}
-            <span className="underline cursor-pointer flex items-center"><MapPin className="w-4 h-4 mr-1 text-gray-400"/> {property.location}</span>
-          </div>
-        </div>
-        
-        <div className="flex space-x-3 text-sm font-bold">
-          <button className="flex items-center space-x-2 border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors shadow-sm">
-            <Share className="w-4 h-4" /> <span>Share</span>
-          </button>
-          <button className="flex items-center space-x-2 border border-gray-200 hover:bg-gray-50 px-4 py-2.5 rounded-xl transition-colors shadow-sm">
-            <Heart className="w-4 h-4" /> <span>Save</span>
-          </button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 relative">
-        
-        <div className="lg:col-span-7 flex flex-col gap-8">
-          
-          <div className="mb-4">
-            
-            {/* MOBILE VIEW */}
-            <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group shadow-sm">
-              <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                {property.images.map((img, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => setLightboxIndex(idx)}
-                    className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
-                  >
-                    <img src={img} alt={`${property.title} - ${idx + 1}`} className="w-full h-full object-cover" />
-                    <div className="absolute bottom-4 right-4 bg-gray-900/70 backdrop-blur-md text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg pointer-events-none">
-                      {idx + 1} / {property.images.length}
+                <form onSubmit={handleReviewSubmit} className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-bold text-brand-dark mb-3">Overall rating</label>
+                    <div className="flex gap-2">
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <button
+                          key={star}
+                          type="button"
+                          onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                          className="focus:outline-none transition-transform active:scale-90 hover:scale-110"
+                        >
+                          <Star className={`w-10 h-10 ${reviewForm.rating >= star ? 'fill-brand-star text-brand-star' : 'fill-transparent text-gray-300'}`} />
+                        </button>
+                      ))}
                     </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-bold text-brand-dark mb-3">Written review</label>
+                    <textarea
+                      rows={4}
+                      value={reviewForm.comment}
+                      onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                      placeholder="Share the details of your stay..."
+                      className="w-full bg-gray-50 border border-gray-200 rounded-xl p-4 text-base text-brand-dark focus:ring-2 focus:ring-brand-primary/30 focus:border-brand-primary outline-none transition-all resize-none"
+                    ></textarea>
+                  </div>
+
+                  {reviewError && (
+                    <div className="p-4 bg-red-50 text-red-600 text-sm font-semibold rounded-xl border border-red-100">
+                      {reviewError}
+                    </div>
+                  )}
+
+                  <Button type="submit" disabled={isSubmittingReview} className="w-full" size="lg">
+                    {isSubmittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Submit review'}
+                  </Button>
+                </form>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* LIGHTBOX */}
+        {lightboxIndex !== null && (
+          <div
+            className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center animate-fade-up"
+            onClick={() => setLightboxIndex(null)}
+          >
+            <div className="absolute top-0 w-full p-6 flex justify-between items-center z-50">
+              <div className="text-white font-semibold text-base bg-white/10 px-5 py-2.5 rounded-full">
+                {lightboxIndex + 1} / {imgs.length}
+              </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }}
+                className="text-white hover:bg-white/25 bg-white/10 rounded-full p-3 transition-colors"
+                aria-label="Close"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+
+            <div className="relative w-full max-w-7xl px-4 flex items-center justify-center">
+              {imgs.length > 1 && (
+                <button onClick={prevLightboxImage} className="absolute left-4 md:left-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50">
+                  <ChevronLeft className="w-8 h-8" />
+                </button>
+              )}
+              <img
+                src={imgs[lightboxIndex]}
+                alt="Expanded view"
+                className="max-h-[85vh] max-w-full object-contain select-none rounded-2xl shadow-2xl"
+                onClick={(e) => e.stopPropagation()}
+              />
+              {imgs.length > 1 && (
+                <button onClick={nextLightboxImage} className="absolute right-4 md:right-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50">
+                  <ChevronRight className="w-8 h-8" />
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* TITLE ROW */}
+        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-base font-semibold text-brand-text-secondary hover:text-brand-dark mb-5 transition-all group w-fit">
+          <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
+          <span>Back to listings</span>
+        </button>
+
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-6 gap-4">
+          <div>
+            <div className="flex items-center gap-2 mb-3">
+              {property.isRentalVerified && <Badge tone="brand"><ShieldCheck className="w-3.5 h-3.5" /> Verified</Badge>}
+              {property.category && <Badge tone="gray">{String(property.category).toLowerCase()}</Badge>}
+            </div>
+            <h1 className="text-3xl md:text-5xl font-display font-bold text-brand-dark tracking-tight mb-3 leading-tight">
+              {property.title}
+            </h1>
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-base text-brand-dark font-semibold">
+              {property.numReviews > 0 && (
+                <span className="flex items-center gap-1.5">
+                  <Star className="w-5 h-5 fill-brand-star text-brand-star" />
+                  <span>{property.rating} · {property.numReviews} review{property.numReviews !== 1 ? 's' : ''}</span>
+                </span>
+              )}
+              <span className="flex items-center text-brand-text-secondary font-medium">
+                <MapPin className="w-5 h-5 mr-1.5 text-brand-primary" /> {property.location}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex gap-3">
+            <Button variant="outline" size="sm" onClick={copyLink}><Share className="w-4 h-4" /> {copied ? 'Link copied' : 'Share'}</Button>
+            <Button variant="outline" size="sm" onClick={toggleSave}><Heart className={`w-4 h-4 ${saved ? 'fill-brand-primary text-brand-primary' : ''}`} /> {saved ? 'Saved' : 'Save'}</Button>
+          </div>
+        </div>
+
+        {/* GALLERY */}
+        <div className="mb-10">
+          {/* Mobile */}
+          <div className="md:hidden relative h-[320px] w-full rounded-2xl overflow-hidden group">
+            <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              {imgs.map((img, idx) => (
+                <div key={idx} onClick={() => setLightboxIndex(idx)} className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer">
+                  <img src={img} alt={`${property.title} - ${idx + 1}`} className="w-full h-full object-cover" />
+                  <div className="absolute bottom-4 right-4 bg-brand-dark/70 backdrop-blur-md text-white text-sm font-semibold px-3 py-1 rounded-full pointer-events-none">
+                    {idx + 1} / {imgs.length}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {imgs.length > 1 && (
+              <>
+                <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
+                <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90"><ChevronRight className="w-5 h-5" /></button>
+              </>
+            )}
+          </div>
+
+          {/* Desktop mosaic */}
+          <div className="hidden md:block relative">
+            {imgs.length === 1 ? (
+              <div className="h-[520px] rounded-3xl overflow-hidden cursor-pointer group" onClick={() => setLightboxIndex(0)}>
+                <img src={imgs[0]} className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-700" alt="Main view" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-4 grid-rows-2 gap-3 h-[520px] rounded-3xl overflow-hidden">
+                <div className="col-span-2 row-span-2 relative group cursor-pointer overflow-hidden" onClick={() => setLightboxIndex(0)}>
+                  <img src={imgs[0]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700" alt="Main view" />
+                </div>
+                {[1, 2, 3, 4].map((i) => (
+                  <div
+                    key={i}
+                    className={`relative group cursor-pointer overflow-hidden ${imgs[i] ? '' : 'bg-brand-accent-soft'}`}
+                    onClick={() => imgs[i] && setLightboxIndex(i)}
+                  >
+                    {imgs[i] && <img src={imgs[i]} className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-700" alt={`View ${i + 1}`} />}
                   </div>
                 ))}
               </div>
-
-              {property.images.length > 1 && (
-                <>
-                  <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
-                  <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md z-10 transition-transform active:scale-90"><ChevronRight className="w-5 h-5" /></button>
-                </>
-              )}
-            </div>
-
-            {/* DESKTOP VIEW */}
-            <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden shadow-sm">
-              {property.images.length === 1 && (
-                <div 
-                  className="w-full h-full relative cursor-pointer"
-                  onClick={() => setLightboxIndex(0)}
-                >
-                  <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300 rounded-2xl" alt="Main View" />
-                </div>
-              )}
-              {property.images.length === 2 && (
-                <div className="grid grid-cols-2 gap-2 h-full">
-                  <div 
-                    className="w-full h-full relative cursor-pointer"
-                    onClick={() => setLightboxIndex(0)}
-                  >
-                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 1"/>
-                  </div>
-                  <div 
-                    className="w-full h-full relative cursor-pointer"
-                    onClick={() => setLightboxIndex(1)}
-                  >
-                    <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2"/>
-                  </div>
-                </div>
-              )}
-              {property.images.length >= 3 && (
-                <div className="grid grid-cols-2 gap-2 h-full">
-                  <div 
-                    className="w-full h-full relative group cursor-pointer"
-                    onClick={() => setLightboxIndex(0)}
-                  >
-                    <img src={property.images[0]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Main View" />
-                  </div>
-                  <div className="grid grid-rows-2 gap-2 h-full">
-                    <div 
-                      className="w-full h-full relative group cursor-pointer"
-                      onClick={() => setLightboxIndex(1)}
-                    >
-                      <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
-                    </div>
-                    <div className="w-full h-full relative group">
-                      <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-                        {property.images.slice(2).map((img, idx) => (
-                          <div 
-                            key={idx} 
-                            onClick={() => setLightboxIndex(idx + 2)}
-                            className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
-                          >
-                            <img src={img} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity duration-300" alt={`Interior ${idx + 2}`} />
-                            {property.images.length > 3 && (
-                              <div className="absolute bottom-4 right-4 bg-gray-900/80 backdrop-blur-md text-white text-xs font-bold px-3.5 py-1.5 rounded-full pointer-events-none shadow-lg">
-                                {idx + 1} / {property.images.length - 2}
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                      {property.images.length > 3 && (
-                        <>
-                          <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
-                          <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-
-          <div className="border-b border-gray-200 pb-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Entire property hosted by Rentals</h2>
-            
-            {/* 💡 UPDATED: Clean ASCII pipes instead of unicode dots */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6">
-              <span>{property.maxGuests || 2} guests</span>
-              {property.bedrooms && (
-                <><span>|</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
-              )}
-              {property.bathrooms && (
-                <><span>|</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
-              )}
-            </div>
-
-            {property.description && (
-              <div className="mt-8 mb-10">
-                <h3 className="text-xl font-bold text-gray-900 mb-4">About this space</h3>
-                <p className="text-gray-600 leading-relaxed whitespace-pre-line">
-                  {property.description}
-                </p>
-                
-                {property.propertyId && (
-                  <div className="mt-6 flex items-center space-x-2">
-                    <span className="text-xs font-bold text-gray-500 uppercase tracking-widest bg-gray-100 px-3 py-1.5 rounded-md shadow-sm border border-gray-200">
-                      Property ID: {property.propertyId}
-                    </span>
-                  </div>
-                )}
-              </div>
             )}
+            {imgs.length > 1 && (
+              <button
+                onClick={() => setLightboxIndex(0)}
+                className="absolute bottom-5 right-5 flex items-center gap-2 bg-white hover:bg-gray-50 text-brand-dark font-semibold text-base px-5 py-3 rounded-xl shadow-elevated transition-colors"
+              >
+                <Grid3x3 className="w-5 h-5" /> Show all {imgs.length} photos
+              </button>
+            )}
+          </div>
+        </div>
 
-            {/* 💡 NEW: Cinematic Video Tour Section */}
-            {property.video && (
-              <div className="mt-10 mb-10">
-                <div className="flex items-center space-x-2 mb-4">
-                  <Video className="w-5 h-5 text-gray-900" />
-                  <h3 className="text-xl font-bold text-gray-900">Cinematic Tour</h3>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 relative">
+
+          <div className="lg:col-span-7 xl:col-span-8 flex flex-col gap-10">
+
+            {/* Overview */}
+            <section className="pb-10 border-b border-gray-100">
+              <h2 className="text-2xl md:text-3xl font-display font-bold text-brand-dark mb-5 tracking-tight">Entire property managed by Rentals Africa</h2>
+              <div className="flex flex-wrap gap-3 mb-8">
+                {fact(Users, `${property.maxGuests || 2} guests`)}
+                {property.bedrooms && fact(BedDouble, `${property.bedrooms} bedroom${property.bedrooms > 1 ? 's' : ''}`)}
+                {property.bathrooms && fact(Bath, `${property.bathrooms} bath${property.bathrooms > 1 ? 's' : ''}`)}
+              </div>
+
+              {property.description && (
+                <div>
+                  <h3 className="text-xl font-display font-bold text-brand-dark mb-3">About this space</h3>
+                  <p className="text-lg text-brand-text-secondary leading-relaxed whitespace-pre-line">
+                    {property.description}
+                  </p>
+                  {property.propertyId && (
+                    <div className="mt-6">
+                      <Badge tone="gray">Property ID: {property.propertyId}</Badge>
+                    </div>
+                  )}
                 </div>
-                <div className="w-full relative rounded-2xl overflow-hidden bg-black shadow-lg group">
-                  <video 
-                    src={property.video} 
-                    controls 
+              )}
+            </section>
+
+            {/* Host card */}
+            <section className="pb-10 border-b border-gray-100">
+              <Card className="p-6 flex items-center gap-5">
+                <div className="w-16 h-16 rounded-full bg-brand-dark text-white flex items-center justify-center font-display font-bold text-2xl flex-shrink-0">R</div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xl font-display font-bold text-brand-dark">Managed by Rentals Africa</p>
+                  <p className="text-base text-brand-text-secondary">Your booking is handled end to end by Rentals Africa</p>
+                </div>
+                <Badge tone="green" className="hidden sm:inline-flex"><ShieldCheck className="w-3.5 h-3.5" /> Verified</Badge>
+              </Card>
+            </section>
+
+            {/* Video */}
+            {property.video && (
+              <section className="pb-10 border-b border-gray-100">
+                <div className="flex items-center gap-3 mb-5">
+                  <Video className="w-6 h-6 text-brand-primary" />
+                  <h3 className="text-2xl font-display font-bold text-brand-dark">Cinematic tour</h3>
+                </div>
+                <div className="w-full relative rounded-3xl overflow-hidden bg-black shadow-card">
+                  <video
+                    src={property.video}
+                    controls
                     preload="metadata"
-                    className="w-full h-auto max-h-[450px] object-contain"
-                    poster={property.images[0]} // Use the first image as the video thumbnail
+                    className="w-full h-auto max-h-[480px] object-contain"
+                    poster={property.images[0]}
                   />
                 </div>
-              </div>
+              </section>
             )}
 
+            {/* Amenities */}
             {property.amenities && property.amenities.length > 0 && (
-              <div className="pt-8 border-t border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-6">What this place offers</h3>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-y-5 gap-x-6">
+              <section className="pb-10 border-b border-gray-100">
+                <h3 className="text-2xl font-display font-bold text-brand-dark mb-6">What this place offers</h3>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {property.amenities.map((amenity, idx) => (
-                    <div key={idx} className="flex items-center space-x-3">
-                      <div className="w-1.5 h-1.5 bg-gray-900"></div>
-                      <span className="text-gray-700 font-medium text-sm capitalize">{amenity}</span>
+                    <div key={idx} className="flex items-center gap-3 p-4 rounded-2xl border border-gray-100 bg-white">
+                      <div className="w-10 h-10 rounded-xl bg-brand-primary-soft flex items-center justify-center flex-shrink-0">
+                        <Check className="w-5 h-5 text-brand-primary" />
+                      </div>
+                      <span className="text-base font-medium text-brand-dark capitalize">{amenity}</span>
                     </div>
                   ))}
                 </div>
-              </div>
+              </section>
             )}
-          </div>
 
-          {/* REVIEWS SECTION */}
-          <div className="border-b border-gray-200 pb-10">
-            <div className="flex items-center justify-between mb-8">
-              <div className="flex items-center space-x-3">
-                <Star className="w-6 h-6 fill-gray-900 text-gray-900" />
-                <h3 className="text-2xl font-extrabold text-gray-900 tracking-tight">
-                  {property.numReviews === 0 ? 'No reviews yet' : `${property.rating} · ${property.numReviews} review${property.numReviews !== 1 ? 's' : ''}`}
-                </h3>
-              </div>
-              
-              <button 
-                onClick={() => {
-                  if (!user) {
-                    setShowAuthModal(true);
-                  } else if (user.role === 'USER') {
-                    setShowReviewModal(true);
-                  } else {
-                    alert('Only guest accounts can submit reviews.');
-                  }
-                }}
-                className="px-5 py-2.5 bg-gray-50 border border-gray-200 text-gray-900 hover:bg-gray-100 rounded-lg text-sm font-bold transition-colors shadow-sm"
-              >
-                Write a Review
-              </button>
-            </div>
+            {/* Reviews */}
+            <section className="pb-10 border-b border-gray-100">
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+                <div className="flex items-center gap-3">
+                  <Star className="w-7 h-7 fill-brand-star text-brand-star" />
+                  <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">
+                    {property.numReviews === 0 ? 'No reviews yet' : `${property.rating} · ${property.numReviews} review${property.numReviews !== 1 ? 's' : ''}`}
+                  </h3>
+                </div>
 
-            {reviewsLoading ? (
-              <div className="flex items-center space-x-2 text-gray-500 font-medium text-sm">
-                <Loader2 className="w-4 h-4 animate-spin" />
-                <span>Loading guest feedback...</span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    if (!user) {
+                      setShowAuthModal(true);
+                    } else if (user.role === 'USER') {
+                      setShowReviewModal(true);
+                    } else {
+                      alert('Only guest accounts can submit reviews.');
+                    }
+                  }}
+                >
+                  Write a review
+                </Button>
               </div>
-            ) : reviews.length === 0 ? (
-              <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100 flex flex-col items-center text-center">
-                <MessageSquare className="w-8 h-8 text-gray-300 mb-3" />
-                <h4 className="text-gray-900 font-bold mb-1">Be the first to review</h4>
-                <p className="text-sm font-medium text-gray-500 max-w-sm">Share your experience to help other travelers make informed decisions.</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                {reviews.map((review) => (
-                  <div key={review._id} className="space-y-4">
-                    <div className="flex items-center space-x-4">
-                      <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
-                        {review.user?.profilePicture ? (
-                          <img src={review.user.profilePicture} alt="User" className="w-full h-full object-cover" />
-                        ) : (
-                          <div className="w-full h-full bg-gray-900 flex items-center justify-center text-white font-bold text-lg uppercase">
-                            {review.user?.firstName?.charAt(0) || 'G'}
+
+              {reviewsLoading ? (
+                <div className="flex items-center gap-2 text-brand-text-secondary text-base">
+                  <Loader2 className="w-5 h-5 animate-spin" />
+                  <span>Loading guest feedback...</span>
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="bg-gray-50 rounded-2xl p-10 border border-gray-100 flex flex-col items-center text-center">
+                  <MessageSquare className="w-10 h-10 text-gray-300 mb-4" />
+                  <h4 className="text-xl font-display font-bold text-brand-dark mb-1">Be the first to review</h4>
+                  <p className="text-base text-brand-text-secondary max-w-sm">Share your experience to help other travelers make informed decisions.</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {reviews.map((review) => (
+                    <Card key={review._id} className="p-6 space-y-4">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-gray-200 rounded-full overflow-hidden flex-shrink-0">
+                          {review.user?.profilePicture ? (
+                            <img src={review.user.profilePicture} alt="User" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full bg-brand-dark flex items-center justify-center text-white font-display font-bold text-lg uppercase">
+                              {review.user?.firstName?.charAt(0) || 'G'}
+                            </div>
+                          )}
+                        </div>
+                        <div>
+                          <div className="text-base font-bold text-brand-dark">{review.user?.firstName}</div>
+                          <div className="text-sm text-brand-text-muted">
+                            {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                           </div>
-                        )}
-                      </div>
-                      <div>
-                        <div className="font-bold text-gray-900">{review.user?.firstName}</div>
-                        <div className="text-xs font-medium text-gray-500">
-                          {new Date(review.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                         </div>
                       </div>
-                    </div>
-                    <div className="flex space-x-1">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <Star key={star} className={`w-3 h-3 ${review.rating >= star ? 'fill-gray-900 text-gray-900' : 'fill-transparent text-gray-300'}`} />
-                      ))}
-                    </div>
-                    <p className="text-gray-600 text-sm leading-relaxed font-medium">
-                      {review.comment}
-                    </p>
-                  </div>
-                ))}
+                      <div className="flex gap-1">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <Star key={star} className={`w-4 h-4 ${review.rating >= star ? 'fill-brand-star text-brand-star' : 'fill-transparent text-gray-300'}`} />
+                        ))}
+                      </div>
+                      <p className="text-base text-brand-text-secondary leading-relaxed">{review.comment}</p>
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </section>
+
+            <div className="lg:hidden block">
+              <BookingWidget property={property} />
+            </div>
+
+            {/* Map */}
+            <section>
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-2">Where you'll be</h3>
+              <p className="text-base text-brand-text-secondary mb-5 flex items-center"><MapPin className="w-5 h-5 mr-1.5 text-brand-primary" />{property.location}</p>
+              <div className="w-full h-[420px] rounded-3xl overflow-hidden border border-gray-100 shadow-card">
+                <InteractiveMap
+                  address={property.address}
+                  type="SHORTLET"
+                  price={property.price || 0}
+                />
               </div>
-            )}
+            </section>
+
           </div>
 
-          <div className="lg:hidden block">
-            <BookingWidget property={property} />
-          </div>
-
-          <div className="pt-4 pb-8">
-            <h3 className="text-xl font-bold text-gray-900 mb-6">Where you'll be</h3>
-            <div className="w-full h-[400px] rounded-3xl overflow-hidden border border-gray-200 shadow-sm">
-              <InteractiveMap 
-                address={property.address} 
-                type="SHORTLET"
-                price={property.price || 0}
-              />
+          <div className="hidden lg:block lg:col-span-5 xl:col-span-4 relative">
+            <div className="sticky top-28 w-full ml-auto">
+              <BookingWidget property={property} />
             </div>
           </div>
 
         </div>
-
-        <div className="hidden lg:block lg:col-span-5 relative">
-          <div className="sticky top-28 w-full max-w-md ml-auto">
-            <BookingWidget property={property} />
-          </div>
-        </div>
-
-      </div>
-      <FloatingPriceTag />
-
+        <FloatingPriceTag />
+      </Container>
     </main>
   );
 }

@@ -17,6 +17,11 @@ import VipDetails from './pages/VipDetails';
 import VipSuccess from './pages/VipSuccess';
 import ListYourProperty from './pages/ListYourProperty';
 import About from './pages/About';
+import Help from './pages/Help';
+import Trips from './pages/Trips';
+import Saved from './pages/Saved';
+import Notifications from './pages/Notifications';
+import Profile from './pages/Profile';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
@@ -108,6 +113,11 @@ function App() {
           <Route path="/dashboard/admin" element={<AdminDashboard />} />
           <Route path="/list-property" element={<ListYourProperty />} />
           <Route path="/about" element={<About />} />
+          <Route path="/help" element={<Help />} />
+          <Route path="/trips" element={<Trips />} />
+          <Route path="/saved" element={<Saved />} />
+          <Route path="/notifications" element={<Notifications />} />
+          <Route path="/profile" element={<Profile />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/sitemap" element={<Sitemap />} />

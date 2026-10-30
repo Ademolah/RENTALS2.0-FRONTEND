@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { toLocalISO } from '../lib/dates';
 import { Search, SlidersHorizontal, MapPin, Plus, Minus, X, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 
 const LOCATION_TAXONOMY = {
@@ -105,7 +106,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     const currentMenu = activeMenu || 'checkIn';
 
     if (currentMenu === 'checkIn') {
-      setCheckIn(date.toISOString().split('T')[0]);
+      setCheckIn(toLocalISO(date));
       if (isVip) {
         setActiveMenu('location');
         return;
@@ -116,11 +117,11 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
       setActiveMenu('checkOut');
     } else if (currentMenu === 'checkOut') {
       if (checkInTime && selectedTime <= checkInTime) {
-        setCheckIn(date.toISOString().split('T')[0]);
+        setCheckIn(toLocalISO(date));
         setCheckOut('');
         setActiveMenu('checkOut');
       } else {
-        setCheckOut(date.toISOString().split('T')[0]);
+        setCheckOut(toLocalISO(date));
         if (isStandard) setActiveMenu('guests');
         else setActiveMenu(null); 
       }

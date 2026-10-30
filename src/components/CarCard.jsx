@@ -1,5 +1,6 @@
 import { MapPin, Users, Settings2, Gauge } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { listingTag } from './browse/meta';
 
 export default function CarCard({ car }) {
   const make = car.make || 'Unknown Make';
@@ -15,11 +16,15 @@ export default function CarCard({ car }) {
         <img
           src={image}
           alt={`${make} ${model}`}
+          loading="lazy"
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
         />
-        <div className="absolute top-3 left-3 px-2 py-1 bg-white/95 backdrop-blur-sm shadow-sm rounded-lg flex items-center space-x-1">
-          <span className="text-brand-primary font-display font-bold text-sm leading-none">R</span>
-          <span className="text-[10px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
+        <div className="absolute top-3 left-3 flex flex-col items-start gap-1.5">
+          <span className="bg-brand-dark text-white px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm">{listingTag(car, 'car')}</span>
+          <div className="px-2.5 py-1 bg-white/95 backdrop-blur-sm shadow-sm rounded-lg flex items-center space-x-1">
+            <span className="text-brand-primary font-display font-bold text-sm leading-none">R</span>
+            <span className="text-xs font-bold text-brand-dark uppercase tracking-wider">Verified</span>
+          </div>
         </div>
       </div>
 
@@ -31,7 +36,7 @@ export default function CarCard({ car }) {
 
         <div className="flex items-center text-brand-text-secondary text-sm mt-1">
           <MapPin className="w-3.5 h-3.5 mr-1 flex-shrink-0" />
-          <span className="truncate">{car.location?.city || 'Lagos'}, {car.location?.state || 'LA'}</span>
+          <span className="truncate">{[car.location?.city, car.location?.state].filter(Boolean).join(', ') || 'Lagos, Abuja'}</span>
         </div>
 
         <div className="mt-2 flex items-baseline space-x-1.5">
@@ -39,13 +44,13 @@ export default function CarCard({ car }) {
             ₦{price.toLocaleString()}
           </span>
           <span className="text-sm uppercase tracking-wider text-brand-text-muted font-semibold">
-            / day
+            / 12 hrs
           </span>
         </div>
 
         <div className="h-px w-full bg-gray-100 my-3"></div>
 
-        <div className="flex items-center justify-between text-brand-text-muted text-xs font-medium">
+        <div className="flex items-center justify-between text-brand-text-muted text-sm font-medium">
           <div className="flex items-center gap-1.5" title="Seats">
             <Users className="w-3.5 h-3.5" />
             <span>{car.seatNumber || 4}</span>

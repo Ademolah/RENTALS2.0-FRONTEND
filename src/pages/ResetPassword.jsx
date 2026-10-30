@@ -59,17 +59,18 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col justify-center items-center p-4">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
-        
-        <div className="p-8">
+    <div className="min-h-screen bg-brand-dark relative overflow-hidden flex flex-col justify-center items-center p-4">
+      <div className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-brand-primary/20 blur-3xl" />
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden relative">
+
+        <div className="p-8 sm:p-12">
           <div className="flex justify-center mb-6">
-            <div className="w-12 h-12 bg-gray-900 rounded-xl flex items-center justify-center shadow-lg">
-              <Lock className="w-6 h-6 text-white" />
+            <div className="w-16 h-16 bg-brand-primary rounded-2xl flex items-center justify-center shadow-glow">
+              <Lock className="w-8 h-8 text-white" />
             </div>
           </div>
 
-          <h2 className="text-2xl font-black text-gray-900 text-center tracking-tight mb-2">
+          <h2 className="text-3xl font-display font-bold text-brand-dark text-center tracking-tight mb-2">
             Create New Password
           </h2>
           
@@ -78,12 +79,12 @@ export default function ResetPassword() {
               <div className="w-16 h-16 bg-green-50 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle2 className="w-8 h-8 text-green-600" />
               </div>
-              <p className="text-sm font-medium text-gray-500 mb-8">
+              <p className="text-base text-brand-text-secondary mb-8">
                 Your password has been reset successfully. You can now log into your Rentals Africa account.
               </p>
               <Link 
                 to="/"
-                className="w-full inline-flex items-center justify-center bg-gray-900 text-white font-bold py-4 rounded-xl hover:bg-black transition-all active:scale-[0.98]"
+                className="w-full inline-flex items-center justify-center bg-brand-primary text-white text-base font-semibold py-4 rounded-xl hover:bg-brand-hover transition-all active:scale-[0.98]"
               >
                 Return to Home
                 <ArrowRight className="w-4 h-4 ml-2" />
@@ -91,12 +92,12 @@ export default function ResetPassword() {
             </div>
           ) : (
             <>
-              <p className="text-sm font-medium text-gray-500 text-center mb-8">
+              <p className="text-base text-brand-text-secondary text-center mb-8">
                 Your new password must be at least 8 characters long and include a number and a letter.
               </p>
 
               {error && (
-                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-xs font-bold flex items-start animate-in fade-in">
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-sm font-semibold flex items-start animate-in fade-in">
                   <AlertCircle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
                   <span>{error}</span>
                 </div>
@@ -104,7 +105,7 @@ export default function ResetPassword() {
 
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-brand-text-secondary mb-2">
                     New Password
                   </label>
                   <div className="relative">
@@ -116,7 +117,7 @@ export default function ResetPassword() {
                       onChange={handleChange} 
                       placeholder="••••••••" 
                       disabled={!token || loading}
-                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all pr-12" 
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" 
                     />
                     <button 
                       type="button" 
@@ -129,7 +130,7 @@ export default function ResetPassword() {
                 </div>
 
                 <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">
+                  <label className="block text-xs font-bold uppercase tracking-widest text-brand-text-secondary mb-2">
                     Confirm New Password
                   </label>
                   <div className="relative">
@@ -141,7 +142,7 @@ export default function ResetPassword() {
                       onChange={handleChange} 
                       placeholder="••••••••" 
                       disabled={!token || loading}
-                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all pr-12" 
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" 
                     />
                     <button 
                       type="button" 
@@ -156,7 +157,7 @@ export default function ResetPassword() {
                 <button 
                   type="submit" 
                   disabled={loading || !token} 
-                  className="w-full py-4 bg-brand-primary hover:opacity-90 text-white rounded-xl font-bold text-sm transition-all shadow-lg shadow-brand-primary/20 flex items-center justify-center mt-2 active:scale-[0.98] disabled:opacity-50"
+                  className="w-full py-4 bg-brand-primary hover:opacity-90 text-white rounded-xl font-semibold text-base transition-all shadow-glow flex items-center justify-center mt-2 active:scale-[0.98] disabled:opacity-50"
                 >
                   {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Secure My Account'}
                 </button>

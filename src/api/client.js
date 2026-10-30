@@ -30,11 +30,11 @@ apiClient.interceptors.response.use(
     const isLoginEndpoint = error.config?.url?.includes('/auth/login');
 
     if (error.response?.status === 401) {
-      localStorage.removeItem('rentals_token');
-      
-      // 2. Only redirect if the 401 is a session expiration, NOT a bad login attempt
+      // 2. Only clear the session if the 401 is an expiry, NOT a bad login attempt
       if (!isLoginEndpoint) {
-        window.location.href = '/'; // Safely route to the home page instead of a non-existent /login
+        localStorage.removeItem('rentals_token');
+        localStorage.removeItem('rentals_user');
+        window.location.href = '/?session=expired';
       }
     }
     return Promise.reject(error);

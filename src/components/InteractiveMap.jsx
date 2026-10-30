@@ -128,8 +128,8 @@ export default function InteractiveMap({
   if (isLoading) {
     return (
       <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center text-gray-500 bg-gray-100 rounded-3xl border border-gray-200">
-        <Loader2 className="w-8 h-8 animate-spin text-gray-900 mb-2" />
-        <span className="text-xs font-bold text-gray-600 uppercase tracking-wider">Rendering Map...</span>
+        <Loader2 className="w-8 h-8 animate-spin text-brand-primary mb-2" />
+        <span className="text-sm font-semibold text-brand-text-secondary uppercase tracking-wider">Rendering Map...</span>
       </div>
     );
   }
@@ -138,7 +138,7 @@ export default function InteractiveMap({
     return (
       <div className="w-full h-full min-h-[300px] flex flex-col items-center justify-center text-gray-400 bg-gray-100 rounded-3xl border border-gray-200 p-6 text-center">
         <MapPin className="w-8 h-8 mb-2 text-gray-300" />
-        <span className="text-sm font-bold text-gray-600">Map location preview unavailable for this address.</span>
+        <span className="text-base font-semibold text-brand-text-secondary">Map location preview unavailable for this address.</span>
       </div>
     );
   }
@@ -272,7 +272,7 @@ export default function InteractiveMap({
               {image && (
                 <div className="relative h-32 w-full bg-gray-100 overflow-hidden">
                   <img src={image} alt={title} className="w-full h-full object-cover" />
-                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md text-[9px] font-black text-white uppercase tracking-wider">
+                  <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md px-2 py-0.5 rounded-md text-xs font-bold text-white uppercase tracking-wider">
                     {type}
                   </div>
                 </div>
@@ -280,25 +280,25 @@ export default function InteractiveMap({
               
               <div className="p-3">
                 <div className="flex justify-between items-center mb-1">
-                  <span className="font-extrabold text-gray-900 text-sm truncate max-w-[160px]">
+                  <span className="font-bold text-brand-dark text-base truncate max-w-[160px]">
                     {title || 'Selected Property'}
                   </span>
                   {rating > 0 && (
-                    <div className="flex items-center text-xs font-bold text-gray-900">
+                    <div className="flex items-center text-sm font-bold text-brand-dark">
                       <Star className="w-3 h-3 fill-gray-900 mr-0.5" />
                       <span>{Number(rating).toFixed(1)}</span>
                     </div>
                   )}
                 </div>
 
-                <p className="text-xs text-gray-500 font-medium truncate mb-2">
+                <p className="text-sm text-brand-text-secondary font-medium truncate mb-2">
                   {address.street ? `${address.street}, ` : ''}{address.city}
                 </p>
 
                 <div className="flex items-baseline justify-between pt-2 border-t border-gray-100">
                   <div>
-                    <span className="font-black text-gray-900 text-sm">{formatMapPrice(price)}</span>
-                    <span className="text-[10px] text-gray-500 font-medium"> / night</span>
+                    <span className="font-bold text-brand-dark text-base">{formatMapPrice(price)}</span>
+                    <span className="text-xs text-brand-text-secondary font-medium"> / night</span>
                   </div>
                 </div>
               </div>
@@ -330,14 +330,14 @@ export default function InteractiveMap({
                     </div>
                   )}
                   <div className="p-3">
-                    <h4 className="font-extrabold text-sm text-gray-900 truncate mb-1">{item.title}</h4>
+                    <h4 className="font-bold text-base text-brand-dark truncate mb-1">{item.title}</h4>
                     <div className="flex items-center justify-between mt-2 pt-2 border-t border-gray-100">
-                      <div className="font-black text-gray-900 text-sm">
+                      <div className="font-bold text-brand-dark text-base">
                         {formatMapPrice(item.pricePerNight || item.pricePer12Hours || item.startingPrice)}
                       </div>
                       <Link 
                         to={`/${type.toLowerCase() === 'car' ? 'cars' : 'properties'}/${item._id}`}
-                        className="text-[10px] font-bold text-brand-primary hover:underline flex items-center"
+                        className="text-xs font-bold text-brand-primary hover:underline flex items-center"
                       >
                         View <ExternalLink className="w-2.5 h-2.5 ml-0.5" />
                       </Link>

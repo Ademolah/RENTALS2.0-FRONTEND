@@ -141,7 +141,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
         
         {/* Street Address */}
         <div>
-          <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
+          <label className="block text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
             <Building className="w-3 h-3 mr-1.5" /> Residential Address
           </label>
           <input 
@@ -158,7 +158,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
         {/* City & State Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
+            <label className="block text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
               <MapPin className="w-3 h-3 mr-1.5" /> City
             </label>
             <input 
@@ -172,7 +172,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
             />
           </div>
           <div>
-            <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5">
+            <label className="block text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5">
               State
             </label>
             <select 
@@ -191,7 +191,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
 
         {/* NIN Verification */}
         <div className="pt-2">
-          <label className="block text-[10px] font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
+          <label className="block text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5 flex items-center">
             <CreditCard className="w-3 h-3 mr-1.5" /> National ID (NIN)
           </label>
           <div className="relative">
@@ -205,7 +205,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
               placeholder="Enter 11-digit NIN" 
               className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all tracking-widest" 
             />
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-[10px] font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100">
               <ShieldCheck className="w-3 h-3 mr-1" /> Secure
             </div>
           </div>

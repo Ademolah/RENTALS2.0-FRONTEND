@@ -3,6 +3,8 @@ import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, C
 import { initiateBooking, logUnifiedWhatsappIntent } from '../api/reservation';
 import { checkPropertyAvailability } from '../api/properties';
 import { useAuth } from '../context/AuthContext';
+import AvailabilityNotice from './AvailabilityNotice';
+import { CONCIERGE_WHATSAPP } from '../lib/config';
 
 export default function BookingWidget({ property }) {
   const { user, setShowAuthModal } = useAuth();
@@ -133,7 +135,7 @@ export default function BookingWidget({ property }) {
     }
 
     if (availabilityStatus === 'booked') {
-      setError('These dates are already booked. Please choose different dates.');
+      setError('These dates have been booked.');
       return;
     }
 
@@ -155,7 +157,8 @@ export default function BookingWidget({ property }) {
         checkInDate: checkIn,
         checkOutDate: checkOut,
         guestsCount: guests,
-        totalAmount: pricingDetails.grandTotal
+        totalAmount: pricingDetails.grandTotal,
+        callbackUrl: `${window.location.origin}/trips`
       });
 
       const checkoutUrl = response.checkoutUrl || response.data?.checkoutUrl || response.authorization_url;
@@ -206,10 +209,11 @@ export default function BookingWidget({ property }) {
       });
 
       // 2. Retrieve secure reference from your backend
-      const reference = response.data?.reference || 'REQ-S-' + Math.floor(Math.random() * 100000);
+      const reference = response.data?.data?.reference || response.data?.reference;
+      if (!reference) throw new Error('No reference returned');
 
       // 3. Inject reference into the message
-      const WHATSAPP_NUMBER = "2347087937649"; 
+      const WHATSAPP_NUMBER = CONCIERGE_WHATSAPP;
       const propertyIdText = property?.propertyId ? ` (ID: ${property.propertyId})` : '';
       
       const waMessage = encodeURIComponent(
@@ -234,26 +238,26 @@ export default function BookingWidget({ property }) {
   const maxAllowedGuests = property?.maxGuests || 1;
 
   return (
-    <div className="bg-white border border-gray-200 p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] sticky top-28">
+    <div className="bg-white border border-gray-100 p-7 rounded-3xl shadow-elevated">
       
       {/* Header */}
       <div className="flex items-baseline justify-between mb-6">
-        <div className="flex items-baseline space-x-1">
-          <span className="text-2xl font-bold text-brand-dark tracking-tight">
+        <div className="flex items-baseline space-x-1.5">
+          <span className="text-3xl font-display font-bold text-brand-dark tracking-tight">
             ₦{pricingDetails ? pricingDetails.baseTotal.toLocaleString() : Number(currentPrice).toLocaleString()}
           </span>
-          <span className="text-brand-text-secondary text-sm font-medium">
+          <span className="text-brand-text-secondary text-base font-medium">
             {pricingDetails ? '/ total' : '/ night'}
           </span>
         </div>
         <div className="flex items-center space-x-1">
-          <Star className="w-4 h-4 fill-gray-900 text-brand-dark" />
-          <span className="font-semibold text-sm text-brand-dark">{property?.rating || "5.0"}</span>
+          <Star className="w-5 h-5 fill-brand-star text-brand-star" />
+          <span className="font-semibold text-base text-brand-dark">{property?.rating || "5.0"}</span>
         </div>
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start animate-in fade-in">
+        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-semibold border border-red-100 flex items-start animate-in fade-in">
           <span>{error}</span>
         </div>
       )}
@@ -263,15 +267,15 @@ export default function BookingWidget({ property }) {
         
         {/* BESPOKE DATE PICKER WRAPPER */}
         <div className="relative">
-          <div className={`border rounded-2xl overflow-hidden bg-white shadow-sm transition-all flex flex-col ${showCalendar ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-300'}`}>
+          <div className={`border rounded-2xl overflow-hidden bg-white shadow-sm transition-all flex flex-col ${showCalendar ? 'border-brand-dark ring-1 ring-brand-dark' : 'border-gray-300'}`}>
             <div className="flex border-b border-gray-300">
               {/* Check-In Button */}
               <div 
                 onClick={() => openCalendar('checkIn')}
                 className={`flex-1 p-3.5 border-r border-gray-300 relative cursor-pointer transition-colors ${calendarMode === 'checkIn' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
               >
-                <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-in</label>
-                <div className="text-sm font-bold text-brand-dark flex items-center">
+                <label className="text-xs font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-in</label>
+                <div className="text-base font-semibold text-brand-dark flex items-center">
                   {checkIn ? new Date(checkIn).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                 </div>
               </div>
@@ -281,8 +285,8 @@ export default function BookingWidget({ property }) {
                 onClick={() => openCalendar('checkOut')}
                 className={`flex-1 p-3.5 relative cursor-pointer transition-colors ${calendarMode === 'checkOut' && showCalendar ? 'bg-gray-100' : 'hover:bg-gray-50'}`}
               >
-                <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-out</label>
-                <div className="text-sm font-bold text-brand-dark flex items-center">
+                <label className="text-xs font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-1">Check-out</label>
+                <div className="text-base font-semibold text-brand-dark flex items-center">
                   {checkOut ? new Date(checkOut).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : 'Add Date'}
                 </div>
               </div>
@@ -291,24 +295,24 @@ export default function BookingWidget({ property }) {
             {/* Plus / Minus Guest Counter */}
             <div className="p-4 flex justify-between items-center bg-gray-50/50">
               <div>
-                <label className="text-[10px] font-display font-bold uppercase tracking-widest text-brand-dark block">Guests</label>
-                <span className="text-xs text-brand-text-secondary font-medium">Max {maxAllowedGuests}</span>
+                <label className="text-xs font-display font-bold uppercase tracking-widest text-brand-dark block">Guests</label>
+                <span className="text-sm text-brand-text-secondary font-medium">Max {maxAllowedGuests}</span>
               </div>
               <div className="flex items-center space-x-4">
                 <button 
                   type="button" 
                   onClick={() => setGuests(prev => Math.max(1, prev - 1))}
                   disabled={guests <= 1}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-gray-900 hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                  className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-brand-dark hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
                 >
                   <Minus className="w-4 h-4" />
                 </button>
-                <span className="font-semibold text-brand-dark w-4 text-center">{guests}</span>
+                <span className="text-lg font-semibold text-brand-dark w-5 text-center">{guests}</span>
                 <button 
                   type="button" 
                   onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
                   disabled={guests >= maxAllowedGuests}
-                  className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-gray-900 hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
+                  className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-brand-dark hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -321,19 +325,19 @@ export default function BookingWidget({ property }) {
             <div className="absolute top-[75px] left-0 mt-2 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center mb-4">
                 <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
-                <span className="font-display font-bold text-sm tracking-widest uppercase text-brand-dark">
+                <span className="font-display font-bold text-base tracking-wider uppercase text-brand-dark">
                   {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </span>
                 <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
               </div>
-              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-display font-bold text-brand-text-muted tracking-widest uppercase">
+              <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-display font-bold text-brand-text-muted tracking-widest uppercase">
                 {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
               </div>
               <div className="grid grid-cols-7 gap-y-2">
                 {generateCalendarDays().map((dateObj, i) => {
-                  if (!dateObj) return <div key={i} className="h-8"></div>;
+                  if (!dateObj) return <div key={i} className="h-9"></div>;
                   
-                  const dateStr = dateObj.toISOString().split('T')[0];
+                  const dateStr = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
                   const isPast = dateObj < todayDateObj;
                   const isSelectedIn = dateStr === checkIn;
                   const isSelectedOut = dateStr === checkOut;
@@ -345,14 +349,14 @@ export default function BookingWidget({ property }) {
                   let bgClass = 'hover:bg-gray-100 text-brand-dark';
                   if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
                   if (isBetween) bgClass = 'bg-gray-100 text-brand-dark';
-                  if (isSelectedIn || isSelectedOut) bgClass = 'bg-gray-900 text-white shadow-md';
+                  if (isSelectedIn || isSelectedOut) bgClass = 'bg-brand-primary text-white shadow-md';
 
                   return (
                     <button
                       key={i}
                       disabled={disabled}
                       onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
-                      className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
+                      className={`h-9 w-9 mx-auto rounded-full text-sm font-semibold transition-all flex items-center justify-center ${bgClass}`}
                     >
                       {dateObj.getDate()}
                     </button>
@@ -361,12 +365,12 @@ export default function BookingWidget({ property }) {
               </div>
               
               <div className="mt-4 pt-3 border-t border-gray-100 flex justify-between items-center">
-                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-widest">
+                <span className="text-xs font-bold text-brand-text-muted uppercase tracking-widest">
                   Selecting: {calendarMode === 'checkIn' ? 'Check-in' : 'Check-out'}
                 </span>
                 <button 
                   onClick={(e) => { e.preventDefault(); setShowCalendar(false); }}
-                  className="text-xs font-bold text-brand-dark underline underline-offset-2"
+                  className="text-sm font-bold text-brand-dark underline underline-offset-2"
                 >
                   Close
                 </button>
@@ -379,14 +383,17 @@ export default function BookingWidget({ property }) {
         {availabilityStatus === 'available' && (
           <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
-            <span className="text-sm font-bold">Dates are available!</span>
+            <span className="text-base font-semibold">Dates are available!</span>
           </div>
         )}
         {availabilityStatus === 'booked' && (
-          <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-3 rounded-xl border border-red-200 animate-in fade-in">
-            <XCircle className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-bold">These dates are already booked.</span>
-          </div>
+          <AvailabilityNotice
+            start={checkIn}
+            end={checkOut}
+            bookedDates={property?.bookedDates}
+            isFree={async (s, e) => (await checkPropertyAvailability(property.id, { startDate: s, endDate: e })).available !== false}
+            onPick={(s, e) => { setCheckIn(s); setCheckOut(e); }}
+          />
         )}
 
         {/* Action Buttons */}
@@ -397,7 +404,7 @@ export default function BookingWidget({ property }) {
               type="button"
               onClick={handleCheckAvailability}
               disabled={isCheckingAvailability}
-              className="w-1/2 py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-brand-dark rounded-xl font-bold text-sm transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+              className="w-1/2 py-4 bg-white border border-gray-300 hover:border-brand-dark text-brand-dark rounded-xl font-semibold text-base transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
             >
               {isCheckingAvailability ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -412,7 +419,7 @@ export default function BookingWidget({ property }) {
             <button 
               type="submit"
               disabled={loading || availabilityStatus === 'booked'}
-              className="w-1/2 py-3.5 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
+              className="w-1/2 py-4 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-semibold text-base transition-all shadow-glow flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
             >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
@@ -426,14 +433,14 @@ export default function BookingWidget({ property }) {
             type="button"
             onClick={handleWhatsAppClick}
             disabled={isWhatsappLoading}
-            className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+            className="w-full py-4 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-semibold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
           >
             {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
               <>
                 <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2 fill-current" xmlns="http://www.w3.org/2000/svg">
                   <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                 </svg>
-                Book via WhatsApp
+                Book via WhatsApp instead
               </>
             )}
           </button>
@@ -442,43 +449,43 @@ export default function BookingWidget({ property }) {
       </form>
 
       {/* Trust & Guarantees Section */}
-      <div className="bg-gray-50 rounded-xl p-4 mt-5 space-y-3.5 border border-gray-100">
+      <div className="bg-gray-50 rounded-2xl p-5 mt-6 space-y-4 border border-gray-100">
         <div className="flex gap-3">
-          <ShieldCheck className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
+          <ShieldCheck className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">100% Secured Payment</h4>
-            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
+            <h4 className="text-sm font-bold text-brand-dark">100% Secured Payment</h4>
+            <p className="text-sm text-brand-text-secondary mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
           </div>
         </div>
         <div className="flex gap-3">
-          <Clock className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+          <Clock className="w-5 h-5 text-brand-dark shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">Caution Fee Protection</h4>
-            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of checkout, subject to a standard property inspection.</p>
+            <h4 className="text-sm font-bold text-brand-dark">Caution Fee Protection</h4>
+            <p className="text-sm text-brand-text-secondary mt-0.5 leading-relaxed">Fully refundable within 24-48 hours of checkout, subject to a standard property inspection.</p>
           </div>
         </div>
         <div className="flex gap-3">
-          <Info className="w-4 h-4 text-gray-700 shrink-0 mt-0.5" />
+          <Info className="w-5 h-5 text-brand-dark shrink-0 mt-0.5" />
           <div>
-            <h4 className="text-[11px] font-bold text-brand-dark uppercase tracking-wide">Cancellations & Refunds</h4>
-            <p className="text-[11px] text-brand-text-secondary mt-0.5 leading-relaxed">Refunds are processed according to our standard platform terms and conditions.</p>
+            <h4 className="text-sm font-bold text-brand-dark">Cancellations & Refunds</h4>
+            <p className="text-sm text-brand-text-secondary mt-0.5 leading-relaxed">Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment. Rentals Africa reviews and processes refunds.</p>
           </div>
         </div>
       </div>
 
       {pricingDetails && (
         <div className="space-y-3 pt-5 mt-5 border-t border-gray-100 animate-in fade-in duration-300">
-          <div className="flex justify-between text-gray-600 text-sm">
+          <div className="flex justify-between text-brand-text-secondary text-base">
             <span className="underline decoration-gray-300 underline-offset-4">
               ₦{currentPrice.toLocaleString()} x {pricingDetails.nights} nights
             </span>
             <span>₦{pricingDetails.baseTotal.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between text-gray-600 text-sm">
-            <span className="underline decoration-gray-300 underline-offset-4">Taxes</span>
+          <div className="flex justify-between text-brand-text-secondary text-base">
+            <span className="underline decoration-gray-300 underline-offset-4">Platform fee (5%)</span>
             <span>₦{pricingDetails.platformFee.toLocaleString()}</span>
           </div>
-          <div className="flex justify-between font-bold text-brand-dark text-base pt-3 border-t border-gray-200">
+          <div className="flex justify-between font-bold text-brand-dark text-xl pt-3 border-t border-gray-200">
             <span>Total</span>
             <span>₦{pricingDetails.grandTotal.toLocaleString()}</span>
           </div>

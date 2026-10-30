@@ -1,15 +1,33 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
-  CarFront, Crown, ChevronRight, User as UserIcon
+  CarFront, Crown, ChevronRight, User as UserIcon,
+  Briefcase, Heart, Bell, LifeBuoy
 } from 'lucide-react';
+import { getUnreadCountApi } from '../api/user';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    if (!user) { setUnread(0); return; }
+    let active = true;
+    getUnreadCountApi().then((n) => active && setUnread(n)).catch(() => active && setUnread(0));
+    return () => { active = false; };
+  }, [user, isMenuOpen]);
+
+  const menuLinks = [
+    { to: '/trips', label: 'Trips', icon: Briefcase },
+    { to: '/saved', label: 'Saved', icon: Heart },
+    { to: '/notifications', label: 'Notifications', icon: Bell, badge: unread },
+    { to: '/profile', label: 'Profile', icon: UserIcon },
+    { to: '/help', label: 'Help', icon: LifeBuoy },
+  ];
 
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
@@ -83,9 +101,10 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
               <div className="relative z-[99999]">
                 <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
-                  className="flex items-center gap-2 border border-gray-200 p-1.5 pl-3 rounded-full hover:shadow-card transition-all bg-white"
+                  className="relative flex items-center gap-2 border border-gray-200 p-1.5 pl-3 rounded-full hover:shadow-card transition-all bg-white"
                 >
                   <Menu className="w-4 h-4 text-brand-text-muted" />
+                  {unread > 0 && <span className="absolute -top-1 -right-1 w-3.5 h-3.5 rounded-full bg-brand-primary border-2 border-white" aria-label={`${unread} unread notifications`} />}
                   <div className="w-8 h-8 rounded-full bg-brand-dark text-white flex items-center justify-center font-display font-bold text-sm">
                     {user ? user.firstName?.[0]?.toUpperCase() : <UserCircle className="w-7 h-7 text-gray-300" />}
                   </div>
@@ -122,23 +141,31 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                               <div className="w-9 h-9 bg-gray-50 group-hover:bg-brand-primary/10 rounded-lg flex items-center justify-center transition-colors">
                                 <LayoutDashboard className="w-4 h-4 text-brand-text-secondary group-hover:text-brand-primary" />
                               </div>
-                              <span className="text-sm font-medium text-brand-dark">Dashboard</span>
+                              <span className="text-base font-medium text-brand-dark">Dashboard</span>
                             </div>
                             <ChevronRight className="w-4 h-4 text-gray-300" />
                           </button>
 
-                          <button
-                            onClick={() => { setIsMenuOpen(false); redirectUserByRole(user.role); }}
-                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-9 h-9 bg-gray-50 group-hover:bg-brand-primary/10 rounded-lg flex items-center justify-center transition-colors">
-                                <UserIcon className="w-4 h-4 text-brand-text-secondary group-hover:text-brand-primary" />
+                          {menuLinks.map(({ to, label, icon: Icon, badge }) => (
+                            <Link
+                              key={to}
+                              to={to}
+                              onClick={() => setIsMenuOpen(false)}
+                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-9 h-9 bg-gray-50 group-hover:bg-brand-primary/10 rounded-lg flex items-center justify-center transition-colors">
+                                  <Icon className="w-4 h-4 text-brand-text-secondary group-hover:text-brand-primary" />
+                                </div>
+                                <span className="text-base font-medium text-brand-dark">{label}</span>
                               </div>
-                              <span className="text-sm font-medium text-brand-dark">Profile</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300" />
-                          </button>
+                              {badge > 0 ? (
+                                <span className="min-w-6 h-6 px-1.5 rounded-full bg-brand-primary text-white text-xs font-bold flex items-center justify-center">{badge > 99 ? '99+' : badge}</span>
+                              ) : (
+                                <ChevronRight className="w-4 h-4 text-gray-300" />
+                              )}
+                            </Link>
+                          ))}
                         </div>
 
                         <div className="mt-1 pt-1 border-t border-gray-100">
@@ -149,7 +176,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                             <div className="w-9 h-9 bg-gray-50 rounded-lg flex items-center justify-center">
                               <LogOut className="w-4 h-4" />
                             </div>
-                            <span className="text-sm font-medium">Sign Out</span>
+                            <span className="text-base font-medium">Sign Out</span>
                           </button>
                         </div>
                       </>

@@ -8,7 +8,7 @@ import {
 export default function VipSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const reference = searchParams.get('reference') || 'VIP-SECURED';
+  const reference = searchParams.get('reference') || searchParams.get('trxref') || '';
   
   const [verifying, setVerifying] = useState(true);
 
@@ -25,7 +25,7 @@ export default function VipSuccess() {
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-amber-500/10 blur-[80px] rounded-full"></div>
         <Loader2 className="w-12 h-12 animate-spin text-amber-500 mb-6 relative z-10" />
-        <p className="text-amber-500/80 font-bold uppercase tracking-[0.25em] text-xs relative z-10 animate-pulse">
+        <p className="text-amber-500/80 font-bold uppercase tracking-[0.25em] text-sm relative z-10 animate-pulse">
           Securing Payment...
         </p>
       </div>
@@ -41,7 +41,7 @@ export default function VipSuccess() {
         <div className="absolute -bottom-24 -left-24 w-96 h-96 bg-amber-500/10 blur-[100px] rounded-full"></div>
       </div>
 
-      <div className="w-full max-w-md relative z-10 animate-in fade-in slide-in-from-bottom-8 duration-700">
+      <div className="w-full max-w-xl relative z-10 animate-fade-up">
         
         {/* Digital VIP Pass Card */}
         <div className="bg-white/5 backdrop-blur-2xl border border-white/10 rounded-[2rem] p-8 md:p-10 shadow-elevated relative overflow-hidden">
@@ -59,23 +59,25 @@ export default function VipSuccess() {
               </div>
             </div>
             
-            <h1 className="text-3xl font-display font-bold text-white tracking-tight mb-3">Reservation Secured</h1>
-            <p className="text-brand-text-muted text-sm font-medium leading-relaxed">
+            <h1 className="text-4xl font-display font-bold text-white tracking-tight mb-3">Reservation Secured</h1>
+            <p className="text-white/60 text-lg leading-relaxed">
               Your VIP experience is locked in. Your deposit has been securely placed in our platform escrow.
             </p>
           </div>
 
           <div className="space-y-4 mb-10">
+            {reference && (
             <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex items-center justify-between">
-              <span className="text-xs font-bold text-brand-text-secondary uppercase tracking-widest">Reference ID</span>
-              <span className="text-sm font-bold text-amber-500 tracking-wider">{reference}</span>
+              <span className="text-sm font-bold text-white/50 uppercase tracking-widest">Reference ID</span>
+              <span className="text-base font-bold text-amber-500 tracking-wider">{reference}</span>
             </div>
+            )}
             
             <div className="flex items-start space-x-3 text-left p-4">
               <Mail className="w-5 h-5 text-brand-text-muted shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-gray-200">Confirmation Sent</h4>
-                <p className="text-xs font-medium text-brand-text-secondary mt-1 leading-relaxed">
+                <h4 className="text-base font-bold text-gray-200">Confirmation Sent</h4>
+                <p className="text-sm text-white/50 mt-1 leading-relaxed">
                   We have dispatched your digital itinerary and receipt to your email. Check your inbox.
                 </p>
               </div>
@@ -84,8 +86,8 @@ export default function VipSuccess() {
             <div className="flex items-start space-x-3 text-left p-4">
               <ShieldCheck className="w-5 h-5 text-brand-text-muted shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-gray-200">Escrow Protected</h4>
-                <p className="text-xs font-medium text-brand-text-secondary mt-1 leading-relaxed">
+                <h4 className="text-base font-bold text-gray-200">Escrow Protected</h4>
+                <p className="text-sm text-white/50 mt-1 leading-relaxed">
                   Funds remain secured until you tap "Confirm Arrival" on your dashboard at the venue.
                 </p>
               </div>
@@ -95,7 +97,7 @@ export default function VipSuccess() {
           <div className="space-y-3">
             <button 
               onClick={() => navigate('/', { replace: true })}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-display font-bold uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
+              className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-display font-bold uppercase tracking-widest text-sm transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
             >
               <span>Return Home</span>
               <ArrowRight className="w-4 h-4" />

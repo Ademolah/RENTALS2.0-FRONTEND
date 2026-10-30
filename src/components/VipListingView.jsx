@@ -1,42 +1,45 @@
-import { useState, useEffect, useMemo } from 'react';
-import { Loader2, Building, ShieldCheck } from 'lucide-react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
+import { Building, ShieldCheck } from 'lucide-react';
 import { getVipEstablishments, getVipServices } from '../api/vip';
 import { VipSectionHeader } from './VipSectionHeader'; 
 import VipCard from './VipCard';
 import CitySelectorModal from './CitySelectorModal';
+import BrowseShell from './browse/BrowseShell';
+import { SkeletonGrid, ErrorState, NoResults } from './browse/States';
+import { applyFilters, sortItems } from './browse/meta';
 
 export default function VipListingView({ defaultLocation }) {
   const [establishments, setEstablishments] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+  const [filters, setFilters] = useState({});
+  const [sort, setSort] = useState('recommended');
   
   const [activeTab, setActiveTab] = useState('venues'); // 'venues' | 'services'
   const [selectedLocation, setSelectedLocation] = useState(defaultLocation || null);
 
-  useEffect(() => {
-    async function loadVipData() {
-      try {
-        setLoading(true);
-        // 💡 NEW: Fetch both concurrently. allSettled ensures one failure doesn't break the whole page.
-        const [venuesRes, servicesRes] = await Promise.allSettled([
-          getVipEstablishments(),
-          getVipServices()
-        ]);
-
-        if (venuesRes.status === 'fulfilled') {
-          setEstablishments(venuesRes.value.data?.establishments || venuesRes.value.data || []);
-        }
-        if (servicesRes.status === 'fulfilled') {
-          setServices(servicesRes.value.data?.services || servicesRes.value.data || []);
-        }
-      } catch (error) {
-        console.error("Failed to load VIP data", error);
-      } finally {
-        setLoading(false);
+  const loadVipData = useCallback(async () => {
+    try {
+      setLoading(true);
+      setError(false);
+      const [venuesRes, servicesRes] = await Promise.allSettled([getVipEstablishments(), getVipServices()]);
+      if (venuesRes.status === 'rejected' && servicesRes.status === 'rejected') setError(true);
+      if (venuesRes.status === 'fulfilled') {
+        setEstablishments(venuesRes.value.data?.establishments || venuesRes.value.data || []);
       }
+      if (servicesRes.status === 'fulfilled') {
+        setServices(servicesRes.value.data?.services || servicesRes.value.data || []);
+      }
+    } catch (e) {
+      console.error('Failed to load VIP data', e);
+      setError(true);
+    } finally {
+      setLoading(false);
     }
-    loadVipData();
   }, []);
+
+  useEffect(() => { loadVipData(); }, [loadVipData]);
 
   // Helper to filter by city
   const filterByLocation = (items, targetCity) => {
@@ -53,7 +56,17 @@ export default function VipListingView({ defaultLocation }) {
   const filteredServices = useMemo(() => filterByLocation(services, selectedLocation), [services, selectedLocation]);
 
   // Determine which list to show based on the active tab
-  const activeList = activeTab === 'venues' ? filteredEstablishments : filteredServices;
+  const baseList = activeTab === 'venues' ? filteredEstablishments : filteredServices;
+  const typeOptions = useMemo(() => {
+    const set = new Set(baseList.map((i) => String(i.establishmentType || i.serviceType || '').toUpperCase()).filter(Boolean));
+    return [...set].map((v) => ({ value: v, label: v.replace(/_/g, ' ').replace(/\w/g, (c) => c.toUpperCase()).replace(/(\w)(\w*)/g, (m, a2, b2) => a2 + b2.toLowerCase()) }));
+  }, [baseList]);
+  const vipConfig = [
+    { kind: 'price', label: activeTab === 'venues' ? 'Required deposit' : 'Price per day', max: 2000000, step: 25000 },
+    ...(typeOptions.length ? [{ kind: 'multi', key: 'types', label: 'Type', options: typeOptions }] : []),
+  ];
+  const activeList = useMemo(() => sortItems(applyFilters(baseList, filters), sort), [baseList, filters, sort]);
+  const hasFilters = Object.keys(filters).length > 0;
 
   if (!selectedLocation) {
     return (
@@ -76,9 +89,9 @@ export default function VipListingView({ defaultLocation }) {
         <div className="bg-gray-100 p-1.5 rounded-2xl inline-flex space-x-1 shadow-inner border border-gray-200">
           <button
             onClick={() => setActiveTab('venues')}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-display font-bold tracking-widest uppercase transition-all duration-300 ${
-              activeTab === 'venues' 
-                ? 'bg-black text-amber-400 shadow-md' 
+            className={`flex items-center space-x-2 px-7 py-3.5 rounded-xl text-base font-display font-bold tracking-wide uppercase transition-all duration-300 ${
+              activeTab === 'venues'
+                ? 'bg-brand-dark text-amber-400 shadow-md'
                 : 'text-brand-text-secondary hover:text-brand-dark'
             }`}
           >
@@ -87,9 +100,9 @@ export default function VipListingView({ defaultLocation }) {
           </button>
           <button
             onClick={() => setActiveTab('services')}
-            className={`flex items-center space-x-2 px-6 py-3 rounded-xl text-sm font-display font-bold tracking-widest uppercase transition-all duration-300 ${
-              activeTab === 'services' 
-                ? 'bg-black text-amber-400 shadow-md' 
+            className={`flex items-center space-x-2 px-7 py-3.5 rounded-xl text-base font-display font-bold tracking-wide uppercase transition-all duration-300 ${
+              activeTab === 'services'
+                ? 'bg-brand-dark text-amber-400 shadow-md'
                 : 'text-brand-text-secondary hover:text-brand-dark'
             }`}
           >
@@ -99,45 +112,43 @@ export default function VipListingView({ defaultLocation }) {
         </div>
       </div>
 
-      {loading ? (
-        <div className="flex flex-col items-center justify-center py-20 text-brand-text-muted">
-          <Loader2 className="w-10 h-10 animate-spin text-amber-400 mb-4" />
-          <p className="font-medium text-sm uppercase tracking-widest">Curating Portfolio...</p>
-        </div>
-      ) : activeList.length === 0 ? (
-        <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50">
-          <p className="text-brand-text-secondary font-bold">No exclusive {activeTab} available in {selectedLocation} yet.</p>
-          <button 
+      <BrowseShell
+        config={vipConfig}
+        filters={filters}
+        setFilters={setFilters}
+        sort={sort}
+        setSort={setSort}
+        total={activeList.length}
+        noun={activeTab === 'venues' ? 'venues' : 'services'}
+      >
+        <div className="flex justify-between items-center mb-6">
+          <h3 className="text-2xl md:text-[28px] font-display font-bold text-brand-dark tracking-tight capitalize">
+            {activeTab} in {selectedLocation}
+          </h3>
+          <button
             onClick={() => setSelectedLocation(null)}
-            className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-black transition-colors"
+            className="text-base font-bold text-brand-primary hover:text-brand-hover underline underline-offset-4"
           >
-            Change Location
+            Change City
           </button>
         </div>
-      ) : (
-        <>
-          <div className="flex justify-between items-center mb-6">
-            <h3 className="text-xl font-bold text-brand-dark tracking-tight capitalize">
-              {activeTab} in {selectedLocation}
-            </h3>
-            <button 
-              onClick={() => setSelectedLocation(null)}
-              className="text-sm font-bold text-amber-500 hover:text-amber-600 underline underline-offset-4"
-            >
-              Change City
-            </button>
+
+        {loading ? (
+          <SkeletonGrid count={6} className="xl:grid-cols-3" />
+        ) : error ? (
+          <ErrorState onRetry={loadVipData} message="We couldn't load VIP listings. Check your connection and try again." />
+        ) : activeList.length === 0 ? (
+          <NoResults
+            hasFilters={hasFilters}
+            onClear={() => setFilters({})}
+            text={hasFilters ? undefined : `No exclusive ${activeTab} in ${selectedLocation} yet. Try the other city.`}
+          />
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8">
+            {activeList.map((item) => <VipCard key={item._id} establishment={item} />)}
           </div>
-          
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">
-            {activeList.map((item) => (
-              <VipCard 
-                key={item._id} 
-                establishment={item} 
-              />
-            ))}
-          </div>
-        </>
-      )}
+        )}
+      </BrowseShell>
     </div>
   );
 }

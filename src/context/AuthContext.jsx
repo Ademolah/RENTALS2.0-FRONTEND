@@ -25,8 +25,21 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('rentals_user');
       }
     }
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('session') === 'expired') {
+      setShowAuthModal(true);
+      window.history.replaceState({}, '', window.location.pathname);
+    }
     setLoading(false);
   }, []);
+
+  const updateUser = (patch) => {
+    setUser((prev) => {
+      const next = { ...(prev || {}), ...patch };
+      localStorage.setItem('rentals_user', JSON.stringify(next));
+      return next;
+    });
+  };
 
   // Helper function to cleanly extract token and user from various response structures
   const extractAuthData = (apiResponse) => {
@@ -102,6 +115,7 @@ export function AuthProvider({ children }) {
       login, 
       register, 
       logout, 
+      updateUser,
       redirectUserByRole,
       showAuthModal,      // EXPOSED TO APP
       setShowAuthModal    // EXPOSED TO APP

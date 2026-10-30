@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate, Link } from 'react-router-dom'; 
 import { 
   MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
@@ -9,6 +10,28 @@ import { getCarById, createCarReservation, checkCarAvailability, getCars } from 
 import { useAuth } from '../context/AuthContext';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
+import AvailabilityNotice from '../components/AvailabilityNotice';
+import ShareButton from '../components/ShareButton';
+import { useDocumentMeta } from '../lib/seo';
+import { CONCIERGE_WHATSAPP } from '../lib/config';
+import { addDays } from '../lib/availability';
+
+const to24 = (t) => {
+  const m = /(\d+):(\d+)\s*(AM|PM)?/i.exec(t || '10:00 AM') || ['', '10', '00'];
+  let h = Number(m[1]);
+  if (m[3]) {
+    const pm = m[3].toUpperCase() === 'PM';
+    if (pm && h < 12) h += 12;
+    if (!pm && h === 12) h = 0;
+  }
+  return `${String(h).padStart(2, '0')}:${m[2]}`;
+};
+const slotRange = (date, time, slots) => {
+  const start = new Date(`${date}T${to24(time)}:00+01:00`);
+  return { start, end: new Date(start.getTime() + slots * 12 * 3600000) };
+};
+const lagosIso = (d) => new Date(d.getTime() + 3600000).toISOString().slice(0, 19) + '+01:00';
+
 
 export default function CarDetails() {
   const { id } = useParams();
@@ -28,6 +51,7 @@ export default function CarDetails() {
   const [pickupTime, setPickupTime] = useState('10:00 AM');
   const [durationSlots, setDurationSlots] = useState(1); 
   const [needsChauffeur, setNeedsChauffeur] = useState(false);
+  const [licenseAck, setLicenseAck] = useState(false);
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
   const [isRedirecting, setIsRedirecting] = useState(false);
@@ -119,11 +143,14 @@ export default function CarDetails() {
     if (car) fetchSimilar();
   }, [car]);
 
+  useDocumentMeta(car ? `${car.make} ${car.carModel || car.model || ''} ${car.year || ''}`.trim() : '', car?.description?.slice(0, 160));
+  const chauffeurIncluded = /chauffeur/i.test(String(car?.category || '').replace(/_/g, ' '));
+
   const pricing = useMemo(() => {
     if (!car) return null;
     
     const baseRate = car.pricePer12Hours || 0;
-    const chauffeurRate = needsChauffeur ? 25000 * Math.ceil(durationSlots / 2) : 0; 
+    const chauffeurRate = needsChauffeur && !chauffeurIncluded ? 25000 * durationSlots : 0;
     
     const rentalTotal = baseRate * durationSlots;
     const subtotal = rentalTotal + chauffeurRate;
@@ -131,7 +158,7 @@ export default function CarDetails() {
     const grandTotal = subtotal + platformFee;
 
     return { baseRate, rentalTotal, chauffeurRate, subtotal, platformFee, grandTotal };
-  }, [car, durationSlots, needsChauffeur]);
+  }, [car, durationSlots, needsChauffeur, chauffeurIncluded]);
 
   // 💡 FIX: Safely derive images BEFORE the early returns so hooks never change order
   const images = car?.images?.length > 0 ? car.images : ['https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?auto=format&fit=crop&w=1200&q=80'];
@@ -168,13 +195,11 @@ export default function CarDetails() {
     setBookingError('');
     
     try {
-      const pickupDateTime = new Date(`${pickupDate} ${pickupTime}`);
-      const dropoffDateTime = new Date(pickupDateTime);
-      dropoffDateTime.setHours(pickupDateTime.getHours() + (durationSlots * 12)); 
+      const { start: pickupDateTime, end: dropoffDateTime } = slotRange(pickupDate, pickupTime, durationSlots);
 
       const response = await checkCarAvailability(car._id || car.id, { 
-        startDate: pickupDateTime.toISOString(), 
-        endDate: dropoffDateTime.toISOString() 
+        startDate: lagosIso(pickupDateTime), 
+        endDate: lagosIso(dropoffDateTime) 
       });
       
       if (response.available) {
@@ -207,8 +232,13 @@ export default function CarDetails() {
       return;
     }
 
+    if (!licenseAck) {
+      setBookingError('Please confirm you hold a valid driving licence.');
+      return;
+    }
+
     if (availabilityStatus === 'booked') {
-      setBookingError('These dates are already booked. Please choose different times.');
+      setBookingError('These dates have been booked.');
       return;
     }
 
@@ -223,15 +253,16 @@ export default function CarDetails() {
     }
 
     try {
-      const pickupDateTime = new Date(`${pickupDate} ${pickupTime}`);
-      const dropoffDateTime = new Date(pickupDateTime);
-      dropoffDateTime.setHours(pickupDateTime.getHours() + (durationSlots * 12)); 
+      const { start: pickupDateTime, end: dropoffDateTime } = slotRange(pickupDate, pickupTime, durationSlots);
 
       const payload = {
         carId: car._id || car.id,
-        pickupTime: pickupDateTime.toISOString(),
-        dropoffTime: dropoffDateTime.toISOString(),
-        totalAmount: pricing.grandTotal
+        pickupTime: lagosIso(pickupDateTime),
+        dropoffTime: lagosIso(dropoffDateTime),
+        totalAmount: pricing.grandTotal,
+        withChauffeur: needsChauffeur && !chauffeurIncluded,
+        licenseAck: true,
+        callbackUrl: `${window.location.origin}/trips`
       };
 
       const response = await createCarReservation(payload);
@@ -274,24 +305,23 @@ export default function CarDetails() {
 
     try {
       // Calculate precise drop-off based on selected duration slots (12 hours per slot)
-      const pickupDateTime = new Date(`${pickupDate} ${pickupTime}`);
-      const dropoffDateTime = new Date(pickupDateTime);
-      dropoffDateTime.setHours(pickupDateTime.getHours() + (durationSlots * 12)); 
+      const { start: pickupDateTime, end: dropoffDateTime } = slotRange(pickupDate, pickupTime, durationSlots);
 
       // 1. Fire intent to database
       const response = await logUnifiedWhatsappIntent({
         assetId: car._id || car.id,
         assetType: 'CAR',
-        startDate: pickupDateTime.toISOString(),
-        endDate: dropoffDateTime.toISOString(),
-        extraData: { withDriver: needsChauffeur }
+        startDate: lagosIso(pickupDateTime),
+        endDate: lagosIso(dropoffDateTime),
+        extraData: { withDriver: needsChauffeur && !chauffeurIncluded }
       });
 
       // 2. Retrieve secure reference
-      const reference = response.data?.reference || 'REQ-C-' + Math.floor(Math.random() * 100000);
+      const reference = response.data?.data?.reference || response.data?.reference;
+      if (!reference) throw new Error('No reference');
 
       // 3. Inject reference into the message
-      const WHATSAPP_NUMBER = "2347087937649"; 
+      const WHATSAPP_NUMBER = CONCIERGE_WHATSAPP;
       
       const waMessage = encodeURIComponent(
         `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
@@ -331,7 +361,7 @@ export default function CarDetails() {
   }
 
   return (
-    <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
+    <main className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-8 animate-in fade-in duration-500 relative">
 
       {/* FULL SCREEN LIGHTBOX */}
       {lightboxIndex !== null && (
@@ -382,7 +412,7 @@ export default function CarDetails() {
 
       <button 
         onClick={() => navigate(-1)}
-        className="flex items-center text-sm font-bold text-brand-text-secondary hover:text-brand-dark transition-colors mb-6 group w-fit"
+        className="flex items-center text-base font-semibold text-brand-text-secondary hover:text-brand-dark transition-colors mb-6 group w-fit"
       >
         <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
         Back
@@ -390,20 +420,21 @@ export default function CarDetails() {
       
       {/* HEADER SECTION */}
       <div className="mb-6">
-        <div className="flex items-center space-x-2 text-xs font-bold tracking-widest text-brand-primary uppercase mb-2">
+        <div className="flex items-center space-x-2 text-sm font-bold tracking-widest text-brand-primary uppercase mb-3">
           <span>{car.category || 'Premium Vehicle'}</span>
           <span className="text-gray-300">|</span>
-          <span className="text-brand-text-secondary flex items-center"><MapPin className="w-3 h-3 mr-1"/> {car.location?.city}, {car.location?.state}</span>
+          <span className="text-brand-text-secondary flex items-center"><MapPin className="w-4 h-4 mr-1"/> {car.location?.city}, {car.location?.state}</span>
         </div>
-        <h1 className="text-3xl md:text-5xl font-display font-bold text-brand-dark tracking-tight">
+        <h1 className="text-4xl md:text-6xl font-display font-bold text-brand-dark tracking-tight leading-[1.05]">
           {car.make} {car.model} <span className="text-brand-text-muted font-medium ml-2">{car.year}</span>
         </h1>
+        <ShareButton className="mt-4" />
       </div>
 
       {/* --- GALLERY SECTION --- */}
       <div className="relative mb-12">
         {/* MOBILE GALLERY */}
-        <div className="md:hidden relative h-[300px] rounded-2xl overflow-hidden group">
+        <div className="md:hidden relative h-[300px] rounded-3xl overflow-hidden group">
           <div ref={mobileScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {images.map((img, idx) => (
               <div 
@@ -424,7 +455,7 @@ export default function CarDetails() {
         </div>
 
         {/* DESKTOP GALLERY */}
-        <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden">
+        <div className="hidden md:block h-[540px] rounded-3xl overflow-hidden">
           {images.length === 1 && (
             <div 
               className="w-full h-full relative cursor-pointer"
@@ -490,49 +521,49 @@ export default function CarDetails() {
       </div>
 
       {/* --- CONTENT & BOOKING GRID --- */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 lg:gap-16">
         
         {/* LEFT COLUMN: Vehicle Details */}
         <div className="lg:col-span-2 space-y-10">
           <div className="flex flex-wrap gap-4 pb-8 border-b border-gray-200">
-            <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+            <div className="flex items-center space-x-3 bg-brand-accent-soft px-5 py-4 rounded-2xl flex-1 min-w-[190px]">
               <Users className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Seats</span>
-                <span className="text-sm font-semibold text-brand-dark">{car.seatNumber || 4} Passengers</span>
+                <span className="text-xs font-bold text-brand-text-muted uppercase tracking-wider">Seats</span>
+                <span className="text-lg font-display font-bold text-brand-dark">{car.seatNumber || 4} Passengers</span>
               </div>
             </div>
-            <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+            <div className="flex items-center space-x-3 bg-brand-accent-soft px-5 py-4 rounded-2xl flex-1 min-w-[190px]">
               <Settings2 className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Transmission</span>
-                <span className="text-sm font-semibold text-brand-dark capitalize">{car.transmission || 'Automatic'}</span>
+                <span className="text-xs font-bold text-brand-text-muted uppercase tracking-wider">Transmission</span>
+                <span className="text-lg font-display font-bold text-brand-dark capitalize">{car.transmission || 'Automatic'}</span>
               </div>
             </div>
-            <div className="flex items-center space-x-2 bg-gray-50 px-4 py-3 rounded-2xl border border-gray-100">
+            <div className="flex items-center space-x-3 bg-brand-accent-soft px-5 py-4 rounded-2xl flex-1 min-w-[190px]">
               <Gauge className="w-5 h-5 text-brand-text-secondary" />
               <div className="flex flex-col">
-                <span className="text-[10px] font-bold text-brand-text-muted uppercase tracking-wider">Class</span>
-                <span className="text-sm font-semibold text-brand-dark capitalize">{car.category || 'Luxury'}</span>
+                <span className="text-xs font-bold text-brand-text-muted uppercase tracking-wider">Class</span>
+                <span className="text-lg font-display font-bold text-brand-dark capitalize">{car.category || 'Luxury'}</span>
               </div>
             </div>
           </div>
 
           <div>
-            <h3 className="text-xl font-bold text-brand-dark mb-4">About this vehicle</h3>
-            <p className="text-gray-600 leading-relaxed whitespace-pre-line">
+            <h3 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-5">About this vehicle</h3>
+            <p className="text-brand-text-secondary text-lg leading-8 whitespace-pre-line">
               {car.description || "A premium, meticulously maintained vehicle ready for your travel needs."}
             </p>
           </div>
 
           {car.features && car.features.length > 0 && (
             <div>
-              <h3 className="text-xl font-bold text-brand-dark mb-4">Features & Amenities</h3>
+              <h3 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-5">Features & Amenities</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-y-4 gap-x-4">
                 {car.features.map((feature, i) => (
                   <div key={i} className="flex items-center space-x-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0" />
-                    <span className="text-gray-700 font-medium text-sm">{feature}</span>
+                    <CheckCircle2 className="w-5 h-5 text-status-available shrink-0" />
+                    <span className="text-brand-dark font-medium text-base">{feature}</span>
                   </div>
                 ))}
               </div>
@@ -544,7 +575,7 @@ export default function CarDetails() {
             <div className="pt-4 pb-8">
               <div className="flex items-center space-x-2 mb-4">
                 <Video className="w-5 h-5 text-brand-dark" />
-                <h3 className="text-xl font-bold text-brand-dark">Cinematic Tour</h3>
+                <h3 className="text-3xl font-display font-bold text-brand-dark tracking-tight">Cinematic Tour</h3>
               </div>
               <div className="w-full relative rounded-2xl overflow-hidden bg-black shadow-lg group">
                 <video 
@@ -561,20 +592,20 @@ export default function CarDetails() {
 
         {/* RIGHT COLUMN: Concierge Booking Widget */}
         <div className="lg:col-span-1">
-          <div className="bg-white border border-gray-200 p-5 lg:p-6 rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] sticky top-28">
+          <div className="bg-white border border-gray-100 p-6 lg:p-7 rounded-3xl shadow-elevated sticky top-28">
             
             {/* REACTIVE TOP PRICE */}
             <div className="flex items-baseline space-x-1 mb-5 pb-5 border-b border-gray-100 transition-all duration-300">
-              <span className="text-3xl font-display font-bold text-brand-dark tracking-tight">
+              <span className="text-4xl font-display font-bold text-brand-dark tracking-tight">
                 ₦{pricing ? pricing.subtotal.toLocaleString() : Number(car.pricePer12Hours).toLocaleString()}
               </span>
-              <span className="text-brand-text-secondary text-sm font-medium">
+              <span className="text-brand-text-secondary text-base font-medium">
                 {pricing && durationSlots > 1 ? '/ total' : '/ 12 hrs'}
               </span>
             </div>
 
             {bookingError && (
-              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-bold border border-red-100 flex items-start animate-in fade-in">
+              <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-sm font-bold border border-red-100 flex items-start animate-in fade-in">
                 <span>{bookingError}</span>
               </div>
             )}
@@ -587,14 +618,14 @@ export default function CarDetails() {
                 <div className="relative">
                   <div className="flex items-center space-x-2 mb-2.5">
                     <CalendarIcon className="w-3.5 h-3.5 text-brand-text-muted" />
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-brand-dark">Pickup Date</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-brand-dark">Pickup Date</label>
                   </div>
                   
                   <div 
                     onClick={() => setShowCalendar(!showCalendar)}
                     className={`w-full bg-white border rounded-xl py-3.5 pl-4 pr-4 cursor-pointer transition-colors flex items-center justify-between ${showCalendar ? 'border-gray-900 ring-1 ring-gray-900' : 'border-gray-200 hover:border-gray-300'}`}
                   >
-                    <span className={pickupDate ? 'text-brand-dark font-bold text-sm' : 'text-brand-text-muted font-medium text-sm'}>
+                    <span className={pickupDate ? 'text-brand-dark font-bold text-base' : 'text-brand-text-muted font-medium text-base'}>
                       {pickupDate ? new Date(pickupDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' }) : 'Select Date'}
                     </span>
                   </div>
@@ -604,19 +635,19 @@ export default function CarDetails() {
                     <div className="absolute top-[70px] left-0 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
                       <div className="flex justify-between items-center mb-4">
                         <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
-                        <span className="font-display font-bold text-sm tracking-widest uppercase text-brand-dark">
+                        <span className="font-display font-bold text-base tracking-widest uppercase text-brand-dark">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
                         <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-display font-bold text-brand-text-muted tracking-widest uppercase">
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-display font-bold text-brand-text-muted tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-y-2">
                         {generateCalendarDays().map((dateObj, i) => {
                           if (!dateObj) return <div key={i} className="h-8"></div>;
                           
-                          const dateStr = dateObj.toISOString().split('T')[0];
+                          const dateStr = toLocalISO(dateObj);
                           const isPast = dateObj < todayDateObj;
                           const isSelected = dateStr === pickupDate;
                           
@@ -654,7 +685,7 @@ export default function CarDetails() {
                 <div>
                   <div className="flex items-center space-x-2 mb-2.5">
                     <Clock className="w-3.5 h-3.5 text-brand-text-muted" />
-                    <label className="text-[10px] font-bold uppercase tracking-widest text-brand-dark">Pickup Time</label>
+                    <label className="text-xs font-bold uppercase tracking-widest text-brand-dark">Pickup Time</label>
                   </div>
                   <div className="flex overflow-x-auto gap-2 pb-2 custom-scrollbar snap-x">
                     {CONCIERGE_TIME_SLOTS.map((time) => {
@@ -677,11 +708,11 @@ export default function CarDetails() {
 
                 {/* COMPACT Duration Dropdown */}
                 <div className="p-3 bg-white border border-gray-200 rounded-xl shadow-sm">
-                  <label className="text-[9px] font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-0.5">Rental Duration</label>
+                  <label className="text-xs font-display font-bold uppercase tracking-widest text-brand-text-secondary block mb-0.5">Rental Duration</label>
                   <select 
                     value={durationSlots}
                     onChange={(e) => setDurationSlots(Number(e.target.value))}
-                    className="w-full text-sm outline-none bg-transparent font-bold cursor-pointer text-brand-dark"
+                    className="w-full text-base outline-none bg-transparent font-bold cursor-pointer text-brand-dark"
                   >
                     <option value={1}>12 Hours (Half Day)</option>
                     <option value={2}>24 Hours (Full Day)</option>
@@ -693,6 +724,7 @@ export default function CarDetails() {
               </div>
 
               {/* COMPACT Chauffeur Toggle */}
+              {!chauffeurIncluded && (
               <div 
                 onClick={() => setNeedsChauffeur(!needsChauffeur)}
                 className={`p-3.5 rounded-2xl border-2 cursor-pointer transition-all flex items-center justify-between ${
@@ -704,14 +736,20 @@ export default function CarDetails() {
                     <User className="w-4 h-4" />
                   </div>
                   <div>
-                    <div className={`text-sm font-bold ${needsChauffeur ? 'text-brand-dark' : 'text-gray-700'}`}>Add Chauffeur</div>
-                    <div className="text-xs text-brand-text-secondary font-medium">₦25,000 / day</div>
+                    <div className={`text-base font-bold ${needsChauffeur ? 'text-brand-dark' : 'text-gray-700'}`}>Add Chauffeur</div>
+                    <div className="text-xs text-brand-text-secondary font-medium">₦25,000 / 12 hrs</div>
                   </div>
                 </div>
                 <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${needsChauffeur ? 'border-brand-primary' : 'border-gray-300'}`}>
                   {needsChauffeur && <div className="w-2 h-2 bg-brand-primary rounded-full"></div>}
                 </div>
               </div>
+              )}
+
+              <label className="flex items-start gap-3 p-3.5 rounded-2xl border border-gray-100 cursor-pointer">
+                <input type="checkbox" checked={licenseAck} onChange={(e) => setLicenseAck(e.target.checked)} className="mt-1 w-5 h-5 accent-brand-primary" />
+                <span className="text-sm text-brand-text-secondary leading-relaxed">I hold a valid driving licence and will present it when I collect the vehicle.</span>
+              </label>
 
               {/* Availability Status Indicator */}
               {availabilityStatus === 'available' && (
@@ -721,11 +759,20 @@ export default function CarDetails() {
                 </div>
               )}
               {availabilityStatus === 'booked' && (
-                <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-2.5 rounded-xl border border-red-200 mt-2 animate-in fade-in">
-                  <XCircle className="w-4 h-4 text-red-600" />
-                  <span className="text-xs font-bold">Time slot is already booked.</span>
+                <div className="mt-2">
+                  <AvailabilityNotice
+                    start={pickupDate}
+                    end={addDays(pickupDate, Math.max(1, Math.ceil(durationSlots / 2)))}
+                    isFree={async (d) => {
+                      const { start, end } = slotRange(d, pickupTime, durationSlots);
+                      return (await checkCarAvailability(car._id || car.id, { startDate: lagosIso(start), endDate: lagosIso(end) })).available !== false;
+                    }}
+                    onPick={(d) => setPickupDate(d)}
+                  />
                 </div>
               )}
+
+              <p className="text-sm text-brand-text-secondary leading-relaxed">Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment. Rentals Africa reviews and processes refunds.</p>
 
               {/* ACTION BUTTONS */}
               <div className="flex flex-col gap-2.5 pt-2">
@@ -734,7 +781,7 @@ export default function CarDetails() {
                     type="button"
                     onClick={handleCheckAvailability}
                     disabled={isCheckingAvailability}
-                    className="w-1/2 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-brand-dark rounded-xl font-bold text-sm transition-all flex items-center justify-center shadow-sm disabled:opacity-70 active:scale-95 duration-200"
+                    className="w-1/2 py-3 bg-white border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-brand-dark rounded-xl font-bold text-base transition-all flex items-center justify-center shadow-sm disabled:opacity-70 active:scale-95 duration-200"
                   >
                     {isCheckingAvailability ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -749,7 +796,7 @@ export default function CarDetails() {
                   <button 
                     type="submit"
                     disabled={bookingLoading || isRedirecting || availabilityStatus === 'booked'}
-                    className="w-1/2 py-3 bg-gray-900 hover:bg-brand-primary text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
+                    className="w-1/2 py-3 bg-brand-primary hover:bg-brand-hover text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 disabled:cursor-not-allowed active:scale-95 duration-200"
                   >
                     {bookingLoading ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
@@ -765,14 +812,14 @@ export default function CarDetails() {
                   type="button"
                   onClick={handleWhatsAppClick}
                   disabled={isWhatsappLoading}
-                  className="w-full py-3 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+                  className="w-full py-3.5 bg-[#25D366] hover:bg-[#20bd5a] text-white rounded-xl font-bold text-base transition-all shadow-md flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
                 >
                   {isWhatsappLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : (
                     <>
                       <svg viewBox="0 0 24 24" className="w-4 h-4 mr-2 fill-current" xmlns="http://www.w3.org/2000/svg">
                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
                       </svg>
-                      Book via WhatsApp
+                      Book via WhatsApp instead
                     </>
                   )}
                 </button>
@@ -781,7 +828,7 @@ export default function CarDetails() {
 
             <div className="flex items-center justify-center space-x-1.5 text-brand-text-secondary mt-4">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Platform Escrow Protection</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Platform Escrow Protection</span>
             </div>
 
             {/* COMPACT Live Receipt Breakdown */}
@@ -839,7 +886,7 @@ export default function CarDetails() {
                     alt={`${simCar.make} ${simCar.model}`}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
-                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-[10px] font-bold text-brand-dark uppercase tracking-wider">
+                  <div className="absolute top-3 left-3 bg-white/90 backdrop-blur-sm px-2.5 py-1 rounded-full text-xs font-bold text-brand-dark uppercase tracking-wider">
                     {simCar.category || 'Luxury'}
                   </div>
                 </div>
@@ -848,7 +895,7 @@ export default function CarDetails() {
                   <h4 className="font-bold text-brand-dark text-base truncate mb-1 group-hover:text-brand-primary transition-colors">
                     {simCar.make} {simCar.model}
                   </h4>
-                  <p className="text-sm text-brand-text-secondary mb-3 flex items-center">
+                  <p className="text-base text-brand-text-secondary mb-3 flex items-center">
                     <MapPin className="w-3.5 h-3.5 mr-1" />
                     {simCar.location?.city}
                   </p>

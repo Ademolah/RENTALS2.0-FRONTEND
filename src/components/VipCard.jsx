@@ -1,5 +1,6 @@
 import { MapPin, Clock, ChevronRight, Gem } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { listingTag } from './browse/meta';
 
 export default function VipCard({ establishment }) {
   const {
@@ -20,7 +21,8 @@ export default function VipCard({ establishment }) {
   const linkUrl = isService ? `/vip/services/${_id}` : `/vip/${_id}`;
 
   const mainImage = images?.[0] || 'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?auto=format&fit=crop&w=800&q=80';
-  const formattedType = establishmentType?.replace('_', ' ') || (isService ? 'VIP SERVICE' : 'VIP VENUE');
+  const formattedType = listingTag(establishment, isService ? 'vip-service' : 'vip');
+  const subType = establishmentType?.replace(/_/g, ' ');
   
   // Services use pricePerDay, Venues use pricePerNight as the deposit fallback
   const displayedPrice = pricePerDay || pricePerNight || 0;
@@ -35,14 +37,15 @@ export default function VipCard({ establishment }) {
       <img 
         src={mainImage} 
         alt={title}
+        loading="lazy"
         className="absolute inset-0 w-full h-full object-cover opacity-80 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-in-out"
       />
       <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-black/40 to-black/95 transition-opacity duration-500"></div>
 
       {/* Top Badges */}
       <div className="absolute top-4 left-4 right-4 flex justify-between items-start z-10">
-        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-[9px] font-display font-bold text-amber-400 uppercase tracking-widest border border-amber-400/20 flex items-center space-x-1.5 shadow-lg">
-          <Gem className="w-3 h-3" />
+        <div className="bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full text-xs font-display font-bold text-amber-400 uppercase tracking-widest border border-amber-400/20 flex items-center space-x-1.5 shadow-lg">
+          <Gem className="w-3.5 h-3.5" />
           <span>{formattedType}</span>
         </div>
         
@@ -50,7 +53,7 @@ export default function VipCard({ establishment }) {
         {!isService && openHours?.daysOpen && (
           <div className="flex flex-col items-end gap-1">
             {openHours.daysOpen.slice(0, 3).map(day => (
-              <span key={day} className="bg-white/10 backdrop-blur-md text-white text-[8px] font-display font-bold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
+              <span key={day} className="bg-white/10 backdrop-blur-md text-white text-xs font-display font-bold uppercase tracking-widest px-2 py-1 rounded-sm border border-white/5">
                 {day.substring(0, 3)}
               </span>
             ))}
@@ -63,10 +66,11 @@ export default function VipCard({ establishment }) {
         
         {/* Title & Location */}
         <div className="mb-4">
-          <h3 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-white drop-shadow-md mb-2">
+          <h3 className="font-display font-bold text-2xl md:text-3xl tracking-tight text-white drop-shadow-md mb-1">
             {title}
           </h3>
-          <div className="flex flex-col space-y-1.5 text-xs font-medium text-gray-300">
+          {subType && <p className="text-sm font-semibold uppercase tracking-wider text-amber-400 mb-2">{subType}</p>}
+          <div className="flex flex-col space-y-1.5 text-sm font-medium text-gray-200">
             <span className="flex items-center">
               <MapPin className="w-3.5 h-3.5 mr-1.5 text-brand-text-muted" /> 
               {address?.street && `${address.street}, `}{address?.city}
@@ -86,7 +90,7 @@ export default function VipCard({ establishment }) {
             {services.map((service, idx) => (
               <div 
                 key={idx}
-                className="snap-start shrink-0 bg-white/5 border border-white/10 text-gray-200 px-3 py-1.5 rounded-full text-[10px] font-bold tracking-wide whitespace-nowrap"
+                className="snap-start shrink-0 bg-white/5 border border-white/10 text-gray-200 px-3.5 py-1.5 rounded-full text-xs font-bold tracking-wide whitespace-nowrap"
               >
                 {service}
               </div>
@@ -97,11 +101,11 @@ export default function VipCard({ establishment }) {
         {/* Glassmorphism Deposit/Price Footer */}
         <div className="flex items-center justify-between bg-white/10 backdrop-blur-lg border border-white/20 p-4 rounded-2xl">
           <div>
-            <span className="block text-[9px] font-display font-bold uppercase tracking-widest text-amber-400/80 mb-0.5">
+            <span className="block text-xs font-display font-bold uppercase tracking-widest text-amber-400 mb-0.5">
               {priceLabel}
             </span>
             <div className="flex items-baseline space-x-1">
-              <span className="font-display font-bold text-white text-lg md:text-xl tracking-tight">
+              <span className="font-display font-bold text-white text-xl md:text-2xl tracking-tight">
                 ₦{displayedPrice.toLocaleString()}
               </span>
             </div>

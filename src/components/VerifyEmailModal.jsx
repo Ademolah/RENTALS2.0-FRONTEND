@@ -110,17 +110,17 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-elevated overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="w-full max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden animate-in zoom-in-95 duration-300">
         
         {/* Header Section */}
         <div className="px-8 pt-8 pb-6 text-center">
-          <div className="w-16 h-16 mx-auto mb-4 bg-gray-50 rounded-full flex items-center justify-center border border-gray-100 shadow-sm">
-            <svg className="w-8 h-8 text-gray-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-20 h-20 mx-auto mb-5 bg-brand-primary-soft rounded-full flex items-center justify-center">
+            <svg className="w-10 h-10 text-brand-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
             </svg>
           </div>
-          <h2 className="text-2xl font-semibold text-brand-dark mb-2">Check your email</h2>
-          <p className="text-sm text-brand-text-secondary leading-relaxed">
+          <h2 className="text-3xl font-display font-bold text-brand-dark mb-2">Check your email</h2>
+          <p className="text-base text-brand-text-secondary leading-relaxed">
             We sent a 6-digit verification code to <br />
             <span className="font-medium text-brand-dark">{email}</span>
           </p>
@@ -140,13 +140,13 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
                 onChange={(e) => handleChange(e, index)}
                 onKeyDown={(e) => handleKeyDown(e, index)}
                 disabled={isLoading}
-                className="w-12 h-14 text-center text-2xl font-semibold text-brand-dark bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-black focus:ring-2 focus:ring-black focus:outline-none transition-all disabled:opacity-50"
+                className="w-14 h-16 text-center text-3xl font-display font-bold text-brand-dark bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:border-brand-primary focus:ring-2 focus:ring-brand-primary/30 focus:outline-none transition-all disabled:opacity-50"
               />
             ))}
           </div>
 
           {error && (
-            <p className="text-sm text-red-500 text-center mb-4 font-medium animate-pulse">
+            <p className="text-base text-red-500 text-center mb-4 font-medium animate-pulse">
               {error}
             </p>
           )}
@@ -154,7 +154,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
           <button
             type="submit"
             disabled={isLoading || otp.join('').length !== 6}
-            className="w-full py-4 bg-black text-white rounded-xl font-medium text-sm transition-all hover:bg-gray-900 active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+            className="w-full py-4 bg-brand-primary text-white rounded-xl font-semibold text-base transition-all hover:bg-brand-hover shadow-glow active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
           >
             {isLoading ? (
               <svg className="animate-spin h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
@@ -167,7 +167,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
           </button>
 
           {/* Footer Timer / Resend Section */}
-          <div className="mt-8 text-center text-sm">
+          <div className="mt-8 text-center text-base">
             {timeLeft > 0 ? (
               <p className="text-brand-text-secondary">
                 Code expires in <span className="font-semibold text-brand-dark">{formattedTime}</span>
@@ -178,7 +178,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
                 <button
                   type="button"
                   onClick={onResend}
-                  className="font-semibold text-black hover:underline"
+                  className="font-semibold text-brand-primary hover:underline"
                 >
                   Click here to resend
                 </button>

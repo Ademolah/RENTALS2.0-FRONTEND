@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   MapPin, Clock, Calendar as CalendarIcon, Users, ShieldCheck, 
@@ -7,6 +8,8 @@ import {
 } from 'lucide-react';
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
 import FloatingPriceTag from '../components/FloatingPriceTag';
+import ShareButton from '../components/ShareButton';
+import { useDocumentMeta } from '../lib/seo';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
 
@@ -18,6 +21,7 @@ export default function VipDetails() {
   const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
   
   const [establishment, setEstablishment] = useState(null);
+  useDocumentMeta(establishment?.title, establishment?.description?.slice(0, 160));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -35,7 +39,7 @@ export default function VipDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
 
-  const CONCIERGE_WHATSAPP = "2347087937649"; 
+  const CONCIERGE_WHATSAPP = "2347063688222"; 
 
   useEffect(() => {
     async function loadData() {
@@ -111,7 +115,8 @@ export default function VipDetails() {
       });
 
       // 2. Retrieve secure reference
-      const reference = response.data?.reference || 'REQ-V-' + Math.floor(Math.random() * 100000);
+      const reference = response.data?.data?.reference || response.data?.reference;
+      if (!reference) throw new Error('No reference');
 
       // 3. Inject reference into the message
       const message = `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I would like to request a VIP reservation.\n\n*Venue:* ${establishment.title}\n*Date:* ${reservationDate}\n*Time:* ${arrivalTime}\n*Guests:* ${guestCount}\n*Reference:* ${reference}\n\nPlease assist with securing my deposit.`;
@@ -296,11 +301,11 @@ export default function VipDetails() {
           
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-[10px] font-display font-bold uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-display font-bold uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                 {formattedType}
               </span>
               {establishment.openHours?.daysOpen?.map(day => (
-                <span key={day} className="text-[10px] font-bold uppercase tracking-widest text-brand-text-muted bg-white/5 border border-white/5 px-3 py-1 rounded-full">
+                <span key={day} className="text-xs font-bold uppercase tracking-widest text-white/70 bg-white/5 border border-white/5 px-3 py-1 rounded-full">
                   {day.substring(0, 3)}
                 </span>
               ))}
@@ -308,7 +313,8 @@ export default function VipDetails() {
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter mb-4 leading-none">
               {establishment.title}
             </h1>
-            <div className="flex items-center text-brand-text-muted text-sm font-medium">
+            <ShareButton dark className="mb-4" />
+            <div className="flex items-center text-white/70 text-base font-medium">
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {establishment.address?.street}, {establishment.address?.city}, {establishment.address?.state}
             </div>
@@ -317,8 +323,8 @@ export default function VipDetails() {
           <hr className="border-white/10" />
 
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">The Experience</h3>
-            <p className="text-lg md:text-xl text-gray-300 leading-relaxed font-medium">
+            <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-6">The Experience</h3>
+            <p className="text-xl md:text-2xl text-gray-200 leading-relaxed font-medium">
               {establishment.description}
             </p>
           </div>
@@ -326,24 +332,24 @@ export default function VipDetails() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
               <Wine className="w-6 h-6 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold text-lg mb-2">Dress Code</h4>
-              <p className="text-brand-text-muted text-sm leading-relaxed">{establishment.dressCode || "Strictly smart elegant. Management reserves the right of admission."}</p>
+              <h4 className="text-white font-bold text-xl mb-2">Dress Code</h4>
+              <p className="text-white/70 text-base leading-relaxed">{establishment.dressCode || "Strictly smart elegant. Management reserves the right of admission."}</p>
             </div>
             <div className="bg-white/5 border border-white/10 p-6 rounded-3xl">
               <Clock className="w-6 h-6 text-amber-500 mb-4" />
-              <h4 className="text-white font-bold text-lg mb-2">Operating Hours</h4>
-              <p className="text-brand-text-muted text-sm leading-relaxed">{establishment.openHours?.open} to {establishment.openHours?.close}</p>
+              <h4 className="text-white font-bold text-xl mb-2">Operating Hours</h4>
+              <p className="text-white/70 text-base leading-relaxed">{establishment.openHours?.open} to {establishment.openHours?.close}</p>
             </div>
           </div>
 
           {establishment.services && establishment.services.length > 0 && (
             <div>
-              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">Concierge Services Available</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-6">Concierge Services Available</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                 {establishment.services.map((service, idx) => (
-                  <div key={idx} className="flex items-center space-x-3 text-gray-300">
+                  <div key={idx} className="flex items-center space-x-3 text-gray-200">
                     <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
-                    <span className="text-sm font-bold tracking-wide">{service}</span>
+                    <span className="text-base font-bold tracking-wide">{service}</span>
                   </div>
                 ))}
               </div>
@@ -359,7 +365,7 @@ export default function VipDetails() {
 
             <div className="relative z-10">
               <div className="mb-8">
-                <span className="block text-[10px] font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Required Escrow Deposit</span>
+                <span className="block text-xs font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Required Escrow Deposit</span>
                 <div className="flex items-baseline text-white">
                   <span className="text-4xl font-display font-bold tracking-tighter">₦{depositAmount.toLocaleString()}</span>
                 </div>
@@ -398,23 +404,23 @@ export default function VipDetails() {
                         </span>
                         <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronRight className="w-5 h-5"/></button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-brand-text-secondary tracking-widest uppercase">
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold text-white/60 tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
                         {generateCalendarDays().map((dateObj, i) => {
                           if (!dateObj) return <div key={i} className="h-8"></div>;
                           const isPast = dateObj < today;
-                          const isSelected = reservationDate && dateObj.toISOString().split('T')[0] === reservationDate;
+                          const isSelected = reservationDate && toLocalISO(dateObj) === reservationDate;
                           return (
                             <button
                               key={i}
                               disabled={isPast}
                               onClick={() => handleDateSelect(dateObj)}
-                              className={`h-8 rounded-full text-xs font-bold transition-all flex items-center justify-center
+                              className={`h-9 rounded-full text-sm font-bold transition-all flex items-center justify-center
                                 ${isPast ? 'text-gray-600 cursor-not-allowed' : 
                                   isSelected ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25' : 
-                                  'text-gray-300 hover:bg-white/10'}
+                                  'text-gray-200 hover:bg-white/10'}
                               `}
                             >
                               {dateObj.getDate()}
@@ -455,7 +461,7 @@ export default function VipDetails() {
               </div>
 
               {/* Escrow Math */}
-              <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-sm font-medium">
+              <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-base font-medium">
                 <div className="flex justify-between text-brand-text-muted">
                   <span>Venue Deposit</span>
                   <span className="text-white">₦{depositAmount.toLocaleString()}</span>
@@ -475,7 +481,7 @@ export default function VipDetails() {
                 <button 
                   onClick={handleEscrowReservation}
                   disabled={isReserving}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all active:scale-[0.98] flex justify-center items-center"
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-bold uppercase tracking-widest text-base transition-all active:scale-[0.98] flex justify-center items-center"
                 >
                   {isReserving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Make Reservation"}
                 </button>
@@ -483,7 +489,7 @@ export default function VipDetails() {
                 <button 
                   onClick={handleWhatsAppReservation}
                   disabled={isWhatsappLoading}
-                  className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-[#25D366] py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all flex justify-center items-center gap-2 disabled:opacity-70"
+                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 rounded-xl font-bold uppercase tracking-widest text-base shadow-lg transition-all flex justify-center items-center gap-2 disabled:opacity-70"
                 >
                   {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
                     <>
@@ -500,9 +506,9 @@ export default function VipDetails() {
                 </button>
               </div>
 
-              <div className="mt-6 flex items-start gap-3 text-xs text-brand-text-secondary leading-relaxed font-medium">
+              <div className="mt-6 flex items-start gap-3 text-sm text-white/60 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Your deposit is held securely in escrow by Rentals. Funds are only released to the venue upon your physical arrival and check-in.</p>
+                <p>Your deposit is held securely in escrow by Rentals. Funds are only released to the venue upon your physical arrival and check-in. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
               </div>
 
             </div>

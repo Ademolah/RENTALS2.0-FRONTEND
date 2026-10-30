@@ -1,13 +1,9 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Star, Heart, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
-import { useAuth } from '../context/AuthContext';
-import { toggleFavoriteApi } from '../api/user';
+import { Star, AlertCircle, ChevronLeft, ChevronRight } from 'lucide-react';
+import FavoriteHeart from './browse/FavoriteHeart';
 
 export default function PropertyCard({ property }) {
-  const { user, setShowAuthModal } = useAuth();
-  const initialFavorited = user?.favoriteProperties?.includes(property.id || property._id) || false;
-  const [isFavorited, setIsFavorited] = useState(initialFavorited);
   const [toast, setToast] = useState({ visible: false, message: '' });
   const [imgIdx, setImgIdx] = useState(0);
 
@@ -18,27 +14,6 @@ export default function PropertyCard({ property }) {
   const showToast = (message) => {
     setToast({ visible: true, message });
     setTimeout(() => setToast({ visible: false, message: '' }), 2500);
-  };
-
-  const handleHeartClick = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      showToast("Sign in to save this listing.");
-      setTimeout(() => { if (setShowAuthModal) setShowAuthModal(true); }, 2800);
-      return;
-    }
-    if (user.role !== 'USER') {
-      showToast("Only guest accounts can save properties.");
-      return;
-    }
-    const previousState = isFavorited;
-    setIsFavorited(!previousState);
-    try {
-      await toggleFavoriteApi(property.id || property._id);
-    } catch {
-      setIsFavorited(previousState);
-      showToast("Failed to update. Please try again.");
-    }
   };
 
   const nextImg = (e) => {
@@ -96,27 +71,18 @@ export default function PropertyCard({ property }) {
 
           {/* Badges */}
           <div className="absolute top-3 w-full px-3 flex justify-between items-start">
-            <div>
+            <div className="flex flex-col items-start gap-1.5">
+              {property.tag && (
+                <span className="bg-brand-dark text-white px-2.5 py-1 rounded-lg text-xs font-bold uppercase tracking-wider shadow-sm">{property.tag}</span>
+              )}
               {(property.isRentalVerified ?? true) && (
                 <div className="bg-white shadow-sm px-2.5 py-1 rounded-lg flex items-center gap-1.5">
                   <span className="text-brand-primary font-display font-bold text-sm leading-none">R</span>
-                  <span className="text-[10px] font-bold text-brand-dark uppercase tracking-wider">Verified</span>
+                  <span className="text-xs font-bold text-brand-dark uppercase tracking-wider">Verified</span>
                 </div>
               )}
             </div>
-            <button
-              type="button"
-              onClick={handleHeartClick}
-              className="hover:scale-110 active:scale-95 transition-transform z-10"
-            >
-              <Heart
-                className={`w-7 h-7 drop-shadow transition-colors duration-200 ${
-                  isFavorited
-                    ? "fill-brand-primary stroke-brand-primary"
-                    : "fill-black/30 stroke-white stroke-[1.5]"
-                }`}
-              />
-            </button>
+            <FavoriteHeart id={property.id || property._id} onMessage={showToast} />
           </div>
         </div>
 
@@ -136,7 +102,7 @@ export default function PropertyCard({ property }) {
             )}
           </div>
           <p className="text-brand-text-secondary text-sm mt-0.5 truncate">{property.title}</p>
-          <p className="text-brand-text-muted text-sm">{property.dates}</p>
+          {property.dates && <p className="text-brand-text-muted text-sm">{property.dates}</p>}
           <div className="mt-1.5 flex items-baseline gap-1">
             <span className="font-display font-bold text-base text-brand-dark">₦{Number(property.price || property.pricePerNight || 0).toLocaleString()}</span>
             <span className="text-brand-text-muted text-sm">night</span>

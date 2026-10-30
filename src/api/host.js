@@ -14,6 +14,11 @@ export const HostService = {
     return response.data;
   },
 
+  getAnalytics: async () => {
+    const response = await apiClient.get('/hosts/analytics');
+    return response.data;
+  },
+
   getApplications: async () => {
     const response = await apiClient.get('/hosts/requests');
     return response.data;

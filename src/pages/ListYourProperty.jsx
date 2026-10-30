@@ -73,16 +73,16 @@ export default function ListProperty() {
             <div className="lg:col-span-7 space-y-8 text-center lg:text-left">
               <div className="flex items-center space-x-3">
                 <div className="h-4 w-0.5 bg-brand-primary"></div>
-                <span className="text-[11px] font-display font-bold text-brand-primary uppercase tracking-[0.25em]">
+                <span className="text-sm font-display font-bold text-brand-primary uppercase tracking-[0.2em]">
                   Earn On Your Terms
                 </span>
               </div>
 
-              <h1 className="text-4xl sm:text-6xl font-display font-bold tracking-tight text-brand-dark leading-[1.15]">
-                Turn your properties and cars into <span className="text-transparent bg-clip-text bg-gradient-to-r from-brand-primary to-blue-600">extraordinary income.</span>
+              <h1 className="text-5xl sm:text-6xl xl:text-7xl font-display font-bold tracking-tight text-brand-dark leading-[1.08]">
+                Turn your properties and cars into <span className="text-brand-primary">extraordinary income.</span>
               </h1>
 
-              <p className="text-lg sm:text-xl text-gray-600 font-medium max-w-2xl mx-auto lg:mx-0 leading-relaxed">
+              <p className="text-xl text-brand-text-secondary max-w-2xl mx-auto lg:mx-0 leading-relaxed">
                 Join thousands of verified hosts across Lagos and Abuja listing shortlets, boutique apartments, luxury vehicle fleets, and VIP escorts.
               </p>
 
@@ -95,7 +95,7 @@ export default function ListProperty() {
                   <ArrowRight className="w-5 h-5" />
                 </button>
 
-                <div className="flex items-center space-x-3 text-xs font-semibold text-brand-text-secondary py-2">
+                <div className="flex items-center space-x-3 text-base font-semibold text-brand-text-secondary py-2">
                   <div className="flex -space-x-2">
                     <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Host" />
                     <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="Host" />
@@ -112,15 +112,15 @@ export default function ListProperty() {
                 
                 <div className="flex items-center justify-between pb-6 border-b border-gray-100 mb-6">
                   <div>
-                    <h3 className="text-xl font-bold text-brand-dark">Estimate Earnings</h3>
-                    <p className="text-xs text-brand-text-secondary font-medium mt-0.5">Calculate your monthly return</p>
+                    <h3 className="text-2xl font-display font-bold text-brand-dark">Estimate Earnings</h3>
+                    <p className="text-sm text-brand-text-secondary mt-0.5">Calculate your monthly return</p>
                   </div>
                   
                   {/* Category Switcher */}
                   <div className="flex bg-gray-100 p-1 rounded-xl">
                     <button
                       onClick={() => { setAssetType('shortlet'); setNightlyRate(85000); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3.5 py-2 rounded-lg text-sm font-bold transition-all ${
                         assetType === 'shortlet' ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-text-secondary'
                       }`}
                     >
@@ -128,7 +128,7 @@ export default function ListProperty() {
                     </button>
                     <button
                       onClick={() => { setAssetType('car'); setNightlyRate(60000); }}
-                      className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                      className={`px-3.5 py-2 rounded-lg text-sm font-bold transition-all ${
                         assetType === 'car' ? 'bg-white text-brand-dark shadow-sm' : 'text-brand-text-secondary'
                       }`}
                     >
@@ -139,11 +139,11 @@ export default function ListProperty() {
 
                 {/* Earnings Output */}
                 <div className="text-center py-4 bg-gray-50/80 rounded-2xl mb-6 border border-gray-100">
-                  <span className="text-xs font-bold uppercase tracking-wider text-brand-text-muted">Estimated Monthly Earnings</span>
-                  <div className="text-3xl sm:text-4xl font-display font-bold text-brand-dark mt-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-brand-text-secondary">Estimated Monthly Earnings</span>
+                  <div className="text-4xl sm:text-5xl font-display font-bold text-brand-dark mt-1">
                     ₦{monthlyEarnings.toLocaleString()}
                   </div>
-                  <span className="text-xs font-medium text-emerald-600 mt-1 block">
+                  <span className="text-sm font-medium text-status-available mt-1 block">
                     ~ ₦{annualEarnings.toLocaleString()} projected annually
                   </span>
                 </div>
@@ -152,7 +152,7 @@ export default function ListProperty() {
                 <div className="space-y-6">
                   {/* Days / Nights Occupied */}
                   <div>
-                    <div className="flex justify-between text-xs font-bold text-gray-700 mb-2">
+                    <div className="flex justify-between text-sm font-bold text-gray-700 mb-2">
                       <span>{assetType === 'shortlet' ? 'Nights booked per month:' : 'Days rented per month:'}</span>
                       <span className="text-brand-primary">{estimatedNights} {assetType === 'shortlet' ? 'nights' : 'days'}</span>
                     </div>
@@ -168,7 +168,7 @@ export default function ListProperty() {
 
                   {/* Daily Rate Slider */}
                   <div>
-                    <div className="flex justify-between text-xs font-bold text-gray-700 mb-2">
+                    <div className="flex justify-between text-sm font-bold text-gray-700 mb-2">
                       <span>{assetType === 'shortlet' ? 'Average Nightly Rate:' : 'Average Daily Rental Rate:'}</span>
                       <span className="text-brand-primary">₦{nightlyRate.toLocaleString()}</span>
                     </div>
@@ -186,7 +186,7 @@ export default function ListProperty() {
 
                 <button
                   onClick={handleStartListing}
-                  className="w-full mt-8 py-4 bg-gray-900 hover:bg-black text-white font-bold text-sm rounded-xl transition-all shadow-md active:scale-[0.98]"
+                  className="w-full mt-8 py-4 bg-brand-dark hover:bg-brand-accent text-white font-semibold text-base rounded-xl transition-all shadow-md active:scale-[0.98]"
                 >
                   List Your Asset
                 </button>
@@ -216,8 +216,8 @@ export default function ListProperty() {
               <div className="w-12 h-12 bg-brand-primary/10 rounded-2xl flex items-center justify-center text-brand-primary mb-6">
                 <ShieldCheck className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">100% Guest Verification</h3>
-              <p className="text-gray-600 text-sm leading-relaxed font-medium">
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-3">100% Guest Verification</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Every reservation requires verified identity checks, face recognition, and corporate screening for maximum host safety.
               </p>
             </div>
@@ -226,8 +226,8 @@ export default function ListProperty() {
               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
                 <Banknote className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">Escrow Protected Payouts</h3>
-              <p className="text-gray-600 text-sm leading-relaxed font-medium">
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-3">Escrow Protected Payouts</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Funds are held in secure escrow and released directly to your preferred Nigerian bank account 24 hours post check-in.
               </p>
             </div>
@@ -236,8 +236,8 @@ export default function ListProperty() {
               <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-600 mb-6">
                 <Clock className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-bold text-brand-dark mb-3">Full Calendar Autonomy</h3>
-              <p className="text-gray-600 text-sm leading-relaxed font-medium">
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-3">Full Calendar Autonomy</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Set custom pricing, minimum stay rules, and instantly sync availability across platforms with our host controls.
               </p>
             </div>
@@ -251,32 +251,32 @@ export default function ListProperty() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center max-w-2xl mx-auto mb-16">
-            <span className="text-xs font-bold text-brand-primary uppercase tracking-widest">Simple Process</span>
-            <h2 className="text-3xl font-display font-bold text-brand-dark mt-2">How to start hosting in 3 steps</h2>
+            <span className="text-sm font-bold text-brand-primary uppercase tracking-widest">Simple Process</span>
+            <h2 className="text-4xl font-display font-bold text-brand-dark mt-2">How to start hosting in 3 steps</h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative">
             
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative z-10">
               <span className="text-5xl font-display font-bold text-gray-200 block mb-4">01</span>
-              <h3 className="text-lg font-bold text-brand-dark mb-2">Create Your Listing</h3>
-              <p className="text-brand-text-secondary text-sm font-medium leading-relaxed">
+              <h3 className="text-xl font-display font-bold text-brand-dark mb-2">Create Your Listing</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Add photos, set nightly pricing, list your amenities, and specify rules for shortlets or car rentals.
               </p>
             </div>
 
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative z-10">
               <span className="text-5xl font-display font-bold text-gray-200 block mb-4">02</span>
-              <h3 className="text-lg font-bold text-brand-dark mb-2">Accept Verified Bookings</h3>
-              <p className="text-brand-text-secondary text-sm font-medium leading-relaxed">
+              <h3 className="text-xl font-display font-bold text-brand-dark mb-2">Accept Verified Bookings</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Review guest profiles or enable Instant Book to automatically accept verified guests.
               </p>
             </div>
 
             <div className="bg-white p-8 rounded-3xl border border-gray-100 shadow-sm relative z-10">
               <span className="text-5xl font-display font-bold text-gray-200 block mb-4">03</span>
-              <h3 className="text-lg font-bold text-brand-dark mb-2">Receive Direct Payouts</h3>
-              <p className="text-brand-text-secondary text-sm font-medium leading-relaxed">
+              <h3 className="text-xl font-display font-bold text-brand-dark mb-2">Receive Direct Payouts</h3>
+              <p className="text-brand-text-secondary text-base leading-relaxed">
                 Get paid straight into your bank account with automated invoices and detailed earnings reports.
               </p>
             </div>
@@ -290,8 +290,8 @@ export default function ListProperty() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-display font-bold text-brand-dark">Your questions, answered</h2>
-            <p className="text-brand-text-secondary text-sm font-medium mt-2">Everything you need to know about listing with Rentals Africa</p>
+            <h2 className="text-4xl font-display font-bold text-brand-dark">Your questions, answered</h2>
+            <p className="text-brand-text-secondary text-base mt-2">Everything you need to know about listing with Rentals Africa</p>
           </div>
 
           <div className="space-y-4">
@@ -304,7 +304,7 @@ export default function ListProperty() {
                   onClick={() => toggleFaq(idx)}
                   className="w-full flex justify-between items-center p-6 text-left font-bold text-brand-dark hover:bg-gray-50/50 transition-colors"
                 >
-                  <span className="text-base pr-4">{faq.q}</span>
+                  <span className="text-lg pr-4">{faq.q}</span>
                   {openFaq === idx ? (
                     <ChevronUp className="w-5 h-5 text-brand-text-secondary flex-shrink-0" />
                   ) : (
@@ -313,7 +313,7 @@ export default function ListProperty() {
                 </button>
                 
                 {openFaq === idx && (
-                  <div className="px-6 pb-6 text-sm text-gray-600 font-medium leading-relaxed animate-in fade-in duration-200">
+                  <div className="px-6 pb-6 text-base text-brand-text-secondary leading-relaxed animate-in fade-in duration-200">
                     {faq.a}
                   </div>
                 )}
@@ -325,12 +325,12 @@ export default function ListProperty() {
       </section>
 
       {/* 5. BOTTOM CALL TO ACTION */}
-      <section className="py-16 bg-gray-900 text-white relative overflow-hidden">
+      <section className="py-24 bg-brand-dark text-white relative overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
           <h2 className="text-3xl sm:text-4xl font-display font-bold tracking-tight mb-4">
             Ready to unlock new revenue from your assets?
           </h2>
-          <p className="text-brand-text-muted text-base max-w-xl mx-auto mb-8 font-medium">
+          <p className="text-white/70 text-lg max-w-xl mx-auto mb-8">
             Join Rentals Africa today and start hosting shortlets or vehicles in minutes.
           </p>
           <button

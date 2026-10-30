@@ -144,7 +144,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Account Verified</h3>
-              <p className="text-sm text-gray-500">Your payouts are now secured via Paystack Escrow.</p>
+              <p className="text-sm text-gray-500">Your payouts are now secured by Rentals Africa.</p>
             </div>
           ) : (
             <form onSubmit={handleSave} className="space-y-5">
@@ -213,7 +213,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
               <div className="pt-2">
                 <div className="flex items-center justify-center space-x-2 text-gray-400 mb-4">
                   <ShieldCheck className="w-4 h-4" />
-                  <span className="text-[10px] font-bold uppercase tracking-widest">Secured by Paystack</span>
+                  <span className="text-xs font-bold uppercase tracking-widest">Secure payment processing</span>
                 </div>
                 
                 <button 

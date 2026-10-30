@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   MapPin, Calendar as CalendarIcon, ShieldCheck, 
@@ -6,12 +7,18 @@ import {
   Loader2, AlertCircle, X, Clock, UserCheck
 } from 'lucide-react';
 import { getVipServiceById, initiateVipServiceReservation } from '../api/vip';
+import { logUnifiedWhatsappIntent } from '../api/reservation';
+import ShareButton from './ShareButton';
+import { useAuth } from '../context/AuthContext';
+import { useDocumentMeta } from '../lib/seo';
 
 export default function VipServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
   
+  const { user, setShowAuthModal } = useAuth();
   const [service, setService] = useState(null);
+  useDocumentMeta(service?.title, service?.description?.slice(0, 160));
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   
@@ -28,7 +35,7 @@ export default function VipServiceDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
 
-  const CONCIERGE_WHATSAPP = "2347087937649"; 
+  const CONCIERGE_WHATSAPP = "2347063688222"; 
 
   useEffect(() => {
     async function loadData() {
@@ -80,14 +87,40 @@ export default function VipServiceDetails() {
     }
   };
 
-  const handleWhatsAppReservation = () => {
+  const handleWhatsAppReservation = async () => {
     if (!startDate) {
       setBookingError("Please select a start date first.");
       return;
     }
-    const message = `Hello Concierge, I would like to request a VIP Service reservation.\n\n*Service:* ${service.title}\n*Start Date:* ${startDate}\n*Duration:* ${durationDays} Day(s)\n\nPlease assist with securing my deposit.`;
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank');
+    if (!user) {
+      setShowAuthModal?.(true);
+      return;
+    }
+    setBookingError('');
+    try {
+      const end = new Date(`${startDate}T00:00:00`);
+      end.setDate(end.getDate() + durationDays);
+      const response = await logUnifiedWhatsappIntent({
+        assetId: id,
+        assetType: 'VIP',
+        startDate,
+        endDate: toLocalISO(end),
+        extraData: { durationDays }
+      });
+      const reference = response.data?.data?.reference || response.data?.reference;
+      if (!reference) throw new Error('No reference');
+      const message = `Hello Concierge, I would like to request a VIP Service reservation.
+
+*Service:* ${service.title}
+*Start Date:* ${startDate}
+*Duration:* ${durationDays} Day(s)
+*Reference:* ${reference}
+
+Please assist with securing my deposit.`;
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
+    } catch {
+      setBookingError('Could not start the WhatsApp booking. Please try again.');
+    }
   };
 
   // --- CUSTOM CALENDAR ENGINE ---
@@ -148,7 +181,7 @@ export default function VipServiceDetails() {
   const grandTotal = subtotal + platformFee;
   
   const formattedType = service.establishmentType?.replace('_', ' ') || 'VIP SERVICE';
-  const providerName = service.ownerId ? `${service.ownerId.firstName || ''} ${service.ownerId.lastName || ''}`.trim() : 'Verified Security Provider';
+  const providerName = 'Rentals Africa';
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -253,7 +286,7 @@ export default function VipServiceDetails() {
           
           <div>
             <div className="flex flex-wrap items-center gap-3 mb-4">
-              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-[10px] font-display font-bold uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
+              <span className="bg-amber-500/10 text-amber-500 border border-amber-500/20 px-4 py-1.5 rounded-full text-xs font-display font-bold uppercase tracking-[0.2em] flex items-center shadow-[0_0_15px_rgba(245,158,11,0.15)]">
                 <ShieldCheck className="w-3 h-3 mr-1.5" />
                 {formattedType}
               </span>
@@ -261,7 +294,8 @@ export default function VipServiceDetails() {
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter mb-4 leading-none">
               {service.title}
             </h1>
-            <div className="flex items-center text-brand-text-muted text-sm font-medium">
+            <ShareButton dark className="mb-4" />
+            <div className="flex items-center text-white/70 text-base font-medium">
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {service.address?.street && `${service.address.street}, `}{service.address?.city}, {service.address?.state}
             </div>
@@ -275,13 +309,13 @@ export default function VipServiceDetails() {
                <UserCheck className="w-6 h-6 text-amber-500" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-brand-text-secondary uppercase tracking-widest mb-0.5">Provided By</p>
-              <p className="text-sm font-bold text-white tracking-wide">{providerName}</p>
+              <p className="text-xs font-bold text-white/60 uppercase tracking-widest mb-0.5">Provided By</p>
+              <p className="text-base font-bold text-white tracking-wide">{providerName}</p>
             </div>
           </div>
 
           <div>
-            <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">Service Overview</h3>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-6">Service Overview</h3>
             <p className="text-lg md:text-xl text-gray-300 leading-relaxed font-medium">
               {service.description}
             </p>
@@ -290,12 +324,12 @@ export default function VipServiceDetails() {
           {/* What's Included (Services Array) */}
           {service.services && service.services.length > 0 && (
             <div className="bg-white/5 border border-white/10 p-8 rounded-3xl">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-brand-text-secondary mb-6">What's Included</h3>
+              <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-6">What's Included</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-4 gap-x-8">
                 {service.services.map((inclusion, idx) => (
                   <div key={idx} className="flex items-start space-x-3 text-gray-300">
                     <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-                    <span className="text-sm font-bold tracking-wide leading-relaxed">{inclusion}</span>
+                    <span className="text-base font-bold tracking-wide leading-relaxed">{inclusion}</span>
                   </div>
                 ))}
               </div>
@@ -311,10 +345,10 @@ export default function VipServiceDetails() {
 
             <div className="relative z-10">
               <div className="mb-8">
-                <span className="block text-[10px] font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Daily Rate</span>
+                <span className="block text-xs font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Daily Rate</span>
                 <div className="flex items-baseline text-white">
                   <span className="text-4xl font-display font-bold tracking-tighter">₦{dailyRate.toLocaleString()}</span>
-                  <span className="text-brand-text-secondary text-sm ml-2 font-bold">/ day</span>
+                  <span className="text-white/60 text-base ml-2 font-bold">/ day</span>
                 </div>
               </div>
 
@@ -335,7 +369,7 @@ export default function VipServiceDetails() {
                   >
                     <div className="flex items-center">
                       <CalendarIcon className="w-5 h-5 text-brand-text-muted absolute left-4" />
-                      <span className={startDate ? 'text-white' : 'text-brand-text-secondary'}>
+                      <span className={startDate ? 'text-white' : 'text-white/60'}>
                         {startDate ? new Date(startDate).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Select Start Date'}
                       </span>
                     </div>
@@ -351,20 +385,20 @@ export default function VipServiceDetails() {
                         </span>
                         <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronRight className="w-5 h-5"/></button>
                       </div>
-                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-brand-text-secondary tracking-widest uppercase">
+                      <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold text-white/60 tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
                       </div>
                       <div className="grid grid-cols-7 gap-1">
                         {generateCalendarDays().map((dateObj, i) => {
                           if (!dateObj) return <div key={i} className="h-8"></div>;
                           const isPast = dateObj < today;
-                          const isSelected = startDate && dateObj.toISOString().split('T')[0] === startDate;
+                          const isSelected = startDate && toLocalISO(dateObj) === startDate;
                           return (
                             <button
                               key={i}
                               disabled={isPast}
                               onClick={() => handleDateSelect(dateObj)}
-                              className={`h-8 rounded-full text-xs font-bold transition-all flex items-center justify-center
+                              className={`h-9 rounded-full text-sm font-bold transition-all flex items-center justify-center
                                 ${isPast ? 'text-gray-600 cursor-not-allowed' : 
                                   isSelected ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25' : 
                                   'text-gray-300 hover:bg-white/10'}
@@ -400,7 +434,7 @@ export default function VipServiceDetails() {
               </div>
 
               {/* Escrow Math */}
-              <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-sm font-medium">
+              <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-base font-medium">
                 <div className="flex justify-between text-brand-text-muted">
                   <span>₦{dailyRate.toLocaleString()} x {durationDays} day{durationDays > 1 ? 's' : ''}</span>
                   <span className="text-white">₦{subtotal.toLocaleString()}</span>
@@ -420,14 +454,14 @@ export default function VipServiceDetails() {
                 <button 
                   onClick={handleEscrowReservation}
                   disabled={isReserving}
-                  className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all active:scale-[0.98] flex justify-center items-center"
+                  className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-bold uppercase tracking-widest text-base transition-all active:scale-[0.98] flex justify-center items-center"
                 >
                   {isReserving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Secure Reservation"}
                 </button>
                 
                 <button 
                   onClick={handleWhatsAppReservation}
-                  className="w-full bg-[#25D366]/10 hover:bg-[#25D366]/20 border border-[#25D366]/30 text-[#25D366] py-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all flex justify-center items-center gap-2"
+                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 rounded-xl font-bold uppercase tracking-widest text-base shadow-lg transition-all flex justify-center items-center gap-2"
                 >
                   <svg viewBox="0 0 24 24" className="w-5 h-5 mr-2 fill-current" xmlns="http://www.w3.org/2000/svg">
                     <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -436,9 +470,9 @@ export default function VipServiceDetails() {
                 </button>
               </div>
 
-              <div className="mt-6 flex items-start gap-3 text-xs text-brand-text-secondary leading-relaxed font-medium">
+              <div className="mt-6 flex items-start gap-3 text-sm text-white/60 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Payment is securely held in platform escrow and is only released to the provider upon confirmed delivery of service.</p>
+                <p>Payment is securely held in platform escrow and is only released to the provider upon confirmed delivery of service. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
               </div>
 
             </div>
