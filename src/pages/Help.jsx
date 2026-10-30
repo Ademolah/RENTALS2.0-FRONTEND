@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { ChevronDown, ShieldCheck, CalendarX, MessageCircle, Mail, LifeBuoy } from 'lucide-react';
-import { Container, PageHero, Card, SectionTitle, Button } from '../components/ui';
+import { ChevronDown, ShieldCheck, CalendarX, Mail, LifeBuoy } from 'lucide-react';
+import { Container, PageHero, Card, SectionTitle, Button, WhatsAppIcon } from '../components/ui';
 
 const WHATSAPP = '2347063688222';
 
@@ -40,10 +40,10 @@ export default function Help() {
       <PageHero
         eyebrow="Support"
         title="How can we help?"
-        subtitle="Answers, safety guidance and cancellation terms, plus a real person on WhatsApp when you need one."
+        subtitle="Answers, safety guidance and cancellation terms, plus our concierge on WhatsApp for questions and for booking."
       >
         <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
-          <MessageCircle className="w-5 h-5" /> Chat with concierge
+          <WhatsAppIcon className="w-5 h-5" /> Chat with concierge
         </Button>
       </PageHero>
 
@@ -85,11 +85,14 @@ export default function Help() {
         <section id="contact" className="scroll-mt-32">
           <SectionTitle title="Still need help?" />
           <div className="grid md:grid-cols-2 gap-6">
-            <Card className="p-6 flex items-center gap-4">
-              <MessageCircle className="w-8 h-8 text-[#25D366]" />
-              <div>
+            <Card className="p-6 flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-card">
+                <WhatsAppIcon className="w-8 h-8" />
+              </div>
+              <div className="flex-1 min-w-0">
                 <p className="text-lg font-bold text-brand-dark">WhatsApp concierge</p>
-                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="text-base text-brand-primary font-semibold">Start a chat</a>
+                <p className="text-base text-brand-text-secondary">Ask a question or book a stay, car or VIP service.</p>
+                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Chat on WhatsApp</a>
               </div>
             </Card>
             <Card className="p-6 flex items-center gap-4">
