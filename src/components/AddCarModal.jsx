@@ -518,7 +518,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
               />
 
               <div className="flex justify-between items-center text-xs pt-4 mt-4 border-t border-gray-200">
-                <span className="text-gray-500">Platform Fee (5%)</span>
+                <span className="text-gray-500">Platform commission (5%)</span>
                 <span className="font-semibold text-gray-900">Estimated Net: ₦{netEarnings.toLocaleString()}</span>
               </div>
             </div>

@@ -154,7 +154,7 @@ export default function CarDetails() {
     
     const rentalTotal = baseRate * durationSlots;
     const subtotal = rentalTotal + chauffeurRate;
-    const platformFee = Math.round(subtotal * 0.05); 
+    const platformFee = 0;
     const grandTotal = subtotal + platformFee;
 
     return { baseRate, rentalTotal, chauffeurRate, subtotal, platformFee, grandTotal };
@@ -847,11 +847,6 @@ export default function CarDetails() {
                     <span className="font-bold text-brand-dark">₦{pricing.chauffeurRate.toLocaleString()}</span>
                   </div>
                 )}
-                
-                <div className="flex justify-between text-gray-600 text-xs">
-                  <span className="underline decoration-gray-300 underline-offset-4">Platform Escrow Fee</span>
-                  <span className="font-bold text-brand-dark">₦{pricing.platformFee.toLocaleString()}</span>
-                </div>
                 
                 <div className="flex justify-between font-display font-bold text-brand-dark text-base pt-3 border-t border-gray-200 mt-2">
                   <span>Total</span>

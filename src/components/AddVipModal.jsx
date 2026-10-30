@@ -635,8 +635,8 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                   />
                   
                   <div className="flex justify-between items-center text-sm pt-6 mt-6 border-t border-gray-200">
-                    <span className="text-gray-500 font-medium">Platform Escrow Fee</span>
-                    <span className="font-semibold text-gray-700">5% Charged to Guest at Checkout</span>
+                    <span className="text-gray-500 font-medium">Platform commission (5%)</span>
+                    <span className="font-semibold text-gray-700">5% commission deducted from your payout</span>
                   </div>
                 </div>
               </section>

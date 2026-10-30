@@ -7,7 +7,7 @@ const WHATSAPP = '2347063688222';
 
 const FAQS = [
   { q: 'How do I book a stay?', a: 'Pick a city, choose a listing, select your dates and check availability, then reserve. You can pay securely online or book through our WhatsApp concierge.' },
-  { q: 'Which fees will I pay?', a: 'The price you see includes all fees. A 5% platform fee applies to shortlets, cars and VIP services; hotels carry no platform fee. Chauffeur service is N25,000 per 12 hours.' },
+  { q: 'Which fees will I pay?', a: 'You pay the listed price. There is no platform fee added at checkout. The optional chauffeur add-on for cars is N25,000 per 12 hours.' },
   { q: 'Can I see the host or contact them directly?', a: 'No. To protect everyone, hosts and guests never see each other\'s personal details. Rentals Africa is the middleman for every booking.' },
   { q: 'How does car rental work?', a: 'Cars are booked per 12-hour day. A single day can be booked on its own, with an optional chauffeur.' },
   { q: 'What is VIP service?', a: 'VIP covers concierge services and venues reserved through Rentals Africa, with your deposit held securely until you arrive.' },

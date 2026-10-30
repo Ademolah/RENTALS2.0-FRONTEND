@@ -55,7 +55,7 @@ Guest
 - [ ] Listing detail: "Managed by Rentals Africa" only, verified pill, cancellation note
 - [ ] Availability check on Continue: "These dates have been booked." + Check availability button with nearby free-date chips (no "Currently unavailable" label)
 - [ ] Car: single 12h day bookable alone; chauffeur N25,000/12h; delivery toggle; licence acknowledgement
-- [ ] Live quote lines: 5% platform fee (not hotels)
+- [x] Quote: NO guest platform fee (corrected 2026-10-30: 5% commission comes out of host payout, host gets 95%)
 - [ ] WhatsApp: POST /reservations/whatsapp-intent then wa.me with Reference
 - [ ] Checkout success/failure screens
 - [ ] Trips: upcoming/past/cancelled, detail, arrival guide, cancel + refund note, write review

@@ -40,7 +40,7 @@ export default function BookingWidget({ property }) {
     if (nights <= 0) return null;
 
     const baseTotal = nights * property.price;
-    const platformFee = Math.round(baseTotal * 0.05); 
+    const platformFee = 0;
     const grandTotal = baseTotal + platformFee;
 
     return { nights, baseTotal, platformFee, grandTotal };
@@ -480,10 +480,6 @@ export default function BookingWidget({ property }) {
               ₦{currentPrice.toLocaleString()} x {pricingDetails.nights} nights
             </span>
             <span>₦{pricingDetails.baseTotal.toLocaleString()}</span>
-          </div>
-          <div className="flex justify-between text-brand-text-secondary text-base">
-            <span className="underline decoration-gray-300 underline-offset-4">Platform fee (5%)</span>
-            <span>₦{pricingDetails.platformFee.toLocaleString()}</span>
           </div>
           <div className="flex justify-between font-bold text-brand-dark text-xl pt-3 border-t border-gray-200">
             <span>Total</span>

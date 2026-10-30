@@ -187,7 +187,7 @@ export default function VipDetails() {
 
   const images = establishment.images || [];
   const depositAmount = establishment.depositAmount || establishment.pricePerNight || 0;
-  const platformFee = Math.round(depositAmount * 0.05);
+  const platformFee = 0;
   const grandTotal = depositAmount + platformFee;
   const formattedType = establishment.establishmentType?.replace('_', ' ') || 'VIP VENUE';
   const today = new Date();
@@ -465,10 +465,6 @@ export default function VipDetails() {
                 <div className="flex justify-between text-brand-text-muted">
                   <span>Venue Deposit</span>
                   <span className="text-white">₦{depositAmount.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-brand-text-muted">
-                  <span>Platform Fee (5%)</span>
-                  <span className="text-white">₦{platformFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
                   <span className="text-white font-bold">Total Guarantee</span>

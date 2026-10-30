@@ -16,7 +16,7 @@ export default function PayoutActionCard({ booking }) {
   
   const amount = booking.totalAmount || 0;
   
-  // Calculate the 95% payout amount (assuming 5% platform fee)
+  // Host payout is 95% of the booking (5% commission)
   const netPayout = amount * 0.95;
 
   const handlePayoutRequest = async () => {

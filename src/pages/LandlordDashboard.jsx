@@ -483,7 +483,7 @@ export default function LandlordDashboard() {
               </div>
             ) : activeTab === 'EARNINGS' ? (
               <div>
-                <SectionTitle title="Earnings" subtitle={analytics ? `Your payouts for ${analytics.year}, after the platform fee.` : 'Your payouts for this year.'} />
+                <SectionTitle title="Earnings" subtitle={analytics ? `Your payouts for ${analytics.year}, after the 5% platform commission.` : 'Your payouts for this year.'} />
                 {analyticsState === 'loading' || analyticsState === 'idle' ? (
                   <div className="py-24 flex justify-center"><Loader2 className="w-8 h-8 animate-spin text-brand-primary" /></div>
                 ) : analyticsState === 'error' ? (

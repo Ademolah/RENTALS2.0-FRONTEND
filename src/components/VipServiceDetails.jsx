@@ -177,7 +177,7 @@ Please assist with securing my deposit.`;
   // Dynamic Pricing Calculation
   const dailyRate = service.pricePerDay || service.pricePerNight || 0;
   const subtotal = dailyRate * durationDays;
-  const platformFee = Math.round(subtotal * 0.05);
+  const platformFee = 0;
   const grandTotal = subtotal + platformFee;
   
   const formattedType = service.establishmentType?.replace('_', ' ') || 'VIP SERVICE';
@@ -438,10 +438,6 @@ Please assist with securing my deposit.`;
                 <div className="flex justify-between text-brand-text-muted">
                   <span>₦{dailyRate.toLocaleString()} x {durationDays} day{durationDays > 1 ? 's' : ''}</span>
                   <span className="text-white">₦{subtotal.toLocaleString()}</span>
-                </div>
-                <div className="flex justify-between text-brand-text-muted">
-                  <span>Platform Fee (5%)</span>
-                  <span className="text-white">₦{platformFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
                   <span className="text-white font-bold">Total Escrow</span>
