@@ -446,7 +446,8 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
 
       {/* MOBILE ACCORDION MODAL (WORLD-CLASS IMPLEMENTATION) */}
       {isMobileModalOpen && (
-        <div className="fixed inset-0 bg-[#f7f7f7] z-[9999] md:hidden flex flex-col animate-in slide-in-from-bottom-full duration-300">
+        <div className="fixed inset-0 z-[9999] md:hidden flex items-center justify-center p-4 bg-brand-dark/60 backdrop-blur-sm" onClick={() => setIsMobileModalOpen(false)}>
+        <div className="bg-[#f7f7f7] rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden shadow-elevated animate-fade-up" onClick={(e) => e.stopPropagation()}>
           
           {/* Header */}
           <div className="px-4 py-5 flex items-center justify-between bg-[#f7f7f7]">
@@ -459,7 +460,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           </div>
           
           {/* Accordion Body */}
-          <div className="flex-1 overflow-y-auto px-4 pb-32 space-y-3 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto px-4 pb-4 space-y-3 custom-scrollbar">
             
             {/* VIP Service Card */}
             {isVip && (
@@ -577,7 +578,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           </div>
 
           {/* Fixed Bottom Action Bar */}
-          <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 shadow-[0_-10px_20px_rgba(0,0,0,0.05)] flex justify-between items-center">
+          <div className="shrink-0 p-4 bg-white border-t border-gray-200 flex justify-between items-center">
             <span className="font-semibold underline text-brand-dark cursor-pointer active:opacity-50" onClick={clearAll}>
               Clear all
             </span>
@@ -586,6 +587,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
               <span>Search</span>
             </button>
           </div>
+        </div>
         </div>
       )}
     </div>

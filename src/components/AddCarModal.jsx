@@ -192,7 +192,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4">
       
-      <div className="bg-white w-full max-w-2xl max-h-[90vh] sm:max-h-[85vh] flex flex-col rounded-t-[1.5rem] sm:rounded-[1.5rem] shadow-2xl animate-in slide-in-from-bottom-4 sm:zoom-in-95">
+      <div className="bg-white w-full max-w-2xl max-h-[85vh] flex flex-col rounded-[1.5rem] shadow-2xl animate-fade-up">
         
         {/* STICKY HEADER */}
         <div className="px-6 py-5 border-b border-gray-100 flex justify-between items-center shrink-0">

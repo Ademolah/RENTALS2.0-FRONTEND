@@ -10,7 +10,6 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
 import { createPropertyReviewApi } from "../api/reviews";
 import { useAuth } from '../context/AuthContext'; 
-import FloatingPriceTag from '../components/FloatingPriceTag';
 import { Container, Card, Badge, Button } from '../components/ui';
 import { useDocumentMeta } from '../lib/seo';
 import { useToast } from '../components/Toast';
@@ -529,7 +528,6 @@ export default function PropertyDetail() {
           </div>
 
         </div>
-        <FloatingPriceTag />
       </Container>
     </main>
   );

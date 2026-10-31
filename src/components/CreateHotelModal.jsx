@@ -449,10 +449,10 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
   );
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative w-full sm:max-w-2xl bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[95vh] sm:h-[85vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+      <div className="relative w-full sm:max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden flex flex-col h-[85vh] animate-fade-up duration-300">
         
         {/* HEADER */}
         <div className="bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between shrink-0">
@@ -489,7 +489,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
         </div>
 
         {/* FOOTER ACTIONS */}
-        <div className="bg-white border-t border-gray-100 p-4 sm:p-6 shrink-0 flex justify-between items-center pb-safe">
+        <div className="bg-white border-t border-gray-100 p-4 sm:p-6 shrink-0 flex justify-between items-center">
           <button 
             onClick={() => setStep(prev => Math.max(1, prev - 1))}
             className={`font-bold px-6 py-3 rounded-xl transition-all flex items-center ${

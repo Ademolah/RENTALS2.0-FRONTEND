@@ -17,18 +17,10 @@ import { getUnreadCountApi } from '../api/user';
 import { fetchGuestBookings } from '../api/trips';
 import SearchBox from '../components/browse/SearchBox';
 import ListingsMap from '../components/browse/ListingsMap';
-import FloatingPriceTag from '../components/FloatingPriceTag';
 import BrowseShell from '../components/browse/BrowseShell';
 import { SkeletonGrid, ErrorState, NoResults } from '../components/browse/States';
 import { AMENITY_OPTIONS, CAR_CLASSES, applyFilters, sortItems, listingTag } from '../components/browse/meta';
 import { useDocumentMeta } from '../lib/seo';
-
-const SERVICES = [
-  { key: 'shortlet', label: 'Shortlets', icon: Key, color: 'bg-brand-primary-soft text-brand-primary', desc: 'Luxury apartments' },
-  { key: 'hotel', label: 'Hotels', icon: Building2, color: 'bg-blue-50 text-blue-600', desc: 'Premium suites' },
-  { key: 'car', label: 'Car Rentals', icon: CarFront, color: 'bg-brand-purple-soft text-brand-purple', desc: 'Fleet rentals' },
-  { key: 'vip', label: 'VIP', icon: Crown, color: 'bg-amber-50 text-amber-600', desc: 'Concierge service' },
-];
 
 const TRUST_BADGES = [
   { icon: Shield, label: 'Verified listings', desc: 'Every property inspected' },
@@ -248,39 +240,6 @@ export default function Home({
         </section>
       )}
 
-      {/* Services Grid */}
-      {showCuratedHome && (
-        <div className="mb-10 animate-fade-up" style={{ animationDelay: '0.05s' }}>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-            {SERVICES.map((s) => {
-              const Icon = s.icon;
-              const isActive = cat === s.key;
-              return (
-                <button
-                  key={s.key}
-                  onClick={() => onCategoryChange?.(s.key)}
-                  className={`relative flex items-center gap-3 p-4 rounded-2xl border transition-all duration-200 group ${
-                    isActive
-                      ? 'bg-brand-dark border-brand-dark text-white shadow-card'
-                      : 'bg-white border-gray-100 hover:border-gray-200 hover:shadow-card'
-                  }`}
-                >
-                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                    isActive ? 'bg-white/15' : s.color
-                  }`}>
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-white' : ''}`} />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className={`text-base font-semibold block ${isActive ? 'text-white' : 'text-brand-dark'}`}>{s.label}</span>
-                    <span className={`text-sm block truncate ${isActive ? 'text-white/60' : 'text-brand-text-muted'}`}>{s.desc}</span>
-                  </div>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
       {showCuratedHome && nextTrip && (
         <Link to="/trips" className="mb-10 flex items-center gap-5 p-4 pr-6 rounded-2xl border border-gray-100 bg-white shadow-card hover:shadow-card-hover transition-shadow animate-fade-up">
           <img src={nextTrip.image} alt="" className="w-24 h-20 rounded-xl object-cover bg-gray-100 shrink-0" />
@@ -434,7 +393,7 @@ export default function Home({
               </div>
             )}
           </BrowseShell>
-          <FloatingPriceTag />
+          
         </>
       )}
     </main>

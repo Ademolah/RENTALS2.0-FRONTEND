@@ -148,13 +148,13 @@ Please assist me with this reservation.`;
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in duration-300">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 animate-in fade-in duration-300">
       <div 
         className="absolute inset-0 bg-brand-dark/70 backdrop-blur-sm transition-opacity"
         onClick={onClose}
       />
 
-      <div className="relative w-full sm:max-w-lg bg-white rounded-t-3xl sm:rounded-3xl shadow-elevated overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+      <div className="relative w-full sm:max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden flex flex-col max-h-[90vh] animate-fade-up duration-300">
         
         <div className="bg-brand-dark p-7 text-white relative">
           <button 

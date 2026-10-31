@@ -8,7 +8,6 @@ import {
 } from 'lucide-react';
 import { getCarById, checkCarAvailability, getCars } from '../api/car';
 import { useAuth } from '../context/AuthContext';
-import FloatingPriceTag from '../components/FloatingPriceTag';
 import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';
 import AvailabilityNotice from '../components/AvailabilityNotice';
 import ShareButton from '../components/ShareButton';
@@ -967,7 +966,6 @@ export default function CarDetails() {
         </div>
       )}
 
-      <FloatingPriceTag />
     </main>
   );
 }

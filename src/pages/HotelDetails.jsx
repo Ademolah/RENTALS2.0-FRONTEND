@@ -17,7 +17,6 @@ import ReviewsSection from '../components/detail/ReviewsSection';
 import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
-import FloatingPriceTag from '../components/FloatingPriceTag';
 import { useDocumentMeta } from '../lib/seo';
 import ShareButton from '../components/ShareButton';
 import { checkHotelRoomAvailability } from '../api/hotel';
@@ -748,9 +747,9 @@ export default function HotelDetails() {
         </div>
       </div>
 
-      {/* MOBILE BOTTOM BOOKING BAR */}
+      {/* Booking card on small screens */}
       {!ownListing && (
-      <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 pb-safe shadow-[0_-10px_40px_rgba(0,0,0,0.05)] z-[60] flex justify-between items-center">
+      <div className="lg:hidden mx-4 my-8 bg-white rounded-2xl border border-gray-100 shadow-card p-5 flex justify-between items-center gap-3">
         <div className="flex flex-col max-w-[40%]">
           <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1 truncate">Taxes incl.</span>
           <span className="text-lg sm:text-xl font-display font-bold text-brand-dark tracking-tight truncate">
@@ -800,7 +799,6 @@ export default function HotelDetails() {
         />
       )}
 
-      <FloatingPriceTag />
     </main>
   );
 }

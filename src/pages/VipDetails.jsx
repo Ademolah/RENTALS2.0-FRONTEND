@@ -7,7 +7,6 @@ import {
   Wine, Loader2, AlertCircle, X
 } from 'lucide-react';
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
-import FloatingPriceTag from '../components/FloatingPriceTag';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
 import { WhatsAppIcon } from '../components/ui';
@@ -524,7 +523,6 @@ export default function VipDetails() {
         </div>
 
       </div>
-      <FloatingPriceTag />
     </main>
   );
 }
