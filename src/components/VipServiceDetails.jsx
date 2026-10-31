@@ -11,7 +11,7 @@ import { logUnifiedWhatsappIntent } from '../api/reservation';
 import ShareButton from './ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { useDocumentMeta } from '../lib/seo';
-import { WhatsAppIcon } from './ui';
+import { WhatsAppIcon, WhatsAppCheckout } from './ui';
 import ReviewsSection from './detail/ReviewsSection';
 import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from './detail/extras';
 
@@ -472,13 +472,7 @@ Please assist with securing my deposit.`;
                   {isReserving ? <Loader2 className="w-5 h-5 animate-spin" /> : "Secure Reservation"}
                 </button>
                 
-                <button 
-                  onClick={handleWhatsAppReservation}
-                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white py-4 rounded-xl font-bold uppercase tracking-widest text-base shadow-lg transition-all flex justify-center items-center gap-2"
-                >
-                  <WhatsAppIcon className="w-5 h-5 mr-2" />
-                  Book via WhatsApp
-                </button>
+                <WhatsAppCheckout onClick={handleWhatsAppReservation} loading={!!(false)} />
               </div>
 
               <div className="mt-6 flex items-start gap-3 text-sm text-white/60 leading-relaxed font-medium">

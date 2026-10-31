@@ -6,7 +6,7 @@ import { Container, PageHero, Card, SectionTitle, Button, WhatsAppIcon } from '.
 const WHATSAPP = '2347063688222';
 
 const FAQS = [
-  { q: 'How do I book a stay?', a: 'Pick a city, choose a listing, select your dates and check availability, then reserve. You can pay securely online or book through our WhatsApp concierge.' },
+  { q: 'How do I book a stay?', a: 'Pick a city, choose a listing, select your dates and check availability, then reserve. You can pay securely online, or check out on WhatsApp.' },
   { q: 'Which fees will I pay?', a: 'You pay the listed price. There is no platform fee added at checkout. The optional chauffeur add-on for cars is N25,000 per 12 hours.' },
   { q: 'Can I see the host or contact them directly?', a: 'No. To protect everyone, hosts and guests never see each other\'s personal details. Rentals Africa is the middleman for every booking.' },
   { q: 'How does car rental work?', a: 'Cars are booked per 12-hour day. A single day can be booked on its own, with an optional chauffeur.' },
@@ -40,10 +40,10 @@ export default function Help() {
       <PageHero
         eyebrow="Support"
         title="How can we help?"
-        subtitle="Answers, safety guidance and cancellation terms, plus our concierge on WhatsApp for questions and for booking."
+        subtitle="Answers, safety guidance and cancellation terms, plus WhatsApp checkout when you would rather book in a chat."
       >
         <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
-          <WhatsAppIcon className="w-5 h-5" /> Chat with concierge
+          <WhatsAppIcon className="w-5 h-5" /> Checkout via WhatsApp
         </Button>
       </PageHero>
 
@@ -90,9 +90,9 @@ export default function Help() {
                 <WhatsAppIcon className="w-8 h-8" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-lg font-bold text-brand-dark">WhatsApp concierge</p>
-                <p className="text-base text-brand-text-secondary">Ask a question or book a stay, car or VIP service.</p>
-                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Chat on WhatsApp</a>
+                <p className="text-lg font-bold text-brand-dark">Book on WhatsApp</p>
+                <p className="text-base text-brand-text-secondary">Check out and book a stay, car or VIP service right in WhatsApp. You can also ask our team a question there.</p>
+                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Start your booking on WhatsApp</a>
               </div>
             </Card>
             <Card className="p-6 flex items-center gap-4">

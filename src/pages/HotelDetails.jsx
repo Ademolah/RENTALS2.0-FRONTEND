@@ -12,7 +12,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 import { createPropertyReviewApi } from '../api/reviews';
 import { useToast } from '../components/Toast';
-import { WhatsAppIcon } from '../components/ui';
+import { WhatsAppIcon, WhatsAppCheckout } from '../components/ui';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
@@ -727,18 +727,7 @@ export default function HotelDetails() {
                   {isLoggedIn ? "Reserve Now" : "Login to Reserve"}
                 </button>
                 
-                <button 
-                  onClick={handleWhatsAppClick}
-                  disabled={isWhatsappLoading}
-                  className="w-full bg-[#25D366] hover:bg-[#20bd5a] text-white font-bold text-lg py-4 rounded-xl transition-all active:scale-[0.98] flex items-center justify-center gap-2 disabled:opacity-70"
-                >
-                  {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-                    <>
-                      <WhatsAppIcon className="w-5 h-5" />
-                      Book via WhatsApp instead
-                    </>
-                  )}
-                </button>
+                <WhatsAppCheckout onClick={handleWhatsAppClick} loading={!!(isWhatsappLoading)} />
               </div>
             </div>
             )}
@@ -749,31 +738,18 @@ export default function HotelDetails() {
 
       {/* Booking card on small screens */}
       {!ownListing && (
-      <div className="lg:hidden mx-4 my-8 bg-white rounded-2xl border border-gray-100 shadow-card p-5 flex justify-between items-center gap-3">
-        <div className="flex flex-col max-w-[40%]">
-          <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-50 px-1.5 py-0.5 rounded self-start mb-1 truncate">Taxes incl.</span>
-          <span className="text-lg sm:text-xl font-display font-bold text-brand-dark tracking-tight truncate">
-            ₦{totalPrice.toLocaleString()}
-          </span>
+      <div className="lg:hidden mx-4 my-8 bg-white rounded-2xl border border-gray-100 shadow-card p-5">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <span className="text-xs font-bold text-green-700 uppercase tracking-widest bg-green-50 px-2 py-1 rounded">Taxes incl.</span>
+          <span className="text-2xl font-display font-bold text-brand-dark tracking-tight">₦{totalPrice.toLocaleString()}</span>
         </div>
-        
-        <div className="flex gap-2 w-[60%] justify-end">
-          <button 
-            onClick={handleWhatsAppClick}
-            disabled={isWhatsappLoading}
-            className="bg-[#25D366] text-white p-3 sm:px-4 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-[#25D366]/20 flex items-center justify-center disabled:opacity-70"
-          >
-            {isWhatsappLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
-              <WhatsAppIcon className="w-5 h-5" />
-            )}
-          </button>
-          <button 
-            onClick={handleBookClick}
-            className="bg-brand-primary text-white text-base font-bold px-4 sm:px-6 py-3.5 rounded-xl hover:opacity-90 transition-transform active:scale-95 shadow-lg shadow-brand-primary/20 flex-1 whitespace-nowrap"
-          >
-            {isLoggedIn ? "Reserve" : "Login"}
-          </button>
-        </div>
+        <button
+          onClick={handleBookClick}
+          className="w-full bg-brand-primary text-white text-lg font-bold px-6 py-4 rounded-2xl hover:opacity-90 transition-transform active:scale-[0.99] shadow-lg shadow-brand-primary/20"
+        >
+          {isLoggedIn ? "Reserve" : "Login"}
+        </button>
+        <WhatsAppCheckout onClick={handleWhatsAppClick} loading={!!isWhatsappLoading} />
       </div>
       )}
       {ownListing && (

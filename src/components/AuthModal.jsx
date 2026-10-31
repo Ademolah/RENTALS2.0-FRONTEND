@@ -1,7 +1,7 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
-import { GoogleLogin } from '@react-oauth/google';
+import { GoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { registerUser as registerUserApi } from '../api/auth';
@@ -93,6 +93,10 @@ export default function AuthModal({ isOpen, onClose }) {
     setNewUser(null);
     finishSignIn(u);
   };
+
+  useEffect(() => {
+    if (isOpen) { try { googleLogout(); } catch { /* ignore */ } }
+  }, [isOpen]);
 
   if (!isOpen) return null;
 
@@ -246,6 +250,8 @@ export default function AuthModal({ isOpen, onClose }) {
 
         <div className="mb-4 flex justify-center">
           <GoogleLogin
+            auto_select={false}
+            use_fedcm_for_button={false}
             onSuccess={handleGoogleSuccess}
             onError={() => setError('Google Sign-In failed.')}
             shape="pill"

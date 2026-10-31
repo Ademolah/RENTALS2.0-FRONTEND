@@ -136,3 +136,30 @@ export function ConfirmDialog({ open, title, text, confirmLabel = 'Confirm', dan
     </div>
   );
 }
+
+export function WhatsAppCheckout({ onClick, loading = false, disabled = false, className = '' }) {
+  return (
+    <div className={className}>
+      <div className="flex items-center gap-3 my-4" aria-hidden="true">
+        <span className="flex-1 h-px bg-gray-200" />
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text-muted">or</span>
+        <span className="flex-1 h-px bg-gray-200" />
+      </div>
+      <button
+        type="button"
+        onClick={onClick}
+        disabled={disabled || loading}
+        className="group w-full flex items-center gap-4 rounded-2xl bg-[#25D366] hover:bg-[#1FB955] text-white px-4 py-3.5 text-left shadow-lg shadow-[#25D366]/30 ring-4 ring-[#25D366]/15 transition-all active:scale-[0.99] disabled:opacity-70"
+      >
+        <span className="w-12 h-12 rounded-full bg-white text-[#25D366] flex items-center justify-center shrink-0 shadow-sm">
+          <WhatsAppIcon className="w-8 h-8" />
+        </span>
+        <span className="flex-1 min-w-0">
+          <span className="block text-lg font-display font-bold leading-tight">{loading ? 'Opening WhatsApp...' : 'Checkout via WhatsApp'}</span>
+          <span className="block text-sm text-white/90 leading-snug">Place your booking directly in a WhatsApp chat</span>
+        </span>
+        <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+      </button>
+    </div>
+  );
+}
