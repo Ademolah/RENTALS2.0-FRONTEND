@@ -40,11 +40,16 @@ export default function Help() {
       <PageHero
         eyebrow="Support"
         title="How can we help?"
-        subtitle="Answers, safety guidance and cancellation terms, plus WhatsApp checkout when you would rather book in a chat."
+        subtitle="Answers, safety guidance and cancellation terms. On WhatsApp you can check out your booking or ask our concierge for help."
       >
-        <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
-          <WhatsAppIcon className="w-5 h-5" /> Check out via WhatsApp
-        </Button>
+        <div className="flex flex-wrap gap-3">
+          <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
+            <WhatsAppIcon className="w-5 h-5" /> Check out via WhatsApp
+          </Button>
+          <Button variant="outline" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello Rentals Africa Concierge, I need some help.')}`, '_blank')}>
+            <WhatsAppIcon className="w-5 h-5 text-[#25D366]" /> Ask the concierge for help
+          </Button>
+        </div>
       </PageHero>
 
       <Container className="py-16 space-y-14">
@@ -84,15 +89,25 @@ export default function Help() {
 
         <section id="contact" className="scroll-mt-32">
           <SectionTitle title="Still need help?" />
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-3 gap-6">
             <Card className="p-6 flex items-center gap-5">
               <div className="w-14 h-14 rounded-2xl bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-card">
                 <WhatsAppIcon className="w-8 h-8" />
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-lg font-bold text-brand-dark">Check out on WhatsApp</p>
-                <p className="text-base text-brand-text-secondary">Check out and book a stay, car or VIP service right in WhatsApp. You can also ask our team a question there.</p>
+                <p className="text-base text-brand-text-secondary">Complete a stay, car or VIP booking right in a WhatsApp chat.</p>
                 <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Check out on WhatsApp</a>
+              </div>
+            </Card>
+            <Card className="p-6 flex items-center gap-5">
+              <div className="w-14 h-14 rounded-2xl bg-white text-[#25D366] ring-2 ring-[#25D366] flex items-center justify-center shrink-0">
+                <WhatsAppIcon className="w-8 h-8" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-lg font-bold text-brand-dark">Ask the concierge</p>
+                <p className="text-base text-brand-text-secondary">Questions, changes or help with a booking.</p>
+                <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello Rentals Africa Concierge, I need some help.')}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Get help on WhatsApp</a>
               </div>
             </Card>
             <Card className="p-6 flex items-center gap-4">
