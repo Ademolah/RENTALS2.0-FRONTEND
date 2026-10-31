@@ -234,15 +234,15 @@ export default function Home({
 
       {/* Hero */}
       {!isVip && (
-        <section className="relative overflow-hidden rounded-3xl bg-brand-primary text-white mb-8 px-6 py-10 md:px-12 md:py-14 animate-fade-up">
-          <CityBackdrop tone="coral" image={/abuja/i.test(activeCityContext) ? '/abuja.jpg' : '/lagos.jpg'} />
+        <section className="relative overflow-hidden rounded-3xl bg-[#F8EAC0] text-brand-dark mb-8 px-6 py-10 md:px-12 md:py-14 animate-fade-up">
+          <CityBackdrop tone="gold" image={/abuja/i.test(activeCityContext) ? '/abuja.jpg' : '/lagos.jpg'} />
           <div className="relative max-w-3xl">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/20 rounded-full mb-5">
-              <MapPin className="w-4 h-4 text-white" />
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white/70 rounded-full mb-5">
+              <MapPin className="w-4 h-4 text-brand-primary" />
               <span className="text-base font-semibold">{activeCityContext}, Nigeria</span>
             </div>
             <h1 className="text-4xl md:text-6xl font-display font-bold tracking-tight">Stay Somewhere Exceptional</h1>
-            <p className="mt-4 text-lg md:text-xl text-white/70 leading-relaxed">{HERO_COPY[cat] || HERO_COPY.shortlet}</p>
+            <p className="mt-4 text-lg md:text-xl text-brand-text-secondary leading-relaxed">{HERO_COPY[cat] || HERO_COPY.shortlet}</p>
           </div>
         </section>
       )}
