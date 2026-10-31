@@ -214,30 +214,6 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
 
           </div>
 
-          {/* Category tabs on small screens */}
-          <div className="md:hidden pb-3">
-            <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100 rounded-2xl">
-              {categories.map((cat) => {
-                const Icon = cat.icon;
-                const isActive = activeCategory === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => selectCategory(cat.id)}
-                    aria-pressed={isActive}
-                    className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl text-sm leading-none transition-all ${
-                      isActive
-                        ? 'bg-white text-brand-dark font-bold shadow-card'
-                        : 'text-brand-text-secondary font-medium'
-                    }`}
-                  >
-                    <Icon className={`w-5 h-5 ${isActive ? 'text-brand-primary' : ''}`} />
-                    <span>{cat.short}</span>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
         </div>
       </nav>
 

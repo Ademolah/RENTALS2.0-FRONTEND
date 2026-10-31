@@ -22,6 +22,13 @@ import { SkeletonGrid, ErrorState, NoResults } from '../components/browse/States
 import { AMENITY_OPTIONS, CAR_CLASSES, applyFilters, sortItems, listingTag } from '../components/browse/meta';
 import { useDocumentMeta } from '../lib/seo';
 
+const SERVICES = [
+  { key: 'shortlet', label: 'Shortlets', icon: Key, desc: 'Apartments' },
+  { key: 'hotel', label: 'Hotels', icon: Building2, desc: 'Suites' },
+  { key: 'car', label: 'Car Rentals', icon: CarFront, desc: 'Fleet' },
+  { key: 'vip', label: 'VIP', icon: Crown, desc: 'Concierge' },
+];
+
 const TRUST_BADGES = [
   { icon: Shield, label: 'Verified listings', desc: 'Every property inspected' },
   { icon: Star, label: 'Premium quality', desc: 'Curated selection only' },
@@ -240,6 +247,34 @@ export default function Home({
         </section>
       )}
 
+      {/* Category cards */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up">
+        {SERVICES.map((svc) => {
+          const Icon = svc.icon;
+          const active = cat === svc.key;
+          return (
+            <button
+              key={svc.key}
+              type="button"
+              onClick={() => onCategoryChange?.(svc.key)}
+              aria-pressed={active}
+              className={`group relative aspect-square lg:aspect-[16/10] rounded-3xl p-5 md:p-6 flex flex-col justify-between text-left overflow-hidden bg-gradient-to-br from-brand-dark via-brand-dark to-brand-accent transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated ${
+                active ? 'ring-4 ring-brand-primary shadow-elevated' : 'ring-1 ring-white/10'
+              }`}
+            >
+              <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors" />
+              <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${active ? 'bg-brand-primary' : 'bg-white/10 group-hover:bg-white/15'}`}>
+                <Icon className="w-7 h-7 text-white" />
+              </div>
+              <div className="relative">
+                <p className="text-xl md:text-2xl font-display font-bold text-white leading-tight">{svc.label}</p>
+                <p className="text-base text-white/70 mt-1">{svc.desc}</p>
+              </div>
+            </button>
+          );
+        })}
+      </div>
+
       {showCuratedHome && nextTrip && (
         <Link to="/trips" className="mb-10 flex items-center gap-5 p-4 pr-6 rounded-2xl border border-gray-100 bg-white shadow-card hover:shadow-card-hover transition-shadow animate-fade-up">
           <img src={nextTrip.image} alt="" className="w-24 h-20 rounded-xl object-cover bg-gray-100 shrink-0" />
@@ -263,7 +298,7 @@ export default function Home({
           if (q) next.query = q; else delete next.query;
           return next;
         })}
-        placeholder={isCar ? 'Search cars by make, model or city...' : isHotel ? 'Search hotels by name or area...' : isVip ? 'Search VIP venues and services...' : 'Search shortlets, hotels, cars...'}
+        placeholder={isCar ? 'Search cars' : isHotel ? 'Search hotels' : isVip ? 'Search VIP' : 'Search stays'}
       />
 
       {isHotel ? (
