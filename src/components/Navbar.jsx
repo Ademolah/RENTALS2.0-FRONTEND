@@ -9,7 +9,7 @@ import { getUnreadCountApi } from '../api/user';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
-export default function Navbar({ activeCategory }) {
+export default function Navbar({ activeCategory, center }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
   const [unread, setUnread] = useState(0);
@@ -43,10 +43,10 @@ export default function Navbar({ activeCategory }) {
       {/* TOP NAVBAR */}
       <nav className="sticky top-0 z-[99999] w-full bg-white border-b border-gray-100">
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-[72px]">
+          <div className="flex flex-wrap md:flex-nowrap justify-between items-center md:h-[72px]">
 
             {/* Logo */}
-            <div className="flex-shrink-0">
+            <div className="flex-shrink-0 h-16 md:h-auto flex items-center">
               <Link to="/" className="flex items-center">
                 <img
                   src="/Rentals-Navbar.png"
@@ -57,8 +57,11 @@ export default function Navbar({ activeCategory }) {
               </Link>
             </div>
 
+            {/* Search (top bar on desktop, own row on phones) */}
+            {center && <div className="order-last basis-full pb-3 md:order-none md:basis-auto md:flex-1 md:min-w-0 md:px-6 md:pb-0">{center}</div>}
+
             {/* Right Actions */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3 h-16 md:h-auto">
               <button
                 onClick={() => user ? redirectUserByRole('LANDLORD') : setShowAuthModal(true)}
                 className="hidden md:block text-base font-medium text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"

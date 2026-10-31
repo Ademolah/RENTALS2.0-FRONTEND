@@ -249,28 +249,28 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const activeMenuIsDate = activeMenu === 'checkIn' || activeMenu === 'checkOut';
 
   return (
-    <div className="w-full flex justify-center mt-4 md:mt-8 px-4 z-40 relative" ref={searchBarRef}>
+    <div className="w-full flex justify-center z-40 relative" ref={searchBarRef}>
       
       {/* DESKTOP VIEW */}
-      <div className={`hidden md:flex relative items-center max-w-4xl w-full rounded-full transition-all duration-300 ${
+      <div className={`hidden md:flex relative items-center max-w-3xl w-full rounded-full whitespace-nowrap transition-all duration-300 ${
         activeMenu ? 'bg-brand-accent-soft' : 'bg-white border border-gray-200 shadow-search hover:shadow-lg divide-x divide-gray-200'
       }`}>
         {isVip && (
           <>
-            <button onClick={() => setActiveMenu('service')} className={`flex-1 text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'service' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('service')} className={`flex-1 text-left pl-6 pr-3 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'service' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Service</div>
               <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
-            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Date</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Select Date'}</div>
             </button>
-            <div onClick={() => setActiveMenu('location')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <div onClick={() => setActiveMenu('location')} className={`flex-1 flex justify-between items-center pl-5 pr-1.5 py-1 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left w-full">
                 <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
                 <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5 pointer-events-none" />
               </div>
-              <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
+              <button onClick={executeSearch} className={`p-2.5 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-4 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-9'}`}>
                 <Search className="w-5 h-5" />
                 {activeMenu && <span className="font-semibold text-sm">Search</span>}
               </button>
@@ -280,20 +280,20 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
 
         {isCar && (
           <>
-            <button onClick={() => setActiveMenu('location')} className={`flex-[1.2] text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('location')} className={`flex-[1.2] text-left pl-6 pr-3 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Location</div>
               <input type="text" placeholder="Search city or airport" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
-            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Date</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
-            <div onClick={() => setActiveMenu('checkOut')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <div onClick={() => setActiveMenu('checkOut')} className={`flex-1 flex justify-between items-center pl-5 pr-1.5 py-1 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left">
                 <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Drop-off Date</div>
                 <div className={`text-sm font-medium mt-0.5 ${checkOut ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
               </div>
-              <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
+              <button onClick={executeSearch} className={`p-2.5 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-4 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-9'}`}>
                 <Search className="w-5 h-5" />
                 {activeMenu && <span className="font-semibold text-sm">Search</span>}
               </button>
@@ -303,24 +303,24 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
 
         {isStandard && (
           <>
-            <button onClick={() => setActiveMenu('location')} className={`flex-1 text-left pl-8 pr-4 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('location')} className={`flex-1 text-left pl-6 pr-3 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
               <input type="text" placeholder={isHotel ? "Search destinations or hotels" : "Search neighborhoods"} value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
             </button>
-            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Check in</div>
               <div className={`text-sm font-medium mt-0.5 ${checkIn ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkIn ? new Date(checkIn).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
-            <button onClick={() => setActiveMenu('checkOut')} className={`flex-1 text-left px-6 py-3.5 rounded-full transition-colors relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <button onClick={() => setActiveMenu('checkOut')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkOut' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Check out</div>
               <div className={`text-sm font-medium mt-0.5 ${checkOut ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{checkOut ? new Date(checkOut).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) : 'Add dates'}</div>
             </button>
-            <div onClick={() => setActiveMenu('guests')} className={`flex-1 flex justify-between items-center pl-6 pr-2 py-2 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'guests' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
+            <div onClick={() => setActiveMenu('guests')} className={`flex-1 flex justify-between items-center pl-5 pr-1.5 py-1 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'guests' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left">
                 <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Who</div>
                 <div className={`text-sm font-medium mt-0.5 ${totalGuests > 1 ? 'text-brand-dark' : 'text-brand-text-secondary'}`}>{totalGuests > 1 ? `${totalGuests} guests` : 'Add guests'}</div>
               </div>
-              <button onClick={executeSearch} className={`p-4 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-6 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-12'}`}>
+              <button onClick={executeSearch} className={`p-2.5 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-4 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-9'}`}>
                 <Search className="w-5 h-5" />
                 {activeMenu && <span className="font-semibold text-sm">Search</span>}
               </button>
@@ -416,7 +416,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           setIsMobileModalOpen(true);
           if(!activeMenu) setActiveMenu(isVip ? 'service' : 'location');
         }}
-        className="md:hidden flex items-center bg-white border border-gray-200 rounded-full shadow-[0_8px_20px_rgb(0,0,0,0.06)] w-full p-3 pl-5 cursor-pointer active:scale-[0.98] transition-transform z-40"
+        className="md:hidden flex items-center bg-white border border-gray-200 rounded-full shadow-[0_8px_20px_rgb(0,0,0,0.06)] w-full p-2 pl-4 cursor-pointer active:scale-[0.98] transition-transform z-40"
       >
         <Search className="w-5 h-5 text-brand-dark mr-4" />
         <div className="flex flex-col flex-grow text-left">

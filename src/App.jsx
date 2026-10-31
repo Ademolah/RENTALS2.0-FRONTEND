@@ -73,21 +73,17 @@ function App() {
       <div className="sticky top-0 z-50 bg-white flex flex-col">
         
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
-          <Navbar 
-            activeCategory={activeCategory} 
+          <Navbar
+            activeCategory={activeCategory}
+            center={isHomePage ? (
+              <AdvancedSearch
+                activeCategory={activeCategory}
+                activeCityContext={selectedCity}
+                onSearch={setSearchFilters}
+              />
+            ) : null}
           />
         </div>
-        
-        {/* AdvancedSearch Wrapper */}
-        {isHomePage && (
-          <div className="relative z-[60] md:z-30 pb-4 bg-white">
-            <AdvancedSearch 
-              activeCategory={activeCategory}
-              activeCityContext={selectedCity}
-              onSearch={setSearchFilters} 
-            />
-          </div>
-        )}
       </div>
 
       <div className="flex-grow">
