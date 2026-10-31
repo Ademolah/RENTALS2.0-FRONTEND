@@ -9,11 +9,10 @@ import { getCars } from '../api/car';
 import {
   Key, Building2, CarFront, Crown,
   ChevronRight, MapPin, Shield,
-  Star, Clock, Bell, CalendarDays
+  Star, Clock, CalendarDays
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { getUnreadCountApi } from '../api/user';
 import { fetchGuestBookings } from '../api/trips';
 import SearchBox from '../components/browse/SearchBox';
 import ListingsMap from '../components/browse/ListingsMap';
@@ -101,7 +100,6 @@ export default function Home({
   const [sort, setSort] = useState('recommended');
   const [view, setView] = useState('list');
   const { user } = useAuth();
-  const [unread, setUnread] = useState(0);
   const [nextTrip, setNextTrip] = useState(null);
 
   const cat = activeCategory.toLowerCase();
@@ -124,11 +122,9 @@ export default function Home({
   useEffect(() => {
     let active = true;
     if (!user) {
-      setUnread(0);
       setNextTrip(null);
       return undefined;
     }
-    getUnreadCountApi().then((n) => active && setUnread(n)).catch(() => active && setUnread(0));
     fetchGuestBookings()
       .then((rows) => {
         if (!active) return;
@@ -221,14 +217,6 @@ export default function Home({
             <p className="text-base text-brand-text-secondary">{greetingFor()}</p>
             <p className="text-2xl font-display font-bold text-brand-dark">{user.firstName || 'Welcome back'}</p>
           </div>
-          <Link
-            to="/notifications"
-            aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
-            className="relative w-12 h-12 rounded-full border border-gray-200 bg-white flex items-center justify-center hover:border-brand-dark transition-colors"
-          >
-            <Bell className="w-5 h-5 text-brand-dark" />
-            {unread > 0 && <span className="absolute top-2.5 right-3 w-3 h-3 rounded-full bg-brand-primary border-2 border-white" />}
-          </Link>
         </div>
       )}
 

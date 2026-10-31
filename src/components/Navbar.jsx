@@ -38,18 +38,13 @@ export default function Navbar({ center }) {
   const guestLinks = [
     { to: '/trips', label: 'Trips', icon: Briefcase },
     { to: '/saved', label: 'Saved', icon: Heart },
-    { to: '/notifications', label: 'Notifications', icon: Bell, badge: unread },
     { to: '/help', label: 'Help', icon: LifeBuoy },
   ];
   const hostLinks = [
     { to: '/dashboard/landlord', label: 'Dashboard', icon: LayoutDashboard },
-    { to: '/notifications', label: 'Notifications', icon: Bell, badge: unread },
     { to: '/help', label: 'Help', icon: LifeBuoy },
   ];
   const links = user ? (dark ? hostLinks : guestLinks) : [{ to: '/help', label: 'Help', icon: LifeBuoy }];
-
-  // With the search bar in the header there is less room, so labels appear only on very wide screens.
-  const labelCls = center ? 'hidden 2xl:inline' : 'hidden xl:inline';
 
   const linkClass = ({ isActive }) =>
     `relative flex items-center gap-2 px-3 py-2.5 rounded-full text-base font-medium transition-colors ${
@@ -81,10 +76,10 @@ export default function Navbar({ center }) {
     <>
       <nav className={`sticky top-0 z-[99999] w-full border-b ${dark ? 'bg-brand-dark border-white/10' : 'bg-white border-gray-100'}`}>
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap lg:flex-nowrap justify-between items-center lg:h-[72px]">
+          <div className="flex flex-wrap justify-between items-center">
 
             {/* Logo */}
-            <div className="flex-shrink-0 h-16 lg:h-auto flex items-center gap-3">
+            <div className="flex-shrink-0 h-16 lg:h-[72px] flex items-center gap-3">
               <Link to="/" className="flex items-center">
                 <img src="/Rentals-Navbar.png" alt="Rentals Africa" className="h-6 w-auto sm:h-7 object-contain select-none" draggable="false" />
               </Link>
@@ -95,24 +90,40 @@ export default function Navbar({ center }) {
 
             {/* Search (centre on desktop, own row below on small screens) */}
             {center && !dark && (
-              <div className="order-last basis-full pb-3 lg:order-none lg:basis-auto lg:flex-1 lg:min-w-0 lg:px-6 lg:pb-0">{center}</div>
+              <div className="order-last basis-full pb-4">{center}</div>
             )}
 
             {/* Desktop links */}
-            <div className={`hidden lg:flex items-center gap-1 ${center && !dark ? '' : 'flex-1 justify-end'} `}>
+            <div className="hidden lg:flex flex-1 h-[72px] items-center justify-end gap-1">
               {links.map(({ to, label, icon: Icon, badge }) => (
                 <NavLink key={to} to={to} end className={linkClass} aria-label={label} title={label}>
-                  <Icon className="w-5 h-5" />
-                  <span className={center && !dark ? labelCls : ''}>{label}</span>
-                  {badge > 0 && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-brand-primary text-white text-xs font-bold flex items-center justify-center">{badge > 99 ? '99+' : badge}</span>
-                  )}
+                  <span>{label}</span>
                 </NavLink>
               ))}
             </div>
 
             {/* Right cluster */}
-            <div className="flex items-center gap-3 h-16 lg:h-auto lg:ml-3" ref={menuRef}>
+            <div className="flex items-center gap-3 h-16 lg:h-[72px] lg:ml-3" ref={menuRef}>
+              {user && (
+                <NavLink
+                  to="/notifications"
+                  aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+                  title="Notifications"
+                  className={({ isActive }) =>
+                    `relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
+                      dark
+                        ? isActive ? 'bg-white/20 text-white' : 'text-white/80 hover:bg-white/10'
+                        : isActive ? 'bg-brand-accent-soft text-brand-dark' : 'text-brand-dark hover:bg-gray-100'
+                    }`
+                  }
+                >
+                  <Bell className="w-5 h-5" />
+                  {unread > 0 && (
+                    <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-primary text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{unread > 9 ? '9+' : unread}</span>
+                  )}
+                </NavLink>
+              )}
+
               <div className="hidden lg:block">{switchButton}</div>
 
               {!user && (
