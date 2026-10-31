@@ -248,7 +248,7 @@ export default function Home({
       )}
 
       {/* Category cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 animate-fade-up">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-8 animate-fade-up">
         {SERVICES.map((svc) => {
           const Icon = svc.icon;
           const active = cat === svc.key;
@@ -258,17 +258,17 @@ export default function Home({
               type="button"
               onClick={() => onCategoryChange?.(svc.key)}
               aria-pressed={active}
-              className={`group relative aspect-square lg:aspect-[16/10] rounded-3xl p-5 md:p-6 flex flex-col justify-between text-left overflow-hidden bg-gradient-to-br from-brand-dark via-brand-dark to-brand-accent transition-all duration-300 hover:-translate-y-1 hover:shadow-elevated ${
-                active ? 'ring-4 ring-brand-primary shadow-elevated' : 'ring-1 ring-white/10'
+              className={`group relative h-28 lg:h-24 rounded-2xl px-4 py-4 flex flex-col justify-between lg:flex-row lg:items-center lg:justify-start lg:gap-4 text-left overflow-hidden bg-gradient-to-br from-brand-dark via-brand-dark to-brand-accent transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated ${
+                active ? 'ring-2 ring-brand-primary ring-offset-2 ring-offset-white shadow-elevated' : 'ring-1 ring-white/10'
               }`}
             >
-              <div className="absolute -bottom-10 -right-10 w-40 h-40 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors" />
-              <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center transition-colors ${active ? 'bg-brand-primary' : 'bg-white/10 group-hover:bg-white/15'}`}>
-                <Icon className="w-7 h-7 text-white" />
+              <div className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors" />
+              <div className="relative w-11 h-11 shrink-0 rounded-xl bg-white/10 flex items-center justify-center">
+                <Icon className="w-6 h-6 text-white" />
               </div>
-              <div className="relative">
-                <p className="text-xl md:text-2xl font-display font-bold text-white leading-tight">{svc.label}</p>
-                <p className="text-base text-white/70 mt-1">{svc.desc}</p>
+              <div className="relative min-w-0">
+                <p className="text-lg font-display font-bold text-white leading-tight">{svc.label}</p>
+                <p className="text-sm text-white/70">{svc.desc}</p>
               </div>
             </button>
           );
