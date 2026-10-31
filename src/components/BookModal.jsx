@@ -214,7 +214,7 @@ Please assist me with this reservation.`;
           <div className="flex items-start bg-green-50 border border-green-200 p-4 rounded-xl mb-6">
             <ShieldCheck className="w-6 h-6 text-green-700 mr-3 shrink-0" />
             <div>
-              <h5 className="font-bold text-green-900 text-base mb-1">Escrow Protection Active</h5>
+              <h5 className="font-bold text-green-900 text-base mb-1">Payment Protection Active</h5>
               <p className="text-sm text-green-800 leading-relaxed">
                 Your payment is held securely by Rentals Africa and the hotel is only paid after you check in. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.
               </p>

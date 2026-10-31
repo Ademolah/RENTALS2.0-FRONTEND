@@ -882,7 +882,7 @@ export default function CarDetails() {
 
             <div className="flex items-center justify-center space-x-1.5 text-brand-text-secondary mt-4">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-xs font-bold uppercase tracking-wider">Platform Escrow Protection</span>
+              <span className="text-xs font-bold uppercase tracking-wider">Secure Payment Protection</span>
             </div>
 
             {/* COMPACT Live Receipt Breakdown */}

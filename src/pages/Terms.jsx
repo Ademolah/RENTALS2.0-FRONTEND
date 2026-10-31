@@ -17,7 +17,7 @@ export default function Terms() {
   const sections = [
     { id: 'acceptance', title: '1. Acceptance of Terms' },
     { id: 'eligibility', title: '2. User Verification & Eligibility' },
-    { id: 'bookings', title: '3. Booking & Escrow Payments' },
+    { id: 'bookings', title: '3. Booking & Payments' },
     { id: 'cancellations', title: '4. Cancellations & Refunds' },
     { id: 'host-terms', title: '5. Host Obligations & Guarantees' },
     { id: 'vip-vehicle', title: '6. Vehicle & VIP Escort Services' },
@@ -95,8 +95,8 @@ export default function Terms() {
             <div className="p-6 bg-brand-primary/5 rounded-2xl border border-brand-primary/15 flex items-start space-x-4">
               <ShieldCheck className="w-6 h-6 text-brand-primary flex-shrink-0 mt-0.5" />
               <div className="text-base text-gray-700 leading-relaxed">
-                <strong className="font-bold text-gray-900 block mb-1">Escrow & Identity Protection Notice:</strong>
-                All rental payments are safely held in escrow and released 24 hours post check-in or delivery. Guests and hosts must complete ID verification prior to booking execution.
+                <strong className="font-bold text-gray-900 block mb-1">Payment & Identity Protection Notice:</strong>
+                All rental payments are safely held and released 24 hours post check-in or delivery. Guests and hosts must complete ID verification prior to booking execution.
               </div>
             </div>
 
@@ -118,9 +118,9 @@ export default function Terms() {
 
             {/* SECTION 3 */}
             <section id="bookings" className="scroll-mt-28 space-y-4 pt-6 border-t border-gray-100">
-              <h2 className="text-3xl font-display font-bold text-brand-dark tracking-tight">3. Booking & Escrow Payments</h2>
+              <h2 className="text-3xl font-display font-bold text-brand-dark tracking-tight">3. Booking & Payments</h2>
               <p className="text-brand-text-secondary text-lg leading-relaxed">
-                Rentals Africa operates a secure escrow framework. Payment for bookings is collected immediately upon reservation confirmation and held securely. Payouts to hosts or vehicle providers are dispatched 24 hours after successful guest check-in or asset delivery, barring formal dispute notices.
+                Rentals Africa operates a secure payment framework. Payment for bookings is collected immediately upon reservation confirmation and held securely. Payouts to hosts or vehicle providers are dispatched 24 hours after successful guest check-in or asset delivery, barring formal dispute notices.
               </p>
             </section>
 

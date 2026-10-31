@@ -381,7 +381,7 @@ export default function VipDetails() {
 
             <div className="relative z-10">
               <div className="mb-8">
-                <span className="block text-xs font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Required Escrow Deposit</span>
+                <span className="block text-xs font-display font-bold uppercase tracking-widest text-amber-500 mb-2">Required Deposit</span>
                 <div className="flex items-baseline text-white">
                   <span className="text-4xl font-display font-bold tracking-tighter">₦{depositAmount.toLocaleString()}</span>
                 </div>
@@ -514,7 +514,7 @@ export default function VipDetails() {
 
               <div className="mt-6 flex items-start gap-3 text-sm text-white/60 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Your deposit is held securely in escrow by Rentals. Funds are only released to the venue upon your physical arrival and check-in. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
+                <p>Your deposit is held securely by Rentals Africa. Funds are only released to the venue upon your physical arrival and check-in. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
               </div>
 
             </div>

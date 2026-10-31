@@ -457,7 +457,7 @@ Please assist with securing my deposit.`;
                   <span className="text-white">₦{subtotal.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                  <span className="text-white font-bold">Total Escrow</span>
+                  <span className="text-white font-bold">Total</span>
                   <span className="text-xl font-display font-bold text-amber-500">₦{grandTotal.toLocaleString()}</span>
                 </div>
               </div>
@@ -483,7 +483,7 @@ Please assist with securing my deposit.`;
 
               <div className="mt-6 flex items-start gap-3 text-sm text-white/60 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Payment is securely held in platform escrow and is only released to the provider upon confirmed delivery of service. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
+                <p>Payment is securely held by Rentals Africa and is only released to the provider upon confirmed delivery of service. Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment.</p>
               </div>
 
             </div>

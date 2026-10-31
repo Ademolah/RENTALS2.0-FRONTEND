@@ -131,7 +131,7 @@ export default function AdminDashboard() {
       const res = await getEscrowLedger();
       setLedger(res.data?.ledger || []);
     } catch (error) {
-      notify(errMsg(error, "Could not load the escrow ledger."));
+      notify(errMsg(error, "Could not load the payment ledger."));
     } finally {
       setLoading(false);
     }
@@ -223,7 +223,7 @@ export default function AdminDashboard() {
     { id: 'applications', label: 'Host Applications', icon: Users },
     { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
     { id: 'assets', label: 'Asset Oversight', icon: Building },
-    { id: 'escrow', label: 'Escrow Ledger', icon: Wallet },
+    { id: 'escrow', label: 'Payment Ledger', icon: Wallet },
     { id: 'settings', label: 'Platform Settings', icon: Settings },
   ];
 
@@ -414,7 +414,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-right">
                         <div className="text-xl font-display font-bold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
-                        <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Escrow Held</div>
+                        <div className="text-xs font-bold text-brand-text-muted uppercase tracking-wider mt-1">Funds Held</div>
                       </div>
                     </div>
                   </div>
@@ -731,14 +731,14 @@ export default function AdminDashboard() {
                      <th className="p-4 text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted">Guest</th>
                      <th className="p-4 text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted">Asset</th>
                      <th className="p-4 text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted">Amount (NGN)</th>
-                     <th className="p-4 text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted">Escrow Status</th>
+                     <th className="p-4 text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted">Payout Status</th>
                    </tr>
                  </thead>
                  <tbody>
                    {loading ? (
                      <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-brand-text-muted" /></td></tr>
                    ) : ledger.length === 0 ? (
-                     <tr><td colSpan="5" className="p-8 text-center text-brand-text-secondary">No escrow records found.</td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center text-brand-text-secondary">No payment records found.</td></tr>
                    ) : (
                      ledger.map((record) => {
                        const isCar = !!record.carId;
@@ -768,7 +768,7 @@ export default function AdminDashboard() {
                            <td className="p-4 whitespace-nowrap">
                              <span className={`inline-flex items-center space-x-1.5 text-xs font-bold px-2.5 py-1 rounded-md uppercase tracking-wider ${statusColor}`}>
                                <StatusIcon className="w-3.5 h-3.5" />
-                               <span>{eStatus.replace(/_/g, ' ')}</span>
+                               <span>{eStatus.replace(/_?IN_?ESCROW/i, '').replace(/_/g, ' ')}</span>
                              </span>
                            </td>
                          </tr>

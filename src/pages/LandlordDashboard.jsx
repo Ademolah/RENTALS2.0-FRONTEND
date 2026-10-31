@@ -480,7 +480,7 @@ export default function LandlordDashboard() {
               <p className="text-base text-white/70 mt-2">After the 5% platform commission.</p>
             </div>
             <div className="lg:text-right">
-              <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/70">In escrow</p>
+              <p className="text-sm font-bold uppercase tracking-[0.2em] text-white/70">Pending payout</p>
               <p className="text-3xl md:text-4xl font-display font-bold mt-1">₦{pendingEscrow.toLocaleString()}</p>
               <p className="text-base text-white/70 mt-1">Released once check-in is confirmed.</p>
             </div>
@@ -616,7 +616,7 @@ export default function LandlordDashboard() {
               </div>
             ) : activeTab === 'ACTION_FEED' && ledgerEntries.length > 0 ? (
               <div className="space-y-5">
-                <SectionTitle title="Ledger & Actions" subtitle="Confirm arrivals to release escrowed funds." />
+                <SectionTitle title="Ledger & Actions" subtitle="Confirm arrivals to release your payout." />
                 {ledgerEntries.map((booking) => {
                   const isCar = booking.type === 'CAR';
                   const isVip = booking.type === 'VIP';

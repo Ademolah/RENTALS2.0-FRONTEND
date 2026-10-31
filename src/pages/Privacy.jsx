@@ -116,7 +116,7 @@ export default function Privacy() {
             <section id="how-we-use" className="scroll-mt-28 space-y-4 pt-6 border-t border-gray-100">
               <h2 className="text-3xl font-display font-bold text-brand-dark tracking-tight">2. How We Use Your Data</h2>
               <p className="text-brand-text-secondary text-lg leading-relaxed">
-                Your data is used exclusively to facilitate seamless booking confirmations, process automated escrow payouts, prevent fraudulent listings, and provide 24/7 customer concierge support.
+                Your data is used exclusively to facilitate seamless booking confirmations, process automated payouts, prevent fraudulent listings, and provide 24/7 customer concierge support.
               </p>
             </section>
 

@@ -641,7 +641,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                   <div className="flex justify-between items-end mb-8">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                        {listingCategory === 'VENUE' ? 'Required Escrow Deposit' : 'Daily Rate (NGN)'}
+                        {listingCategory === 'VENUE' ? 'Required Deposit' : 'Daily Rate (NGN)'}
                       </label>
                       <p className="text-sm text-gray-500">
                         {listingCategory === 'VENUE' 

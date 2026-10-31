@@ -478,7 +478,7 @@ export default function BookingWidget({ property }) {
           <ShieldCheck className="w-5 h-5 text-brand-primary shrink-0 mt-0.5" />
           <div>
             <h4 className="text-sm font-bold text-brand-dark">100% Secured Payment</h4>
-            <p className="text-sm text-brand-text-secondary mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
+            <p className="text-sm text-brand-text-secondary mt-0.5 leading-relaxed">Your payment is held securely by Rentals Africa and only released to the host after check-in.</p>
           </div>
         </div>
         <div className="flex gap-3">

@@ -16,7 +16,7 @@ export default function About() {
     { label: 'Active Shortlets & Cars', value: '3,500+' },
     { label: 'Verified Guests Served', value: '45,000+' },
     { label: 'Key Cities Covered', value: 'Lagos & Abuja' },
-    { label: 'Host Escrow Payouts', value: '₦1.2B+' },
+    { label: 'Host Payouts', value: '₦1.2B+' },
   ];
 
   const corePillars = [
@@ -28,7 +28,7 @@ export default function About() {
     },
     {
       title: 'Bank-Grade Security & Verification',
-      desc: 'Dual-identity verification for guests and automated escrow payouts for hosts keep every transaction safe.',
+      desc: 'Dual-identity verification for guests and automated payouts for hosts keep every transaction safe.',
       icon: ShieldCheck,
       tag: 'Trust'
     },
@@ -138,7 +138,7 @@ export default function About() {
 
               <div className="pt-2 space-y-4">
                 {[
-                  'Integrated escrow payment systems for zero risk',
+                  'Secure payment processing for peace of mind',
                   '24/7 dedicated concierge & emergency support',
                   '100% verified asset conditions and hosts',
                 ].map((t) => (

@@ -46,7 +46,7 @@ export default function ListProperty() {
     },
     {
       q: "How and when do I get paid?",
-      a: "Payouts are automatically processed directly to your bank account 24 hours after your guest checks in or takes delivery of the vehicle, backed by our escrow protection workflow."
+      a: "Payouts are automatically processed directly to your bank account 24 hours after your guest checks in or takes delivery of the vehicle, backed by our secure payment workflow."
     },
     {
       q: "What host protection and insurance do I have?",
@@ -226,9 +226,9 @@ export default function ListProperty() {
               <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 mb-6">
                 <Banknote className="w-6 h-6" />
               </div>
-              <h3 className="text-2xl font-display font-bold text-brand-dark mb-3">Escrow Protected Payouts</h3>
+              <h3 className="text-2xl font-display font-bold text-brand-dark mb-3">Secure Payouts</h3>
               <p className="text-brand-text-secondary text-base leading-relaxed">
-                Funds are held in secure escrow and released directly to your preferred Nigerian bank account 24 hours post check-in.
+                Funds are held securely and released directly to your preferred Nigerian bank account 24 hours post check-in.
               </p>
             </div>
 

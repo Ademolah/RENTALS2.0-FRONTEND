@@ -125,7 +125,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Payout Account</h2>
-              <p className="text-xs font-medium text-gray-500">Secure escrow settlement setup</p>
+              <p className="text-xs font-medium text-gray-500">Secure payout setup</p>
             </div>
           </div>
           <button 
