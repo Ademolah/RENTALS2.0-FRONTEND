@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { X, Mail, ArrowRight, Loader2, CheckCircle2, AlertCircle } from 'lucide-react';
 import { forgotPasswordApi } from '../api/auth';
 

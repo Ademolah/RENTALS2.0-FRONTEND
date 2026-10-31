@@ -1,10 +1,5 @@
-import React, { useState } from 'react';
-import { 
-  X, MapPin, CheckCircle2, Building, BedDouble, 
-  Wifi, Droplets, Wine, Car, Coffee, Utensils, 
-  Sparkles, Dumbbell, Plus, Trash2, Image as ImageIcon,
-  ChevronRight, ChevronLeft, AlertCircle
-} from 'lucide-react';
+import { useState } from 'react';
+import { X, CheckCircle2, Building, BedDouble, Wifi, Droplets, Wine, Car, Coffee, Utensils, Sparkles, Dumbbell, Plus, Trash2, Image as ImageIcon, ChevronRight, ChevronLeft } from 'lucide-react';
 import { createHotel } from '../api/hotel';
 import { useToast } from './Toast';
 import { useDraft } from './host/useDraft';

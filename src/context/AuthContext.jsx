@@ -27,7 +27,7 @@ export function AuthProvider({ children }) {
     if (storedToken && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
-      } catch (err) {
+      } catch {
         localStorage.removeItem('rentals_token');
         localStorage.removeItem('rentals_user');
       }

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { verifyEmailApi } from '../api/auth';
 import { useToast } from './Toast';
 

@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Building, Car, Hotel, Crown, Plus, ShieldCheck, CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp, BarChart3, Star, Receipt, MessageSquare, Eye, EyeOff, Banknote, Ban, ExternalLink, Hash, CalendarCheck, BedDouble } from 'lucide-react';
+import { Building, Car, Hotel, Crown, Plus, ShieldCheck, CheckCircle, Clock, MapPin, Loader2, Landmark, BarChart3, Star, Receipt, MessageSquare, Eye, EyeOff, Banknote, Ban, ExternalLink, Hash, CalendarCheck, BedDouble } from 'lucide-react';
 
 import { HostService } from '../api/host';
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
@@ -68,7 +68,7 @@ export default function LandlordDashboard() {
         }),
       });
       setAnalyticsState('ready');
-    } catch (error) {
+    } catch {
       setAnalyticsState('error');
     }
   };

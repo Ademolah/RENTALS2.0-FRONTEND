@@ -23,21 +23,23 @@ apiClient.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Intercept responses to handle global errors
-apiClient.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    // 1. Check if the error is coming from the login API itself
-    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
-
-    if (error.response?.status === 401) {
-      // 2. Only clear the session if the 401 is an expiry, NOT a bad login attempt
-      if (!isLoginEndpoint) {
-        localStorage.removeItem('rentals_token');
-        localStorage.removeItem('rentals_user');
-        window.location.href = '/?session=expired';
-      }
-    }
-    return Promise.reject(error);
+// An expired session (401 on a request that carried a token) signs the user out and goes home.
+// Login and Google sign-in failures are NOT session expiry, so they are left alone.
+function handleSessionExpiry(error) {
+  const url = error.config?.url || '';
+  const h = error.config?.headers;
+  const sentToken = !!(h?.Authorization || h?.authorization || h?.get?.('Authorization'));
+  const isAuthEndpoint = url.includes('/auth/');
+  if (error.response?.status === 401 && sentToken && !isAuthEndpoint) {
+    localStorage.removeItem('rentals_token');
+    localStorage.removeItem('rentals_user');
+    window.location.href = '/?session=expired';
   }
-);
+  return Promise.reject(error);
+}
+
+// Intercept responses to handle global errors
+apiClient.interceptors.response.use((response) => response, handleSessionExpiry);
+
+// Calls made with plain axios (a few uploads and payout screens) get the same expiry handling.
+axios.interceptors.response.use((response) => response, handleSessionExpiry);

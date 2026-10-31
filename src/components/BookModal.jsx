@@ -1,9 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { WhatsAppCheckout } from './ui';
-import { 
-  X, Clock, ShieldCheck, CreditCard, MessageCircle, 
-  CalendarDays, BedDouble, MapPin, CheckCircle2 
-} from 'lucide-react';
+import { X, Clock, ShieldCheck, CreditCard, CalendarDays, MapPin, CheckCircle2 } from 'lucide-react';
 import { checkHotelRoomAvailability } from '../api/hotel';
 import { useNavigate } from 'react-router-dom';
 import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';

@@ -74,3 +74,7 @@ Summary: BLOCKER 0 · HIGH 2 · MEDIUM 7 · LOW 11
 ## Fix status (2026-10-31)
 Fixed: #1 role guard on dashboards, #2 API_URL constant + .env.example, #3 verify-email close button, #4 map link routes, #6/#7 accessible names (76 buttons, 33 inputs), #8 hotel wording + cancellation note, #9 lazy-loaded dashboards, #14 badge size, #15 image alt, #18 noopener on WhatsApp links, dead PriceTagIcon removed.
 Left open: #5 (raw axios calls bypass shared client), #10/#11 unused exports/imports and lint errors, #12 dead state in CarDetails, #13 WhatsApp number redeclared in 4 files (value correct), #16 error-state wording, #17 shortlet bookingType (confirm with mobile), #20 hooks lint style warnings.
+
+## Second pass (2026-10-31)
+Also fixed: #5 shared session-expiry handling now covers plain axios calls too (only for requests that carried a token, never for /auth/ endpoints), #11 unused imports removed (lint errors 147 -> 67), #13 one WhatsApp constant, #16 error wording ("Listing not found"), #17 shortlet booking now sends bookingType 'PROPERTY' like mobile, Hotels tab default city no longer counted as an active filter.
+Still open: remaining lint errors are React 19 hook-style rules (set-state-in-effect, exhaustive-deps, immutability) and unused non-import variables; none change behaviour.

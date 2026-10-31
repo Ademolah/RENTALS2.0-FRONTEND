@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { WhatsAppCheckout } from './ui';
-import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, CheckCircle2, XCircle, ChevronLeft, ChevronRight, Calendar as CalendarIcon } from 'lucide-react';
+import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, CheckCircle2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';
 import { checkPropertyAvailability, getPropertyById } from '../api/properties';
@@ -185,6 +185,7 @@ export default function BookingWidget({ property }) {
       total: pricingDetails.grandTotal,
       payload: {
         propertyId: property.id,
+        bookingType: 'PROPERTY',
         checkInDate: checkIn,
         checkOutDate: checkOut,
         guestsCount: guests,
@@ -247,7 +248,7 @@ export default function BookingWidget({ property }) {
       );
 
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
-    } catch (err) {
+    } catch {
       setError("Failed to initialize secure chat. Please try again.");
     } finally {
       setIsWhatsappLoading(false);

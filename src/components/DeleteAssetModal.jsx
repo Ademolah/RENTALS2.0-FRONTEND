@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { AlertCircle, Loader2, X, Trash2 } from 'lucide-react';
 import { deleteProperty } from '../api/properties';
 import { deleteVipEstablishment } from '../api/vip';

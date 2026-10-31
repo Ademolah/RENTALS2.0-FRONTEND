@@ -35,7 +35,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
               setError(res.data.notes);
             }
           }
-        } catch (err) {
+        } catch {
           setAppStatus('IDLE'); // Fallback to the form if the network fails
         }
       }

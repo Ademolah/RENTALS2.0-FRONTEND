@@ -2,11 +2,7 @@ import { useState, useEffect, useMemo, useRef } from 'react';
 import { WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate, Link } from 'react-router-dom'; 
-import { 
-  MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
-  Loader2, ShieldCheck, Calendar as CalendarIcon, 
-  CreditCard, CheckCircle2, User, Sparkles, XCircle, CalendarSearch, X, Video, Truck
-} from 'lucide-react';
+import { MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Loader2, ShieldCheck, Calendar as CalendarIcon, CheckCircle2, User, CalendarSearch, X, Video, Truck } from 'lucide-react';
 import { getCarById, checkCarAvailability, getCars } from '../api/car';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent, saveCheckoutDraft } from '../api/reservation';

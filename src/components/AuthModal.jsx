@@ -6,7 +6,6 @@ import { GoogleLogin, googleLogout } from '@react-oauth/google';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { registerUser as registerUserApi } from '../api/auth';
-import { updateMyProfileApi } from '../api/user';
 import ForgotPasswordModal from './ForgotPasswordModal';
 import { VerifyEmailModal } from './VerifyEmailModal';
 import InterestsPicker from './profile/InterestsPicker';

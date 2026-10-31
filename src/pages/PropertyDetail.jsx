@@ -1,10 +1,6 @@
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef } from 'react';
-import { 
-  Share, Heart, ArrowLeft, Loader2, 
-  ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, PlayCircle, Video, Grid3x3, BedDouble, Bath, Users, ShieldCheck, Check 
-} from 'lucide-react';
+import { Share, Heart, ArrowLeft, Loader2, ChevronLeft, ChevronRight, MapPin, X, Star, Video, Grid3x3, BedDouble, Bath, Users, ShieldCheck, Check } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 

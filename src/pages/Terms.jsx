@@ -1,16 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDocumentMeta } from '../lib/seo';
 import { PageHero } from '../components/ui';
-import { 
-  ShieldCheck, 
-  FileText, 
-  Lock, 
-  CreditCard, 
-  Building2, 
-  AlertCircle, 
-  ChevronRight,
-  Scale
-} from 'lucide-react';
+import { ShieldCheck, ChevronRight } from 'lucide-react';
 
 export default function Terms() {
   useDocumentMeta('Terms of Service', 'The terms for using Rentals Africa.');

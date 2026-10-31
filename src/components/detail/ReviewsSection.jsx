@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { Star, MessageSquare, ArrowRight } from 'lucide-react';
 import { Card, Button, Skeleton } from '../ui';
 import { getListingReviews } from '../../api/reviews';

@@ -166,12 +166,15 @@ export default function BrowseShell({
   total,
   noun = 'results',
   chipLabels,
+  baseFilters,
   view,
   setView,
   children,
 }) {
   const [open, setOpen] = useState(false);
-  const chips = filterChips(filters, chipLabels);
+  const base = baseFilters || {};
+  const userFilters = Object.fromEntries(Object.entries(filters).filter(([k, v]) => !(k in base && base[k] === v)));
+  const chips = filterChips(userFilters, chipLabels);
   const hasFilters = chips.length > 0;
 
   useEffect(() => {
@@ -179,7 +182,7 @@ export default function BrowseShell({
     return () => { document.body.style.overflow = ''; };
   }, [open]);
 
-  const clear = () => setFilters({});
+  const clear = () => setFilters({ ...base });
 
   return (
     <div className="lg:grid lg:grid-cols-[280px_1fr] lg:gap-10">

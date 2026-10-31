@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Building, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { updateProperty, getPropertyById } from '../api/properties';
 import DeleteAssetModal from './DeleteAssetModal';
@@ -54,7 +54,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
             newImages: []
           });
         }
-      } catch (error) {
+      } catch {
         showToast("Failed to fetch current property data.", "error");
       } finally {
         setIsLoading(false);

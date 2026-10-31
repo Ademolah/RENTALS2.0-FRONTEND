@@ -1,18 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { CONCIERGE_WHATSAPP } from '../lib/config';
 import { toLocalISO } from '../lib/dates';
-import { 
-  MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
-  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
-  CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2,
-  Dumbbell, Leaf, X, MessageSquare 
-} from 'lucide-react';
+import { MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, Droplets, Bed, Utensils, Car, CheckCircle2, Wine, CalendarDays, Users, Info, ArrowLeft, Loader2, Dumbbell, Leaf, X } from 'lucide-react';
 import { useNavigate, useParams } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 import { createPropertyReviewApi } from '../api/reviews';
 import { useToast } from '../components/Toast';
-import { WhatsAppIcon, WhatsAppCheckout, WhatsAppPill } from '../components/ui';
+import { WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
@@ -58,7 +54,6 @@ export default function HotelDetails() {
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const toast = useToast();
   const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
-  const CONCIERGE_WHATSAPP = "2347063688222";
   useDocumentMeta(hotel?.title, hotel?.description?.slice(0, 160));
 
   // --- LIGHTBOX STATE ---

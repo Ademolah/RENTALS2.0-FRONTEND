@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  X, UploadCloud, AlertCircle, 
-  CheckCircle2, XCircle, Loader2, MapPin, 
-  Clock, Wine, Tags, ShieldCheck, Building
-} from 'lucide-react';
+import { X, UploadCloud, AlertCircle, XCircle, Loader2, MapPin, Clock, Wine, Tags, ShieldCheck, Building } from 'lucide-react';
 import { createVipEstablishment, createVipService } from '../api/vip';
 import { useToast } from './Toast';
 import { useDraft } from './host/useDraft';

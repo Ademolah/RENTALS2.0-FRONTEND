@@ -1,9 +1,6 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { API_URL } from '../lib/config';
-import { 
-  X, UploadCloud, AlertCircle, CheckCircle2, 
-  Car, Check, MapPin, Settings2, Image as ImageIcon, Video // 💡 NEW: Imported Video icon
-} from 'lucide-react';
+import { X, AlertCircle, Check, Image as ImageIcon, Video } from 'lucide-react';
 import axios from 'axios';
 import { useToast } from './Toast';
 import { useDraft } from './host/useDraft';

@@ -1,15 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useDocumentMeta } from '../lib/seo';
 import { PageHero } from '../components/ui';
-import { 
-  ShieldCheck, 
-  Lock, 
-  Eye, 
-  Database, 
-  KeyRound, 
-  ChevronRight,
-  UserCheck
-} from 'lucide-react';
+import { ChevronRight, UserCheck } from 'lucide-react';
 
 export default function Privacy() {
   useDocumentMeta('Privacy Policy', 'How Rentals Africa handles your data.');

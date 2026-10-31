@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
+import { CONCIERGE_WHATSAPP } from '../lib/config';
 import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate } from 'react-router-dom';
-import { 
-  MapPin, Clock, Calendar as CalendarIcon, Users, ShieldCheck, 
-  ChevronLeft, ChevronRight, Sparkles, CheckCircle2, MessageCircle, 
-  Wine, Loader2, AlertCircle, X
-} from 'lucide-react';
+import { MapPin, Clock, Calendar as CalendarIcon, Users, ShieldCheck, ChevronLeft, ChevronRight, CheckCircle2, Wine, Loader2, AlertCircle, X } from 'lucide-react';
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
-import { WhatsAppIcon, WhatsAppCheckout, WhatsAppPill } from '../components/ui';
+import { WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
@@ -42,7 +39,6 @@ export default function VipDetails() {
   const [showCalendar, setShowCalendar] = useState(false);
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
 
-  const CONCIERGE_WHATSAPP = "2347063688222"; 
 
   useEffect(() => {
     async function loadData() {
@@ -182,7 +178,7 @@ export default function VipDetails() {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
-        <h2 className="text-2xl font-bold mb-4">Venue Unavailable</h2>
+        <h2 className="text-2xl font-bold mb-4">Listing not found</h2>
         <button onClick={() => navigate(-1)} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">Go Back</button>
       </div>
     );

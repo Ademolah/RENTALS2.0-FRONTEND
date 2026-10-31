@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { X, Car, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2 } from 'lucide-react';
 import { updateCar, getCarById } from '../api/car';
 import DeleteAssetModal from './DeleteAssetModal';
@@ -50,7 +50,7 @@ export default function EditCarModal({ isOpen, onClose, onSuccess, carId }) {
             newImages: []
           });
         }
-      } catch (error) {
+      } catch {
         showToast("Failed to fetch current vehicle data.", "error");
       } finally {
         setIsLoading(false);

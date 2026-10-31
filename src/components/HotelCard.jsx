@@ -1,8 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import {
-  MapPin, Star, Coffee, Wifi, ChevronRight, Clock,
-  Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Users, Leaf
-} from 'lucide-react';
+import { MapPin, Coffee, Wifi, ChevronRight, Clock, Droplets, Bed, Utensils, Car, CheckCircle2, Wine, Users, Leaf } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHotels } from '../api/hotel';
 import FavoriteHeart from './browse/FavoriteHeart';
@@ -175,13 +172,13 @@ export default function HotelListingView({ activeCityContext, query }) {
 
   return (
     <div className="w-full">
-      <BrowseShell config={HOTEL_FILTERS} filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} total={visible.length} noun="hotels" chipLabels={{}} view={view} setView={setView}>
+      <BrowseShell config={HOTEL_FILTERS} filters={filters} setFilters={setFilters} sort={sort} setSort={setSort} total={visible.length} noun="hotels" chipLabels={{}} baseFilters={{ city: activeCityContext || 'Lagos' }} view={view} setView={setView}>
         {loading ? (
           <SkeletonGrid count={6} className="xl:grid-cols-3" />
         ) : error ? (
           <ErrorState onRetry={load} message="We couldn't load hotels. Check your connection and try again." />
         ) : visible.length === 0 ? (
-          <NoResults hasFilters={hasFilters} onClear={() => setFilters({})} text={hasFilters ? undefined : 'We are expanding our hotel portfolio. Check back soon.'} />
+          <NoResults hasFilters={hasFilters} onClear={() => setFilters({ city: activeCityContext || 'Lagos' })} text={hasFilters ? undefined : 'We are expanding our hotel portfolio. Check back soon.'} />
         ) : view === 'map' ? (
           <ListingsMap
             items={visible}

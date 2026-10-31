@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDocumentMeta } from '../lib/seo';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';

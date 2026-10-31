@@ -1,9 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, Building, Loader2, CheckCircle2, AlertCircle, 
-  Image as ImageIcon, Trash2, BedDouble, Plus, Wifi, 
-  Droplets, Utensils, Dumbbell, Wine, Sparkles, Car, Coffee
-} from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { X, Building, Loader2, CheckCircle2, AlertCircle, Image as ImageIcon, Trash2, Plus, Wifi, Droplets, Utensils, Dumbbell, Wine, Sparkles, Car, Coffee } from 'lucide-react';
 import { updateHotel, getHotelById } from '../api/hotel';
 import DeleteAssetModal from './DeleteAssetModal';
 

@@ -1,9 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { 
-  X, UploadCloud, AlertCircle, 
-  CheckCircle2, XCircle, Loader2, MapPin, 
-  Users, AlignLeft, Video 
-} from 'lucide-react';
+import { X, UploadCloud, AlertCircle, XCircle, Loader2, MapPin, Users, AlignLeft, Video } from 'lucide-react';
 import { createProperty } from '../api/properties';
 import { useToast } from './Toast';
 import { useDraft } from './host/useDraft';

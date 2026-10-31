@@ -1,20 +1,7 @@
 import { useState } from 'react';
 import { useDocumentMeta } from '../lib/seo';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Car, 
-  ShieldCheck, 
-  Banknote, 
-  Users, 
-  Sparkles, 
-  ChevronDown, 
-  ChevronUp, 
-  ArrowRight,
-  CheckCircle2,
-  Clock,
-  Briefcase
-} from 'lucide-react';
+import { ShieldCheck, Banknote, ChevronDown, ChevronUp, ArrowRight, Clock } from 'lucide-react';
 
 export default function ListProperty() {
   useDocumentMeta('List your property', 'Earn by hosting stays, cars and VIP services with Rentals Africa.');

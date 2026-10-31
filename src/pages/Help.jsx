@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
+import { CONCIERGE_WHATSAPP as WHATSAPP } from '../lib/config';
 import { useDocumentMeta } from '../lib/seo';
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronDown, ShieldCheck, CalendarX, Mail, LifeBuoy } from 'lucide-react';
 import { Container, PageHero, Card, SectionTitle, Button, WhatsAppIcon } from '../components/ui';
 
-const WHATSAPP = '2347063688222';
 
 const FAQS = [
   { q: 'How do I book a stay?', a: 'Pick a city, choose a listing, select your dates and check availability, then reserve. You can pay securely online, or check out on WhatsApp.' },
