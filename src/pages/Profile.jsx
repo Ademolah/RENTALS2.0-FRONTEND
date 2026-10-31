@@ -63,7 +63,10 @@ export default function Profile() {
         if (!active) return;
         setForm({ firstName: u.firstName || '', lastName: u.lastName || '', phoneNumber: u.phoneNumber || '' });
         if (u.profilePicture) updateUser({ profilePicture: u.profilePicture });
-        setInterests({ lookingFor: u.interests?.lookingFor || [], offering: u.interests?.offering || [] });
+        try {
+          const saved = JSON.parse(localStorage.getItem('rentals_interests') || 'null');
+          if (saved) setInterests({ lookingFor: saved.lookingFor || [], offering: saved.offering || [] });
+        } catch { /* ignore */ }
       } catch (err) {
         if (active) setLoadError(err.response?.data?.message || 'We could not load your profile. Please refresh.');
       } finally {
@@ -133,8 +136,7 @@ export default function Profile() {
   const saveInterests = async () => {
     setSavingInterests(true);
     try {
-      await updateMyProfileApi({ interests });
-      updateUser({ interests });
+      localStorage.setItem('rentals_interests', JSON.stringify(interests));
       toast.success('Your preferences have been saved.');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Could not save your preferences. Please try again.');

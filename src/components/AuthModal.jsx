@@ -83,9 +83,7 @@ export default function AuthModal({ isOpen, onClose }) {
     if (save && (interests.lookingFor.length || interests.offering.length)) {
       setSavingInterests(true);
       try {
-        const res = await updateMyProfileApi({ interests });
-        const updated = res?.data?.user || res?.user;
-        if (updated) completeSignIn(localStorage.getItem('rentals_token'), updated);
+        localStorage.setItem('rentals_interests', JSON.stringify(interests));
       } catch {
         toast.error('We could not save your choices. You can set them later in your profile.');
       }

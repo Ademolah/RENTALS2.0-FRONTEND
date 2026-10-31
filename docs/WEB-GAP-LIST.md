@@ -112,30 +112,30 @@ Totals: 111 lines, DONE 75, PARTIAL 25, MISSING 11.
 ## 11. Become a host and host dashboard
 - DONE Host application (HostUpgradeModal, POST /hosts/apply)
 - DONE Application status (GET /hosts/status on Profile)
-- PARTIAL Host dashboard hero: tabs and stat tiles exist; no earnings hero with released vs in-escrow, no quick actions row.
+- DONE Host dashboard hero: earnings hero (released vs in escrow, 95% net) + quick actions. Host dashboard hero: tabs and stat tiles exist; no earnings hero with released vs in-escrow, no quick actions row.
 - DONE Recent reservations masked as "#REF / Managed by Rentals Africa"
-- PARTIAL Arriving Today cards: no "arriving today" section; confirmations are inside Ledger & Actions.
+- DONE Arriving Today section with confirm check-in/handover + manual booking-code entry. Was: no "arriving today" section; confirmations are inside Ledger & Actions.
 - DONE Your listings with LIVE/paused/pending status (components/host/hostApi.js)
 - DONE Host bookings merged from 3 endpoints
-- PARTIAL Host booking detail: masked renter and payout shown; no cancel-reservation action.
+- DONE Host cancel reservation (POST /reservations/:id/cancel, confirm dialog). Was: masked renter and payout shown; no cancel-reservation action.
 - DONE Host confirms check-in/handover/arrival (LandlordDashboard handlers for all 4 types)
 - DONE Earnings analytics (GET /hosts/analytics, Earnings tab)
-- PARTIAL Earnings/payouts list and retry: executePayout exists in api/payouts.js but PayoutActionCard is not rendered in LandlordDashboard.
+- DONE Payouts tab with PayoutActionCard and Request payout (POST /payouts/execute/:id). Was: executePayout exists in api/payouts.js but PayoutActionCard is not rendered in LandlordDashboard.
 - DONE Bank account setup (BankSetupModal)
 - DONE Host reviews tab
-- MISSING Suggested price helper when creating a listing
+- DONE Suggested price helper (median of similar live listings) in property and hotel forms
 
 ## 12. Host listing create/edit/manage
 - DONE Add Asset chooser (separate modals per type opened from dashboard)
-- PARTIAL Create shortlet/property/hotel: modals create with photos/amenities/price; no Save & Exit draft, no address search/locate, no arrival photos.
+- DONE Create forms: Save and exit drafts (localStorage), arrival guide notes+photos, property category fixed to SHORTLET, hotel amenities as JSON. Was: modals create with photos/amenities/price; no Save & Exit draft, no address search/locate, no arrival photos.
 - DONE Hotel room types add/remove (CreateHotelModal roomTypes)
-- PARTIAL Create vehicle: AddCarModal lacks delivery + delivery fee fields.
+- PARTIAL Create vehicle: drafts, arrival/pickup guide, features as comma string done. NOT DONE: delivery + fee fields (API has no delivery field; mobile hardcodes it off).
 - DONE Create VIP venue (AddVipModal)
 - DONE Create VIP security service (AddVipModal serviceType)
-- PARTIAL Manage listing: cards have Edit / Mark unavailable / Delete; no per-listing stats, Rooms shortcut or "View as guest".
+- DONE Manage listing: per-listing stats, Rooms shortcut, View as guest. Was: cards have Edit / Mark unavailable / Delete; no per-listing stats, Rooms shortcut or "View as guest".
 - DONE Edit listing for all types (Edit*Modal)
 - DONE Delete listing (DeleteAssetModal; server blocks future reservations)
-- MISSING Arrival guide editor (notes + photos for guests)
+- DONE Arrival guide notes + photos on create forms (mobile has no edit-time editor)
 - DONE Wizard UI parts (checklists, options inside modals)
 
 ## 13. Shared UI and logic

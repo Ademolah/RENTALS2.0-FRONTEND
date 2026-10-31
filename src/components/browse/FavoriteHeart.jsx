@@ -4,7 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { toggleFavoriteApi } from '../../api/user';
 
 export default function FavoriteHeart({ id, onMessage, className = '' }) {
-  const { user, setShowAuthModal } = useAuth();
+  const { user, requireAuth } = useAuth();
   const [saved, setSaved] = useState(user?.favoriteProperties?.includes(id) || false);
 
   const toggle = async (e) => {
@@ -12,7 +12,14 @@ export default function FavoriteHeart({ id, onMessage, className = '' }) {
     e.stopPropagation();
     if (!user) {
       onMessage?.('Sign in to save this listing.');
-      setShowAuthModal?.(true);
+      requireAuth(async () => {
+        try {
+          await toggleFavoriteApi(id);
+          setSaved(true);
+        } catch {
+          onMessage?.('Could not update saved listings. Please try again.');
+        }
+      });
       return;
     }
     if (user.role !== 'USER') {
