@@ -31,15 +31,6 @@ const freshForm = () => ({
   roomTypes: [newRoom()],
 });
 
-const INITIAL_ROOM_STATE = {
-  name: '',
-  pricePerNight: '',
-  capacity: { adults: 2, children: 0 },
-  totalInventory: 1,
-  amenities: [],
-  description: ''
-};
-
 export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
   const [step, setStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);

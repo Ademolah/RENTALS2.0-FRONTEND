@@ -83,7 +83,7 @@ export default function HotelDetails() {
         if (data.roomTypes && data.roomTypes.length > 0) {
           setSelectedRoom(data.roomTypes[0]._id);
         }
-      } catch (err) {
+      } catch {
         console.error("Failed to load hotel:", err);
         setError("Unable to load hotel details.");
       } finally {

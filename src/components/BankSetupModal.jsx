@@ -2,10 +2,8 @@ import { useState, useEffect } from 'react';
 import { API_URL } from '../lib/config';
 import { X, Landmark, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import axios from 'axios'; // Or use your custom axios instance
-import { useAuth } from '../context/AuthContext';// Adjust path if needed
 
 export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
-  const { token } = useAuth(); // Assuming your auth context provides the token
   
   const [banks, setBanks] = useState([]);
   const [isLoadingBanks, setIsLoadingBanks] = useState(false);

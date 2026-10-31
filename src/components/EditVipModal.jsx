@@ -85,7 +85,7 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
       setServices(est.services || []);
       setExistingImages(est.images || []);
       
-    } catch (err) {
+    } catch {
       setError('Failed to load establishment details.');
     } finally {
       setFetching(false);

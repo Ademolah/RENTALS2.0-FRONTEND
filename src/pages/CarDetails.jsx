@@ -52,7 +52,7 @@ export default function CarDetails() {
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [bookingLoading, setBookingLoading] = useState(false);
   const [bookingError, setBookingError] = useState('');
-  const [isRedirecting, setIsRedirecting] = useState(false);
+  const [isRedirecting] = useState(false);
   const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
   const [availabilityStatus, setAvailabilityStatus] = useState(null); 
 
@@ -112,7 +112,7 @@ export default function CarDetails() {
         setLoading(true);
         const data = await getCarById(id);
         setCar(data.data?.car || data.car || data);
-      } catch (err) {
+      } catch {
         console.error("Failed to load car details:", err);
       } finally {
         setLoading(false);

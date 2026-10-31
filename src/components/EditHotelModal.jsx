@@ -72,7 +72,7 @@ export default function EditHotelModal({ isOpen, onClose, onSuccess, hotelId }) 
             newImages: []
           });
         }
-      } catch (error) {
+      } catch {
         showToast("Failed to fetch current hotel data.", "error");
       } finally {
         setIsLoading(false);

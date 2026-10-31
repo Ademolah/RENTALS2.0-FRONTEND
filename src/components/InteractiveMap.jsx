@@ -69,7 +69,6 @@ export default function InteractiveMap({
   title = '',
   image = '',
   rating = 5.0,
-  reviewsCount = 0,
   assetId = '',
   nearbyProperties = [] 
 }) {

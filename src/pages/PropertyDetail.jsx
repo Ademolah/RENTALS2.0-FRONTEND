@@ -20,7 +20,7 @@ export default function PropertyDetail() {
 
   const [property, setProperty] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [similarProperties, setSimilarProperties] = useState([]);
+  const [, setSimilarProperties] = useState([]);
 
   // --- REVIEWS STATE ---
   const toast = useToast();

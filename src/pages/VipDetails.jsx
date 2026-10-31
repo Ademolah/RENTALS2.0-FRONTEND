@@ -46,7 +46,7 @@ export default function VipDetails() {
         const response = await getVipEstablishmentById(id);
         const est = response.data?.data?.establishment || response.data?.establishment;
         setEstablishment(est);
-      } catch (err) {
+      } catch {
         setError('Failed to load VIP venue details.');
       } finally {
         setLoading(false);
@@ -77,7 +77,7 @@ export default function VipDetails() {
       } else {
         setBookingError("Failed to initialize payment gateway.");
       }
-    } catch (err) {
+    } catch {
       setBookingError(err.response?.data?.message || "Failed to initiate reservation.");
     } finally {
       setIsReserving(false);
@@ -122,7 +122,7 @@ export default function VipDetails() {
       
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
-    } catch (err) {
+    } catch {
       setBookingError("Failed to initialize secure chat. Please try again.");
     } finally {
       setIsWhatsappLoading(false);

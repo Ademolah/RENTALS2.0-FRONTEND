@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useDocumentMeta } from '../lib/seo';
-import { useSearchParams, useNavigate, Link } from 'react-router-dom';
+import { useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { resetPasswordApi } from '../api/auth';
 
 export default function ResetPassword() {
   useDocumentMeta('Reset password', 'Choose a new password for your account.');
   const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
   const token = searchParams.get('token');
 
   const [formData, setFormData] = useState({ password: '', confirmPassword: '' });

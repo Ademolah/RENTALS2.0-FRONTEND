@@ -141,7 +141,8 @@ export default function AuthModal({ isOpen, onClose }) {
           setNewUser(user);
         }}
         onResend={async () => {
-          const { confirmPassword, ...apiData } = formData;
+          const apiData = { ...formData };
+      delete apiData.confirmPassword;
           await registerUserApi(apiData);
         }}
       />
@@ -219,7 +220,8 @@ export default function AuthModal({ isOpen, onClose }) {
       if (isLogin) {
         await login({ email: formData.email.trim(), password: formData.password });
       } else {
-        const { confirmPassword, ...apiData } = formData;
+        const apiData = { ...formData };
+      delete apiData.confirmPassword;
         await registerUserApi({ ...apiData, email: formData.email.trim() });
         setRegisteredEmail(formData.email.trim());
         setShowVerifyEmail(true);

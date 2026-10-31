@@ -59,7 +59,7 @@ export default function VipListingView({ defaultLocation, query }) {
   const baseList = activeTab === 'venues' ? filteredEstablishments : filteredServices;
   const typeOptions = useMemo(() => {
     const set = new Set(baseList.map((i) => String(i.establishmentType || i.serviceType || '').toUpperCase()).filter(Boolean));
-    return [...set].map((v) => ({ value: v, label: v.replace(/_/g, ' ').replace(/\w/g, (c) => c.toUpperCase()).replace(/(\w)(\w*)/g, (m, a2, b2) => a2 + b2.toLowerCase()) }));
+    return [...set].map((v) => ({ value: v, label: v.replace(/_/g, ' ').toLowerCase().replace(/(^|\s)\w/g, (c) => c.toUpperCase()) }));
   }, [baseList]);
   const vipConfig = [
     { kind: 'price', label: activeTab === 'venues' ? 'Required deposit' : 'Price per day', max: 2000000, step: 25000 },
