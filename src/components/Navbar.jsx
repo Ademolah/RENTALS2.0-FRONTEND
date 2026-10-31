@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
-  Menu, X, LogOut, LayoutDashboard, ChevronRight, Repeat,
+  Menu, X, LogOut, LayoutDashboard, ChevronRight, Repeat, Home,
   User as UserIcon, Briefcase, Heart, Bell, LifeBuoy, Store, Plane,
 } from 'lucide-react';
 import { getUnreadCountApi } from '../api/user';
@@ -36,6 +36,7 @@ export default function Navbar({ center }) {
   }, []);
 
   const guestLinks = [
+    { to: '/', label: 'Home', icon: Home },
     { to: '/trips', label: 'Trips', icon: Briefcase },
     { to: '/saved', label: 'Saved', icon: Heart },
     { to: '/help', label: 'Help', icon: LifeBuoy },
@@ -44,7 +45,7 @@ export default function Navbar({ center }) {
     { to: '/dashboard/landlord', label: 'Dashboard', icon: LayoutDashboard },
     { to: '/help', label: 'Help', icon: LifeBuoy },
   ];
-  const links = user ? (dark ? hostLinks : guestLinks) : [{ to: '/help', label: 'Help', icon: LifeBuoy }];
+  const links = user ? (dark ? hostLinks : guestLinks) : [{ to: '/', label: 'Home', icon: Home }, { to: '/help', label: 'Help', icon: LifeBuoy }];
 
   const linkClass = ({ isActive }) =>
     `relative flex items-center gap-2 px-3 py-2.5 rounded-full text-base font-medium transition-colors ${
