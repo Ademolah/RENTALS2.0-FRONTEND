@@ -2,7 +2,7 @@
 
 Goal: a world-class, standard web app that shares the mobile app's brand (coral #F25F5C, navy #000D2E, Outfit + DM Sans) but is designed for desktop — not a copy of the phone UI.
 
-STATUS 2026-10-30: all pages redesigned; brief features built (trips, saved, notifications, profile, host apply, filters, availability check, WhatsApp intent, host listings/bookings/reviews/earnings). NOT yet tested signed-in against the live API (needs a test account). Open: VIP services pause endpoint, delivery/licence fields, notifications read-flag shape, real social + store links.
+STATUS 2026-10-31: all pages redesigned; brief features built (trips, saved, notifications, profile, host apply, filters, availability check, WhatsApp intent, host listings/bookings/reviews/earnings). Codebase cleanup done (153-file refactor, 17 test files, 146 tests green, ESLint clean). VIP availability check wired. Amenity/feature cleanList applied. NOT yet tested signed-in against the live API (needs a test account). Open: VIP services pause endpoint, delivery/licence fields, notifications read-flag shape, real social + store links.
 
 Legend: [x] done · [ ] to do · [?] needs Rodiat's decision
 
@@ -53,7 +53,7 @@ Guest
 - [x] Home hero/tabs/search/featured (redesigned)
 - [ ] Filters (price, type, bedrooms/class, amenities, city Lagos/Abuja), sort, skeleton loading
 - [ ] Listing detail: "Managed by Rentals Africa" only, verified pill, cancellation note
-- [ ] Availability check on Continue: "These dates have been booked." + Check availability button with nearby free-date chips (no "Currently unavailable" label)
+- [x] Availability check on Continue: "These dates have been booked." + Check availability button with nearby free-date chips (no "Currently unavailable" label) — also wired for VIP single-day dates
 - [ ] Car: single 12h day bookable alone; chauffeur N25,000/12h; delivery toggle; licence acknowledgement
 - [x] Quote: NO guest platform fee (corrected 2026-10-30: 5% commission comes out of host payout, host gets 95%)
 - [ ] WhatsApp: POST /reservations/whatsapp-intent then wa.me with Reference
