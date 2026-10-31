@@ -179,10 +179,13 @@ export function WhatsAppCheckout({ onClick, loading = false, disabled = false, c
         </span>
         <span className="flex-1 min-w-0">
           <span className="block text-lg font-display font-bold leading-tight">{loading ? 'Opening WhatsApp...' : 'Check out via WhatsApp'}</span>
-          <span className="block text-sm text-white/90 leading-snug">Prefer chat? Complete your booking right in WhatsApp</span>
+          <span className="block text-sm text-white/90 leading-snug">Book and pay through WhatsApp</span>
         </span>
         <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
       </button>
+      <p className="mt-3 text-sm text-brand-text-secondary leading-snug">
+        <strong className="font-semibold text-brand-dark">This is a full checkout, not just a chat.</strong> You book on WhatsApp and Rentals Africa confirms your reservation and payment there.
+      </p>
       <p className="mt-3 text-center text-sm text-brand-text-secondary">
         Questions first?{' '}
         <a
