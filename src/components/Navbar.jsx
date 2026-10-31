@@ -36,10 +36,10 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   ];
 
   const categories = [
-    { id: 'shortlet', label: 'Shortlets', icon: Key },
-    { id: 'car', label: 'Car Rentals', icon: CarFront },
-    { id: 'vip', label: 'VIP Services', icon: Crown },
-    { id: 'hotel', label: 'Hotels', icon: Building2 },
+    { id: 'shortlet', label: 'Shortlets', short: 'Shortlets', icon: Key },
+    { id: 'car', label: 'Car Rentals', short: 'Cars', icon: CarFront },
+    { id: 'vip', label: 'VIP Services', short: 'VIP', icon: Crown },
+    { id: 'hotel', label: 'Hotels', short: 'Hotels', icon: Building2 },
   ];
 
   const getCtaText = () => {
@@ -215,8 +215,8 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
           </div>
 
           {/* Category tabs on small screens */}
-          <div className="md:hidden -mx-4 px-4 pb-3 overflow-x-auto no-scrollbar">
-            <div className="flex gap-2 w-max">
+          <div className="md:hidden pb-3">
+            <div className="grid grid-cols-4 gap-1 p-1 bg-gray-100 rounded-2xl">
               {categories.map((cat) => {
                 const Icon = cat.icon;
                 const isActive = activeCategory === cat.id;
@@ -224,12 +224,15 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   <button
                     key={cat.id}
                     onClick={() => selectCategory(cat.id)}
-                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-base font-medium whitespace-nowrap transition-colors ${
-                      isActive ? 'bg-brand-dark text-white' : 'bg-gray-50 text-brand-text-secondary'
+                    aria-pressed={isActive}
+                    className={`flex flex-col items-center justify-center gap-1 py-2.5 rounded-xl text-sm leading-none transition-all ${
+                      isActive
+                        ? 'bg-white text-brand-dark font-bold shadow-card'
+                        : 'text-brand-text-secondary font-medium'
                     }`}
                   >
-                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
-                    <span>{cat.label}</span>
+                    <Icon className={`w-5 h-5 ${isActive ? 'text-brand-primary' : ''}`} />
+                    <span>{cat.short}</span>
                   </button>
                 );
               })}
