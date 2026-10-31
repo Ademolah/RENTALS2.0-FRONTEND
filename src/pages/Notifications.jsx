@@ -84,18 +84,19 @@ export default function Notifications() {
 
   const confirmClearAll = async () => {
     setBusy(true);
-    const results = await clearAllNotifications(items.map((n) => n.id));
-    const failed = results.filter((r) => r.status === 'rejected');
+    let failure = null;
+    try {
+      await clearAllNotifications();
+    } catch (e) {
+      failure = e;
+    }
     try {
       setItems(await getNotifications());
     } catch {
       setError(true);
     }
-    if (failed.length) {
-      toast.error(`${failed.length} notification${failed.length > 1 ? 's' : ''} could not be deleted. ${errText(failed[0].reason)}`);
-    } else {
-      toast.success('All notifications cleared.');
-    }
+    if (failure) toast.error(`Notifications could not be cleared. ${errText(failure)}`);
+    else toast.success('All notifications cleared.');
     setBusy(false);
     setConfirm(null);
   };

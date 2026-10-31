@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react';
 import { Camera, Loader2 } from 'lucide-react';
-import { uploadAvatarApi } from '../../api/user';
+import { uploadAvatarApi, getMyProfileApi } from '../../api/user';
 
 const SIZE = 512;
 
@@ -38,9 +38,16 @@ export default function AvatarUploader({ src, initials, onUploaded }) {
     setError('');
     try {
       const blob = await cropSquare(file);
-      const res = await uploadAvatarApi(blob);
-      const user = res?.data?.user || res?.user || res?.data || {};
-      onUploaded?.(user.profilePicture || user.avatarUrl || URL.createObjectURL(blob));
+      await uploadAvatarApi(blob);
+      let url = '';
+      for (let i = 0; i < 5; i += 1) {
+        const me = await getMyProfileApi();
+        const u = me?.data?.user || me?.user || me?.data || {};
+        url = u.profilePicture || u.avatarUrl || '';
+        if (url && url !== src) break;
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+      onUploaded?.(url || URL.createObjectURL(blob));
     } catch (err) {
       setError(err.response?.data?.message || err.message || 'Upload failed. Please try again.');
     } finally {
