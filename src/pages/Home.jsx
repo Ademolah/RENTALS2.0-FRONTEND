@@ -258,17 +258,17 @@ export default function Home({
               type="button"
               onClick={() => onCategoryChange?.(svc.key)}
               aria-pressed={active}
-              className={`group relative h-28 lg:h-24 rounded-2xl px-4 py-4 flex flex-col justify-between lg:flex-row lg:items-center lg:justify-start lg:gap-4 text-left overflow-hidden bg-gradient-to-br from-brand-dark via-brand-dark to-brand-accent transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated ${
+              className={`group relative h-[72px] lg:h-20 rounded-2xl px-3 lg:px-5 flex flex-row items-center gap-2.5 lg:gap-4 text-left overflow-hidden bg-gradient-to-br from-brand-dark via-brand-dark to-brand-accent transition-all duration-300 hover:-translate-y-0.5 hover:shadow-elevated ${
                 active ? 'ring-2 ring-brand-primary ring-offset-2 ring-offset-white shadow-elevated' : 'ring-1 ring-white/10'
               }`}
             >
               <div className="absolute -bottom-8 -right-8 w-28 h-28 rounded-full bg-white/5 group-hover:bg-white/10 transition-colors" />
-              <div className="relative w-11 h-11 shrink-0 rounded-xl bg-white/10 flex items-center justify-center">
-                <Icon className="w-6 h-6 text-white" />
+              <div className="relative w-10 h-10 lg:w-11 lg:h-11 shrink-0 rounded-xl bg-white/10 flex items-center justify-center">
+                <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
               </div>
               <div className="relative min-w-0">
-                <p className="text-lg font-display font-bold text-white leading-tight">{svc.label}</p>
-                <p className="text-sm text-white/70">{svc.desc}</p>
+                <p className="text-[15px] lg:text-lg font-display font-bold text-white leading-tight whitespace-nowrap">{svc.label}</p>
+                <p className="text-xs lg:text-sm text-white/70 leading-tight mt-0.5">{svc.desc}</p>
               </div>
             </button>
           );
