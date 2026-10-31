@@ -51,11 +51,12 @@ export function cityFor(key = '') {
 export function CityBackdrop({ seed = '', image, tone = 'navy' }) {
   const coral = tone === 'coral';
   const gold = tone === 'gold';
+  const black = tone === 'black';
   return (
     <>
       <img src={image || cityFor(seed)} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
-      <div className={`absolute inset-0 bg-gradient-to-r ${gold ? 'from-[#FBF4DD]/95 via-[#F8EAC0]/90 to-[#F3DC98]/75' : coral ? 'from-[#D6403D]/95 via-[#E5504D]/88 to-[#F25F5C]/70' : 'from-brand-dark/95 via-brand-dark/85 to-brand-dark/60'}`} />
-      <div className={`absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t ${gold ? 'from-[#EBCB78]/40' : coral ? 'from-[#B93432]/60' : 'from-brand-dark/70'} to-transparent`} />
+      <div className={`absolute inset-0 bg-gradient-to-r ${black ? 'from-black/70 via-black/55 to-black/40' : gold ? 'from-[#FBF4DD]/95 via-[#F8EAC0]/90 to-[#F3DC98]/75' : coral ? 'from-[#D6403D]/95 via-[#E5504D]/88 to-[#F25F5C]/70' : 'from-brand-dark/95 via-brand-dark/85 to-brand-dark/60'}`} />
+      <div className={`absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t ${black ? 'from-black/40' : gold ? 'from-[#EBCB78]/40' : coral ? 'from-[#B93432]/60' : 'from-brand-dark/70'} to-transparent`} />
     </>
   );
 }
