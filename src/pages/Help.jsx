@@ -43,7 +43,7 @@ export default function Help() {
         subtitle="Answers, safety guidance and cancellation terms, plus WhatsApp checkout when you would rather book in a chat."
       >
         <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
-          <WhatsAppIcon className="w-5 h-5" /> Book via WhatsApp
+          <WhatsAppIcon className="w-5 h-5" /> Check out via WhatsApp
         </Button>
       </PageHero>
 
@@ -90,9 +90,9 @@ export default function Help() {
                 <WhatsAppIcon className="w-8 h-8" />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-lg font-bold text-brand-dark">Book on WhatsApp</p>
+                <p className="text-lg font-bold text-brand-dark">Check out on WhatsApp</p>
                 <p className="text-base text-brand-text-secondary">Check out and book a stay, car or VIP service right in WhatsApp. You can also ask our team a question there.</p>
-                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Start your booking on WhatsApp</a>
+                <a href={`https://wa.me/${WHATSAPP}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Check out on WhatsApp</a>
               </div>
             </Card>
             <Card className="p-6 flex items-center gap-4">

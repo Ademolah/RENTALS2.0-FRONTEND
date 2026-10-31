@@ -267,8 +267,8 @@ export default function Home({
       <div className="mb-8 rounded-2xl border border-[#25D366]/30 bg-[#25D366]/10 px-5 py-4 flex items-center gap-4 animate-fade-up">
         <span className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-sm"><WhatsAppIcon className="w-7 h-7" /></span>
         <p className="text-base text-brand-dark leading-snug">
-          <strong className="font-bold">Book on the website or on WhatsApp.</strong>{' '}
-          <span className="text-brand-text-secondary">Every stay, car and VIP service can be booked and checked out in a WhatsApp chat.</span>
+          <strong className="font-bold">Book on the website, or check out via WhatsApp.</strong>{' '}
+          <span className="text-brand-text-secondary">Every stay, car and VIP service can be completed in a WhatsApp chat.</span>
         </p>
       </div>
 
