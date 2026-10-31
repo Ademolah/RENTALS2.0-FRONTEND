@@ -95,6 +95,17 @@ export default function Home({
   const [sort, setSort] = useState('recommended');
   const [view, setView] = useState('list');
   const { user } = useAuth();
+  const [welcome, setWelcome] = useState(() => {
+    try { return sessionStorage.getItem('rentals_welcomed') ? 'gone' : 'show'; } catch { return 'show'; }
+  });
+
+  useEffect(() => {
+    if (!user || welcome !== 'show') return undefined;
+    try { sessionStorage.setItem('rentals_welcomed', '1'); } catch { /* ignore */ }
+    const fade = setTimeout(() => setWelcome('fading'), 5000);
+    const remove = setTimeout(() => setWelcome('gone'), 5800);
+    return () => { clearTimeout(fade); clearTimeout(remove); };
+  }, [user, welcome]);
   const [nextTrip, setNextTrip] = useState(null);
 
   const cat = activeCategory.toLowerCase();
@@ -205,11 +216,13 @@ export default function Home({
   return (
     <main className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
 
-      {/* Welcome back (signed-in guests and hosts only) */}
-      {user && (
-        <p className="mb-5 text-2xl font-display font-bold text-brand-dark animate-fade-up">
-          Welcome back{user.firstName ? `, ${user.firstName}` : ''}
-        </p>
+      {/* Welcome back: signed-in guests and hosts, once per visit, then it fades away */}
+      {user && welcome !== 'gone' && (
+        <div className={`overflow-hidden transition-all duration-700 ease-out ${welcome === 'fading' ? 'max-h-0 opacity-0 mb-0' : 'max-h-16 opacity-100 mb-5'}`}>
+          <p className="text-2xl font-display font-bold text-brand-dark">
+            Welcome back{user.firstName ? `, ${user.firstName}` : ''}
+          </p>
+        </div>
       )}
 
       {/* Hero */}
