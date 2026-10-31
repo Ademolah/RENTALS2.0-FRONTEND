@@ -43,7 +43,7 @@ export default function Help() {
         subtitle="Answers, safety guidance and cancellation terms, plus WhatsApp checkout when you would rather book in a chat."
       >
         <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
-          <WhatsAppIcon className="w-5 h-5" /> Checkout via WhatsApp
+          <WhatsAppIcon className="w-5 h-5" /> Book via WhatsApp
         </Button>
       </PageHero>
 

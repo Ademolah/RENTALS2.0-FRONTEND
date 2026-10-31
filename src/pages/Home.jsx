@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useCallback } from 'react';
-import { CityBackdrop } from '../components/ui';
+import { CityBackdrop, WhatsAppIcon } from '../components/ui';
 import PropertyCard from '../components/PropertyCard';
 import CarCard from '../components/CarCard';
 import HotelListingView from '../components/HotelCard';
@@ -261,6 +261,15 @@ export default function Home({
             </button>
           );
         })}
+      </div>
+
+      {/* WhatsApp booking notice */}
+      <div className="mb-8 rounded-2xl border border-[#25D366]/30 bg-[#25D366]/10 px-5 py-4 flex items-center gap-4 animate-fade-up">
+        <span className="w-12 h-12 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0 shadow-sm"><WhatsAppIcon className="w-7 h-7" /></span>
+        <p className="text-base text-brand-dark leading-snug">
+          <strong className="font-bold">Book on the website or on WhatsApp.</strong>{' '}
+          <span className="text-brand-text-secondary">Every stay, car and VIP service can be booked and checked out in a WhatsApp chat.</span>
+        </p>
       </div>
 
       {showCuratedHome && nextTrip && (

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
-import { WhatsAppCheckout } from '../components/ui';
+import { WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate, Link } from 'react-router-dom'; 
 import { 
@@ -444,7 +444,7 @@ export default function CarDetails() {
         <h1 className="text-4xl md:text-6xl font-display font-bold text-brand-dark tracking-tight leading-[1.05]">
           {car.make} {car.model} <span className="text-brand-text-muted font-medium ml-2">{car.year}</span>
         </h1>
-        <ShareButton className="mt-4" />
+        <div className="mt-4 flex flex-wrap items-center gap-3"><ShareButton /><WhatsAppPill /></div>
       </div>
 
       {/* --- GALLERY SECTION --- */}

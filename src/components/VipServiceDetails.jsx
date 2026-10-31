@@ -11,7 +11,7 @@ import { logUnifiedWhatsappIntent } from '../api/reservation';
 import ShareButton from './ShareButton';
 import { useAuth } from '../context/AuthContext';
 import { useDocumentMeta } from '../lib/seo';
-import { WhatsAppIcon, WhatsAppCheckout } from './ui';
+import { WhatsAppIcon, WhatsAppCheckout, WhatsAppPill } from './ui';
 import ReviewsSection from './detail/ReviewsSection';
 import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from './detail/extras';
 
@@ -305,7 +305,7 @@ Please assist with securing my deposit.`;
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter mb-4 leading-none">
               {service.title}
             </h1>
-            <ShareButton dark className="mb-4" />
+            <div className="mb-4 flex flex-wrap items-center gap-3"><ShareButton dark /><WhatsAppPill /></div>
             <div className="flex items-center text-white/70 text-base font-medium">
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {service.address?.street && `${service.address.street}, `}{service.address?.city}, {service.address?.state}

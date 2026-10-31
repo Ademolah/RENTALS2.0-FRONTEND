@@ -9,7 +9,7 @@ import {
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
-import { WhatsAppIcon, WhatsAppCheckout } from '../components/ui';
+import { WhatsAppIcon, WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
@@ -323,7 +323,7 @@ export default function VipDetails() {
             <h1 className="text-4xl md:text-6xl font-display font-bold text-white tracking-tighter mb-4 leading-none">
               {establishment.title}
             </h1>
-            <ShareButton dark className="mb-4" />
+            <div className="mb-4 flex flex-wrap items-center gap-3"><ShareButton dark /><WhatsAppPill /></div>
             <div className="flex items-center text-white/70 text-base font-medium">
               <MapPin className="w-4 h-4 mr-2 text-amber-500" />
               {establishment.address?.street}, {establishment.address?.city}, {establishment.address?.state}

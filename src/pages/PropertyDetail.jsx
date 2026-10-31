@@ -10,7 +10,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getPropertyById, getProperties } from "../api/properties"; 
 import { createPropertyReviewApi } from "../api/reviews";
 import { useAuth } from '../context/AuthContext'; 
-import { Container, Card, Badge, Button } from '../components/ui';
+import { Container, Card, Badge, Button, WhatsAppPill } from '../components/ui';
 import { useDocumentMeta } from '../lib/seo';
 import { useToast } from '../components/Toast';
 import ReviewsSection from '../components/detail/ReviewsSection';
@@ -349,7 +349,8 @@ export default function PropertyDetail() {
             </div>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            <WhatsAppPill />
             <Button variant="outline" size="sm" onClick={copyLink}><Share className="w-4 h-4" /> {copied ? 'Link copied' : 'Share'}</Button>
             <Button variant="outline" size="sm" onClick={toggleSave}><Heart className={`w-4 h-4 ${saved ? 'fill-brand-primary text-brand-primary' : ''}`} /> {saved ? 'Saved' : 'Save'}</Button>
           </div>

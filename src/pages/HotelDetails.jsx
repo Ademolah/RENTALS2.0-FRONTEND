@@ -12,7 +12,7 @@ import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
 import { createPropertyReviewApi } from '../api/reviews';
 import { useToast } from '../components/Toast';
-import { WhatsAppIcon, WhatsAppCheckout } from '../components/ui';
+import { WhatsAppIcon, WhatsAppCheckout, WhatsAppPill } from '../components/ui';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
@@ -423,7 +423,7 @@ export default function HotelDetails() {
         <button onClick={() => navigate(-1)} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md">
           <ArrowLeft className="w-6 h-6" />
         </button>
-        <ShareButton dark className="absolute top-6 right-6 z-30 backdrop-blur-md" />
+        <div className="absolute top-6 right-6 z-30 flex items-center gap-2"><WhatsAppPill /><ShareButton dark className="backdrop-blur-md" /></div>
 
        <button onClick={() => scrollGallery('left')} className="absolute top-1/2 left-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl">
           <ChevronLeft className="w-8 h-8" />
