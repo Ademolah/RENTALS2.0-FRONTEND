@@ -45,23 +45,28 @@ export default function PropertyCard({ property }) {
             <>
               <button
                 onClick={prevImg}
-                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                aria-label="Previous photo"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200"
               >
                 <ChevronLeft className="w-4 h-4 text-brand-dark" />
               </button>
               <button
                 onClick={nextImg}
-                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200"
+                aria-label="Next photo"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 hover:bg-white rounded-full flex items-center justify-center shadow-md opacity-100 md:opacity-0 md:group-hover:opacity-100 focus-visible:opacity-100 transition-opacity duration-200"
               >
                 <ChevronRight className="w-4 h-4 text-brand-dark" />
               </button>
               {/* Dots */}
               <div className="absolute bottom-2.5 left-1/2 -translate-x-1/2 flex gap-1.5">
                 {images.slice(0, 5).map((_, i) => (
-                  <div
+                  <button
+                    type="button"
                     key={i}
-                    className={`w-1.5 h-1.5 rounded-full transition-all duration-200 ${
-                      i === imgIdx ? 'bg-white w-3' : 'bg-white/50'
+                    aria-label={`Show photo ${i + 1}`}
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setImgIdx(i); }}
+                    className={`h-1.5 rounded-full transition-all duration-200 ${
+                      i === imgIdx ? 'bg-white w-3' : 'bg-white/50 w-1.5'
                     }`}
                   />
                 ))}

@@ -1,8 +1,10 @@
 import { Link } from 'react-router-dom';
+import { useDocumentMeta } from '../lib/seo';
 import { Building2, Car, Shield, Compass } from 'lucide-react';
 import { Container, PageHero, Card } from '../components/ui';
 
 export default function Sitemap() {
+  useDocumentMeta('Sitemap', 'All the main pages of Rentals Africa.');
   const sitemapData = [
     { title: "Stays & Hotels", icon: Building2, items: [
       { label: "Browse shortlets", to: "/" },
@@ -27,7 +29,7 @@ export default function Sitemap() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 text-brand-dark">
+    <main className="min-h-screen bg-gray-50 text-brand-dark">
       <PageHero
         eyebrow="Directory Overview"
         title="Platform Sitemap"
@@ -56,6 +58,6 @@ export default function Sitemap() {
           })}
         </div>
       </Container>
-    </div>
+    </main>
   );
 }

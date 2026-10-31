@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { API_URL } from '../lib/config';
 import { apiClient } from './client';
 
 export const getProperties = async (filters = {}) => {
@@ -14,7 +15,7 @@ export const getPropertyById = async (id) => {
 
 export const updateProperty = async (id, updateData) => {
   const token = localStorage.getItem('rentals_token');
-  const baseURL = import.meta.env.VITE_API_URL;
+  const baseURL = API_URL;
   
   const response = await axios.patch(`${baseURL}/properties/${id}`, updateData, {
     headers: { Authorization: `Bearer ${token}` }
@@ -31,7 +32,7 @@ export const checkPropertyAvailability = async (id, dates) => {
 export const createProperty = async (formData) => {
   const token = localStorage.getItem('rentals_token');
 
-  const baseURL = import.meta.env.VITE_API_URL 
+  const baseURL = API_URL;
 
   const response = await axios.post(`${baseURL}/properties`, formData, {
     headers: {

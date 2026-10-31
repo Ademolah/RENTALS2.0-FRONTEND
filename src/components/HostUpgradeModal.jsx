@@ -151,8 +151,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
             value={formData.address} 
             onChange={handleChange} 
             placeholder="e.g. 15 Admiralty Way" 
-            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" 
-          />
+            className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" aria-label="e.g. 15 Admiralty Way" />
         </div>
 
         {/* City & State Grid */}
@@ -168,8 +167,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
               value={formData.city} 
               onChange={handleChange} 
               placeholder="e.g. Lekki" 
-              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" 
-            />
+              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" aria-label="e.g. Lekki" />
           </div>
           <div>
             <label className="block text-xs font-display font-bold uppercase tracking-widest text-brand-text-muted mb-1.5">
@@ -203,8 +201,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
               value={formData.nin} 
               onChange={handleChange} 
               placeholder="Enter 11-digit NIN" 
-              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all tracking-widest" 
-            />
+              className="w-full px-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all tracking-widest" aria-label="Enter 11-digit NIN" />
             <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center text-xs font-bold text-green-600 bg-green-50 px-2 py-1 rounded-md border border-green-100">
               <ShieldCheck className="w-3 h-3 mr-1" /> Secure
             </div>
@@ -229,7 +226,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
         <button 
           onClick={onClose}
           className="absolute top-5 right-5 p-2 rounded-full hover:bg-gray-100 transition-colors z-10"
-        >
+         aria-label="Close">
           <X className="w-5 h-5 text-brand-text-muted hover:text-gray-600" />
         </button>
 

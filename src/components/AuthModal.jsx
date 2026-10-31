@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../lib/config';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { GoogleLogin, googleLogout } from '@react-oauth/google';
@@ -61,7 +62,7 @@ export default function AuthModal({ isOpen, onClose }) {
     try {
       setGoogleLoading(true);
       setError('');
-      const res = await axios.post(`${import.meta.env.VITE_API_URL}/auth/google`, {
+      const res = await axios.post(`${API_URL}/auth/google`, {
         idToken: tokenResponse.credential,
       });
       const { token, data } = res.data;
@@ -95,7 +96,20 @@ export default function AuthModal({ isOpen, onClose }) {
   };
 
   useEffect(() => {
-    if (isOpen) { try { googleLogout(); } catch { /* ignore */ } }
+    if (isOpen) {
+      try { googleLogout(); } catch { /* ignore */ }
+      return;
+    }
+    // Forget anything typed once the dialog is closed, and always reopen on Sign in.
+    setIsLogin(true);
+    setError('');
+    setFieldErrors({});
+    setLocalPhone('');
+    setShowPassword(false);
+    setShowConfirmPassword(false);
+    setShowForgot(false);
+    setShowVerifyEmail(false);
+    setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber: '', role: 'USER' });
   }, [isOpen]);
 
   if (!isOpen) return null;
@@ -256,7 +270,7 @@ export default function AuthModal({ isOpen, onClose }) {
             onError={() => setError('Google Sign-In failed.')}
             shape="pill"
             size="large"
-            width="400"
+            width={String(Math.max(240, Math.min(400, (typeof window !== 'undefined' ? window.innerWidth : 400) - 80)))}
             text="continue_with"
           />
         </div>
@@ -304,14 +318,14 @@ export default function AuthModal({ isOpen, onClose }) {
                     <option value="+44">+44</option>
                     <option value="+1">+1</option>
                   </select>
-                  <input type="tel" autoComplete="tel-national" value={localPhone} onChange={handleLocalPhoneChange} placeholder="803 000 0000" className={`${INPUT} !rounded-l-none ${borderFor(fieldErrors.phoneNumber)}`} />
+                  <input type="tel" autoComplete="tel-national" value={localPhone} onChange={handleLocalPhoneChange} placeholder="803 000 0000" className={`${INPUT} !rounded-l-none ${borderFor(fieldErrors.phoneNumber)}`} aria-label="803 000 0000" />
                 </div>
               </Field>
             </>
           )}
 
           <Field label="Email Address" error={fieldErrors.email}>
-            <input type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} placeholder="name@example.com" className={`${INPUT} ${borderFor(fieldErrors.email)}`} />
+            <input type="email" name="email" autoComplete="email" value={formData.email} onChange={handleChange} placeholder="name@example.com" className={`${INPUT} ${borderFor(fieldErrors.email)}`} aria-label="name@example.com" />
           </Field>
 
           <Field
@@ -324,7 +338,7 @@ export default function AuthModal({ isOpen, onClose }) {
             )}
           >
             <div className="relative">
-              <input type={showPassword ? 'text' : 'password'} name="password" autoComplete={isLogin ? 'current-password' : 'new-password'} value={formData.password} onChange={handleChange} placeholder="Your password" className={`${INPUT} pr-12 ${borderFor(fieldErrors.password)}`} />
+              <input type={showPassword ? 'text' : 'password'} name="password" autoComplete={isLogin ? 'current-password' : 'new-password'} value={formData.password} onChange={handleChange} placeholder="Your password" className={`${INPUT} pr-12 ${borderFor(fieldErrors.password)}`} aria-label="Your password" />
               <button type="button" aria-label={showPassword ? 'Hide password' : 'Show password'} onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
                 {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
               </button>
@@ -335,7 +349,7 @@ export default function AuthModal({ isOpen, onClose }) {
           {!isLogin && (
             <Field label="Confirm Password" error={fieldErrors.confirmPassword}>
               <div className="relative">
-                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} placeholder="Repeat your password" className={`${INPUT} pr-12 ${borderFor(fieldErrors.confirmPassword)}`} />
+                <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" autoComplete="new-password" value={formData.confirmPassword} onChange={handleChange} placeholder="Repeat your password" className={`${INPUT} pr-12 ${borderFor(fieldErrors.confirmPassword)}`} aria-label="Repeat your password" />
                 <button type="button" aria-label={showConfirmPassword ? 'Hide password' : 'Show password'} onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700">
                   {showConfirmPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>

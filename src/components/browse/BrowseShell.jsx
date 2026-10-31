@@ -200,7 +200,7 @@ export default function BrowseShell({
           <p className="text-base text-brand-text-secondary">
             <span className="font-bold text-brand-dark">{total}</span> {total === 1 ? noun.replace(/s$/, '') : noun}
           </p>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3 min-w-0 max-w-full">
             {setView && (
               <div role="group" aria-label="View" className="inline-flex rounded-xl border border-gray-200 p-1 bg-white">
                 {[['list', 'List', LayoutGrid], ['map', 'Map', MapIcon]].map(([key, label, Icon]) => (
@@ -209,7 +209,7 @@ export default function BrowseShell({
                     type="button"
                     aria-pressed={view === key}
                     onClick={() => setView(key)}
-                    className={`inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-base font-semibold transition-colors ${
+                    className={`inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 rounded-lg text-base font-semibold transition-colors ${
                       view === key ? 'bg-brand-dark text-white' : 'text-brand-text-secondary hover:text-brand-dark'
                     }`}
                   >
@@ -220,14 +220,14 @@ export default function BrowseShell({
             )}
             <button
               onClick={() => setOpen(true)}
-              className="lg:hidden inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-base font-semibold text-brand-dark hover:border-brand-dark"
+              className="lg:hidden inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 text-base font-semibold text-brand-dark hover:border-brand-dark"
             >
               <SlidersHorizontal className="w-4 h-4" /> Filters{hasFilters ? ` (${chips.length})` : ''}
             </button>
-            <label className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-base text-brand-dark">
+            <label className="inline-flex items-center gap-2 px-3 sm:px-4 py-2.5 rounded-xl border border-gray-200 text-base text-brand-dark max-w-full min-w-0">
               <ArrowUpDown className="w-4 h-4 text-brand-text-muted" />
               <span className="sr-only">Sort by</span>
-              <select value={sort} onChange={(e) => setSort(e.target.value)} className="bg-transparent font-semibold focus:outline-none cursor-pointer">
+              <select value={sort} onChange={(e) => setSort(e.target.value)} className="bg-transparent font-semibold focus:outline-none cursor-pointer min-w-0 max-w-[9.5rem] sm:max-w-none truncate">
                 {SORT_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
               </select>
             </label>

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useDocumentMeta } from '../lib/seo';
 import { useNavigate } from 'react-router-dom';
 import { 
   Building2, 
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 
 export default function ListProperty() {
+  useDocumentMeta('List your property', 'Earn by hosting stays, cars and VIP services with Rentals Africa.');
   const navigate = useNavigate();
   
   // Earnings Calculator State
@@ -59,7 +61,7 @@ export default function ListProperty() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-brand-dark flex flex-col font-sans">
+    <main className="min-h-screen bg-white text-brand-dark flex flex-col font-sans">
       
       {/* 1. HERO SECTION WITH BACKGROUND GLOW */}
       <section className="relative pt-16 pb-24 md:pt-24 md:pb-32 overflow-hidden bg-gradient-to-b from-gray-50/80 to-white">
@@ -343,6 +345,6 @@ export default function ListProperty() {
         </div>
       </section>
 
-    </div>
+    </main>
   );
 }

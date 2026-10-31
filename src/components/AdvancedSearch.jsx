@@ -144,6 +144,15 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     setActiveMenu(isVip ? 'service' : 'location');
   };
 
+  const hasSearchValues = !!(location || checkIn || checkOut || serviceType || guests.adults > 1 || guests.children > 0);
+
+  const resetSearch = () => {
+    setLocation(''); setCheckIn(''); setCheckOut(''); setServiceType('');
+    setGuests({ adults: 1, children: 0 });
+    setActiveMenu(null);
+    onSearch?.({});
+  };
+
   const executeSearch = (e) => {
     if (e) e.stopPropagation();
     setActiveMenu(null);
@@ -178,7 +187,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
       <div className={`flex-1 ${isMobile ? 'w-full' : 'min-w-[280px]'}`}>
         <div className="flex justify-between items-center mb-6 px-2">
           {monthOffset === 0 ? (
-            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month - 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30" disabled={date <= new Date(today.getFullYear(), today.getMonth(), 1)}>
+            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month - 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30" disabled={date <= new Date(today.getFullYear(), today.getMonth(), 1)} aria-label="Previous">
               <ChevronLeft className="w-5 h-5 text-brand-dark" />
             </button>
           ) : <div className="w-9"></div>}
@@ -186,7 +195,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <h3 className="text-base font-bold text-brand-dark tracking-tight">{monthName} {year}</h3>
           
           {monthOffset === (isMobile ? 0 : 1) ? (
-            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month + 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month + 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors" aria-label="Next">
               <ChevronRight className="w-5 h-5 text-brand-dark" />
             </button>
           ) : <div className="w-9"></div>}
@@ -250,6 +259,17 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
 
   return (
     <div className="w-full flex justify-center z-40 relative" ref={searchBarRef}>
+      {hasSearchValues && (
+        <button
+          type="button"
+          onClick={resetSearch}
+          aria-label="Clear search"
+          title="Clear search"
+          className="hidden md:flex absolute left-1/2 ml-[25rem] top-1/2 -translate-y-1/2 items-center gap-1.5 px-3 py-2 rounded-full bg-gray-100 hover:bg-gray-200 text-sm font-semibold text-brand-dark transition-colors whitespace-nowrap"
+        >
+          Clear
+        </button>
+      )}
       
       {/* DESKTOP VIEW */}
       <div className={`hidden md:flex relative items-center max-w-3xl w-full rounded-full whitespace-nowrap transition-all duration-300 ${
@@ -259,7 +279,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <>
             <button onClick={() => setActiveMenu('service')} className={`flex-1 text-left pl-6 pr-3 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'service' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Service</div>
-              <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
+              <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" aria-label="e.g. Armed Escort" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Date</div>
@@ -268,7 +288,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
             <div onClick={() => setActiveMenu('location')} className={`flex-1 flex justify-between items-center pl-5 pr-1.5 py-1 rounded-full transition-colors cursor-pointer relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-left w-full">
                 <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Where</div>
-                <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5 pointer-events-none" />
+                <input type="text" placeholder="Location" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5 pointer-events-none" aria-label="Location" />
               </div>
               <button onClick={executeSearch} className={`p-2.5 rounded-full text-white transition-all duration-300 flex items-center justify-center shadow-md ${activeMenu ? 'bg-brand-primary hover:bg-brand-hover w-auto px-4 space-x-2' : 'bg-brand-primary hover:bg-brand-hover w-9'}`}>
                 <Search className="w-5 h-5" />
@@ -282,7 +302,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <>
             <button onClick={() => setActiveMenu('location')} className={`flex-[1.2] text-left pl-6 pr-3 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'location' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Location</div>
-              <input type="text" placeholder="Search city or airport" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" />
+              <input type="text" placeholder="Search city or airport" value={location} onChange={(e) => setLocation(e.target.value)} className="w-full bg-transparent outline-none text-sm text-brand-dark placeholder-gray-500 font-medium truncate mt-0.5" aria-label="Search city or airport" />
             </button>
             <button onClick={() => setActiveMenu('checkIn')} className={`flex-1 text-left px-5 py-1 rounded-full transition-colors relative z-10 ${activeMenu === 'checkIn' ? 'bg-white shadow-xl' : 'hover:bg-gray-200/50'}`}>
               <div className="text-xs font-display font-bold tracking-widest text-brand-dark uppercase">Pick-up Date</div>
@@ -390,9 +410,9 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                 <div className="text-sm text-brand-text-secondary font-medium mt-1">Ages 13+</div>
               </div>
               <div className="flex items-center space-x-4">
-                <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary disabled:opacity-30 transition-colors"><Minus className="w-4 h-4" /></button>
+                <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary disabled:opacity-30 transition-colors" aria-label="Remove"><Minus className="w-4 h-4" /></button>
                 <span className="font-bold text-brand-dark w-4 text-center">{guests.adults}</span>
-                <button onClick={() => updateGuests('adults', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary transition-colors"><Plus className="w-4 h-4" /></button>
+                <button onClick={() => updateGuests('adults', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary transition-colors" aria-label="Add"><Plus className="w-4 h-4" /></button>
               </div>
             </div>
             <div className="flex items-center justify-between py-5">
@@ -401,9 +421,9 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                 <div className="text-sm text-brand-text-secondary font-medium mt-1">Ages 2-12</div>
               </div>
               <div className="flex items-center space-x-4">
-                <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary disabled:opacity-30 transition-colors"><Minus className="w-4 h-4" /></button>
+                <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary disabled:opacity-30 transition-colors" aria-label="Remove"><Minus className="w-4 h-4" /></button>
                 <span className="font-bold text-brand-dark w-4 text-center">{guests.children}</span>
-                <button onClick={() => updateGuests('children', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary transition-colors"><Plus className="w-4 h-4" /></button>
+                <button onClick={() => updateGuests('children', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center hover:border-brand-primary hover:text-brand-primary transition-colors" aria-label="Add"><Plus className="w-4 h-4" /></button>
               </div>
             </div>
           </div>
@@ -451,7 +471,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           
           {/* Header */}
           <div className="px-4 py-5 flex items-center justify-between bg-[#f7f7f7]">
-            <button onClick={() => setIsMobileModalOpen(false)} className="p-2 bg-white rounded-full shadow-sm border border-gray-200 active:scale-90 transition-transform">
+            <button onClick={() => setIsMobileModalOpen(false)} className="p-2 bg-white rounded-full shadow-sm border border-gray-200 active:scale-90 transition-transform" aria-label="Close">
               <X className="w-5 h-5 text-brand-dark" />
             </button>
             <button onClick={clearAll} className="text-sm font-semibold text-brand-dark underline active:opacity-50 transition-opacity">
@@ -470,7 +490,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                     <h2 className="text-2xl font-bold mb-4 text-brand-dark">What service?</h2>
                     <div className="relative mb-4">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-brand-dark" />
-                      <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full pl-12 pr-5 py-4 bg-[#f7f7f7] rounded-xl outline-none font-bold text-brand-dark text-base" />
+                      <input type="text" placeholder="e.g. Armed Escort" value={serviceType} onChange={(e) => setServiceType(e.target.value)} className="w-full pl-12 pr-5 py-4 bg-[#f7f7f7] rounded-xl outline-none font-bold text-brand-dark text-base" aria-label="e.g. Armed Escort" />
                     </div>
                     <div className="flex flex-wrap gap-2 max-h-48 overflow-y-auto custom-scrollbar">
                       {displayedServices.map(srv => (
@@ -549,9 +569,9 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                         <div className="text-sm text-brand-text-secondary">Ages 13+</div>
                       </div>
                       <div className="flex items-center space-x-5">
-                        <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"><Minus className="w-4 h-4 text-gray-600" /></button>
+                        <button onClick={() => updateGuests('adults', 'subtract')} disabled={guests.adults <= 1} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform" aria-label="Remove"><Minus className="w-4 h-4 text-gray-600" /></button>
                         <span className="font-bold text-lg w-4 text-center">{guests.adults}</span>
-                        <button onClick={() => updateGuests('adults', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center active:scale-95 transition-transform"><Plus className="w-4 h-4 text-gray-600" /></button>
+                        <button onClick={() => updateGuests('adults', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center active:scale-95 transition-transform" aria-label="Add"><Plus className="w-4 h-4 text-gray-600" /></button>
                       </div>
                     </div>
                     <div className="flex items-center justify-between py-4">
@@ -560,9 +580,9 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
                         <div className="text-sm text-brand-text-secondary">Ages 2-12</div>
                       </div>
                       <div className="flex items-center space-x-5">
-                        <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform"><Minus className="w-4 h-4 text-gray-600" /></button>
+                        <button onClick={() => updateGuests('children', 'subtract')} disabled={guests.children <= 0} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center disabled:opacity-30 active:scale-95 transition-transform" aria-label="Remove"><Minus className="w-4 h-4 text-gray-600" /></button>
                         <span className="font-bold text-lg w-4 text-center">{guests.children}</span>
-                        <button onClick={() => updateGuests('children', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center active:scale-95 transition-transform"><Plus className="w-4 h-4 text-gray-600" /></button>
+                        <button onClick={() => updateGuests('children', 'add')} className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center active:scale-95 transition-transform" aria-label="Add"><Plus className="w-4 h-4 text-gray-600" /></button>
                       </div>
                     </div>
                   </div>

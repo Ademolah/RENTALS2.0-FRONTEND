@@ -101,7 +101,7 @@ export default function BookModal({
 *Reference:* ${reference}
 
 Please assist me with this reservation.`;
-      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank');
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(text)}`, '_blank', 'noopener,noreferrer');
     } catch {
       setError('Could not start the WhatsApp booking. Please try again.');
     } finally {
@@ -161,7 +161,7 @@ Please assist me with this reservation.`;
           <button 
             onClick={onClose}
             className="absolute top-4 right-4 p-2 bg-white/10 hover:bg-white/20 rounded-full transition-colors"
-          >
+           aria-label="Close">
             <X className="w-5 h-5 text-white" />
           </button>
           

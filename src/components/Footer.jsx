@@ -78,13 +78,13 @@ export default function Footer() {
           </div>
 
           <div className="flex items-center gap-6">
-            <button className="flex items-center gap-2 text-sm font-medium text-brand-text-secondary hover:text-brand-dark transition-colors">
+            <span className="flex items-center gap-2 text-sm font-medium text-brand-text-secondary">
               <Globe className="w-4 h-4" />
               <span>English (NG)</span>
-            </button>
-            <button className="text-sm font-medium text-brand-text-secondary hover:text-brand-dark transition-colors">
+            </span>
+            <span className="text-sm font-medium text-brand-text-secondary">
               &#8358; NGN
-            </button>
+            </span>
             
           </div>
         </div>

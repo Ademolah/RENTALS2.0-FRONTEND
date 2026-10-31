@@ -214,8 +214,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
           value={formData.title}
           onChange={(e) => handleInputChange('title', e.target.value)}
           placeholder="e.g. The Rentals Luxury Resort"
-          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all"
-        />
+          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 font-bold focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all" aria-label="e.g. The Rentals Luxury Resort" />
       </div>
 
       <div>
@@ -249,16 +248,14 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
           value={formData.address.street}
           onChange={(e) => handleAddressChange('street', e.target.value)}
           placeholder="Street Address (e.g. 15 Bourdillon Rd)"
-          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all"
-        />
+          className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all" aria-label="Street Address (e.g. 15 Bourdillon Rd)" />
         <div className="flex gap-4">
           <input 
             type="text" 
             value={formData.address.city}
             onChange={(e) => handleAddressChange('city', e.target.value)}
             placeholder="City"
-            className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all"
-          />
+            className="w-1/2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-3.5 text-gray-900 focus:outline-none focus:ring-2 focus:ring-brand-primary/50 focus:border-brand-primary transition-all" aria-label="City" />
           <select 
             value={formData.address.state}
             onChange={(e) => handleAddressChange('state', e.target.value)}
@@ -342,7 +339,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
                   type="button"
                   onClick={() => removeImage(idx)}
                   className="absolute top-2 right-2 bg-white/90 backdrop-blur-sm text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50 hover:scale-110 shadow-sm"
-                >
+                 aria-label="Delete">
                   <Trash2 className="w-4 h-4" />
                 </button>
               </div>
@@ -372,7 +369,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
               <button 
                 onClick={() => removeRoomType(index)}
                 className="absolute top-4 right-4 p-2 bg-red-50 text-red-500 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-100"
-              >
+               aria-label="Delete">
                 <Trash2 className="w-4 h-4" />
               </button>
             )}
@@ -387,8 +384,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
                 value={room.name}
                 onChange={(e) => handleRoomChange(index, 'name', e.target.value)}
                 placeholder="Room Name (e.g. Deluxe King Suite)"
-                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-brand-primary"
-              />
+                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-base font-bold focus:outline-none focus:border-brand-primary" aria-label="Room Name (e.g. Deluxe King Suite)" />
               
               <div className="flex gap-4">
                 <div className="w-1/2">
@@ -465,7 +461,7 @@ export default function CreateHotelModal({ isOpen, onClose, onSuccess }) {
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Step {step} of 3</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors text-gray-500">
+          <button onClick={onClose} className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full transition-colors text-gray-500" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>

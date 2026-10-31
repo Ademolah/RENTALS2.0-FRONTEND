@@ -134,7 +134,8 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center px-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-      <div className="w-full max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden animate-in zoom-in-95 duration-300">
+      <div className="relative w-full max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden animate-in zoom-in-95 duration-300">
+        <button type="button" onClick={onClose} aria-label="Close and go back" className="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-brand-dark text-xl leading-none">&times;</button>
         
         {/* Header Section */}
         <div className="px-8 pt-8 pb-6 text-center">

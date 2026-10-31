@@ -156,7 +156,7 @@ export default function HotelDetails() {
                       `Could you please assist me with this reservation?`;
       
       const encodedMessage = encodeURIComponent(message);
-      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank');
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
     } catch (err) {
       showToast("Failed to initialize secure chat. Please try again.");
     } finally {
@@ -315,7 +315,7 @@ export default function HotelDetails() {
             <button 
               onClick={() => setShowReviewModal(false)}
               className="absolute top-5 right-5 text-brand-text-muted hover:text-brand-dark transition-colors"
-            >
+             aria-label="Close">
               <X className="w-5 h-5" />
             </button>
             
@@ -383,7 +383,7 @@ export default function HotelDetails() {
           <button 
             onClick={() => setLightboxIndex(null)} 
             className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
-          >
+           aria-label="Close">
             <X className="w-8 h-8" />
           </button>
           
@@ -391,7 +391,7 @@ export default function HotelDetails() {
             <button 
               onClick={prevImage} 
               className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
-            >
+             aria-label="Previous">
               <ChevronLeft className="w-10 h-10" />
             </button>
           )}
@@ -407,7 +407,7 @@ export default function HotelDetails() {
             <button 
               onClick={nextImage} 
               className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
-            >
+             aria-label="Next">
               <ChevronRight className="w-10 h-10" />
             </button>
           )}
@@ -420,16 +420,16 @@ export default function HotelDetails() {
 
       {/* 1. SCROLLABLE IMAGE GALLERY */}
       <div className="w-full bg-white overflow-hidden relative group pt-4">
-        <button onClick={() => navigate(-1)} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md">
+        <button onClick={() => navigate(-1)} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md" aria-label="Go back">
           <ArrowLeft className="w-6 h-6" />
         </button>
         <div className="absolute top-6 right-6 z-30 flex items-center gap-2"><WhatsAppPill /><ShareButton dark className="backdrop-blur-md" /></div>
 
-       <button onClick={() => scrollGallery('left')} className="absolute top-1/2 left-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl">
+       <button onClick={() => scrollGallery('left')} className="absolute top-1/2 left-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl" aria-label="Previous">
           <ChevronLeft className="w-8 h-8" />
         </button>
         
-        <button onClick={() => scrollGallery('right')} className="absolute top-1/2 right-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl">
+        <button onClick={() => scrollGallery('right')} className="absolute top-1/2 right-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl" aria-label="Next">
           <ChevronRight className="w-8 h-8" />
         </button>
         
@@ -482,7 +482,8 @@ export default function HotelDetails() {
             <hr className="border-gray-200" />
 
             <div>
-              <h2 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-4">About this property</h2>
+              <h2 className="text-3xl font-display font-bold text-brand-dark tracking-tight mb-2">About this hotel</h2>
+              <p className="mb-4 text-base font-medium text-brand-text-secondary">Managed by Rentals Africa</p>
               <p className="text-brand-text-secondary leading-8 text-lg whitespace-pre-line">
                 {hotel.description}
               </p>
@@ -550,11 +551,11 @@ export default function HotelDetails() {
                 {showCalendar && (
                   <div className="absolute top-[85px] sm:top-[75px] left-0 mt-2 w-full sm:w-[320px] bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
                     <div className="flex justify-between items-center mb-4">
-                      <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                      <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Previous"><ChevronLeft className="w-4 h-4"/></button>
                       <span className="font-display font-bold text-base tracking-widest uppercase text-brand-dark">
                         {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                       </span>
-                      <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                      <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Next"><ChevronRight className="w-4 h-4"/></button>
                     </div>
                     <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-display font-bold text-brand-text-muted tracking-widest uppercase">
                       {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -728,6 +729,7 @@ export default function HotelDetails() {
                 </button>
                 
                 <WhatsAppCheckout onClick={handleWhatsAppClick} loading={!!(isWhatsappLoading)} />
+                <p className="mt-3 text-sm text-brand-text-secondary leading-snug">Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment. Rentals Africa reviews and processes refunds.</p>
               </div>
             </div>
             )}
@@ -750,6 +752,7 @@ export default function HotelDetails() {
           {isLoggedIn ? "Reserve" : "Login"}
         </button>
         <WhatsAppCheckout onClick={handleWhatsAppClick} loading={!!isWhatsappLoading} />
+        <p className="mt-3 text-sm text-brand-text-secondary leading-snug">Terms and conditions apply. Payment processing fees are non-refundable, so the refund amount may differ from the original payment. Rentals Africa reviews and processes refunds.</p>
       </div>
       )}
       {ownListing && (

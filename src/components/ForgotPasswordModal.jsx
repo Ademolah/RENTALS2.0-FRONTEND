@@ -18,6 +18,10 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
       setError('Please enter your email address.');
       return;
     }
+    if (!/^\S+@\S+\.\S+$/.test(email.trim())) {
+      setError('Please enter a valid email address.');
+      return;
+    }
 
     try {
       setIsLoading(true);
@@ -48,7 +52,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
         <button 
           onClick={handleClose}
           className="absolute top-5 right-5 p-2 text-brand-text-muted hover:text-brand-dark hover:bg-gray-100 rounded-full transition-colors z-10"
-        >
+         aria-label="Close">
           <X className="w-5 h-5" />
         </button>
 
@@ -86,7 +90,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                 Enter the email address associated with your Rentals Africa account, and we'll send you a secure link to reset your password.
               </p>
 
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
                 <div>
                   <label className="block text-xs font-bold text-brand-dark uppercase tracking-wider mb-2">
                     Email Address
@@ -101,8 +105,7 @@ export default function ForgotPasswordModal({ isOpen, onClose, onBackToLogin }) 
                       onChange={(e) => setEmail(e.target.value)}
                       className="block w-full pl-11 pr-4 py-4 bg-gray-50 border border-gray-200 rounded-xl text-base text-brand-dark focus:ring-2 focus:ring-brand-primary focus:border-brand-primary outline-none transition-all"
                       placeholder="guest@example.com"
-                      disabled={isLoading}
-                    />
+                      disabled={isLoading} aria-label="guest@example.com" />
                   </div>
                 </div>
 

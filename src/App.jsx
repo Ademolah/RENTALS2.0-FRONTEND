@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react';
-import { Routes, Route, useLocation } from 'react-router-dom';
+import { useState, useEffect, lazy, Suspense } from 'react';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
 import './index.css';
 import WelcomeOverlay from './components/WelcomeOverlay';
 import CitySelectorModal from "./components/CitySelectorModal";
@@ -9,9 +10,9 @@ import Home from './pages/Home';
 import PropertyDetail from './pages/PropertyDetail';
 import HotelDetails from './pages/HotelDetails';
 import Footer from './components/Footer';
-import LandlordDashboard from './pages/LandlordDashboard';
-import GuestDashboard from './pages/GuestDashboard';
-import AdminDashboard from './pages/AdminDashboard';
+const LandlordDashboard = lazy(() => import('./pages/LandlordDashboard'));
+const GuestDashboard = lazy(() => import('./pages/GuestDashboard'));
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'));
 import CarDetails from './pages/CarDetails';
 import VipDetails from './pages/VipDetails';
 import VipSuccess from './pages/VipSuccess';
@@ -30,6 +31,23 @@ import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
 import ResetPassword from './pages/ResetPassword';
 import VipServiceDetails from './components/VipServiceDetails';
+import NotFound from './pages/NotFound';
+
+// Keeps signed-out visitors and wrong-role users out of role dashboards.
+function RequireRole({ roles, children }) {
+  const { user, setShowAuthModal } = useAuth();
+  const role = String(user?.role || '').toUpperCase();
+  useEffect(() => {
+    if (!user) setShowAuthModal(true);
+  }, [user, setShowAuthModal]);
+  if (!user) return <Navigate to="/" replace />;
+  if (!roles.includes(role)) return <Navigate to={role === 'ADMIN' ? '/dashboard/admin' : role === 'LANDLORD' ? '/dashboard/landlord' : '/dashboard/guest'} replace />;
+  return children;
+}
+
+const PageLoader = () => (
+  <div className="py-32 flex justify-center"><div className="w-10 h-10 border-2 border-gray-200 border-t-brand-primary rounded-full animate-spin" /></div>
+);
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -43,6 +61,10 @@ function App() {
   
   // 2. Initialize the state using the tracker's inverse value
   const [showCityModal, setShowCityModal] = useState(!hasSeenCityModalThisSession);
+  const { showAuthModal } = useAuth();
+  const [welcomeDone, setWelcomeDone] = useState(() => {
+    try { return !!sessionStorage.getItem('hasSeenWelcome'); } catch { return true; }
+  });
   
   // Initialize useLocation to track the current route
   const location = useLocation();
@@ -62,15 +84,15 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-col relative">
-      <WelcomeOverlay />
+      <WelcomeOverlay onDone={() => setWelcomeDone(true)} />
       
       {/* Restrict City Modal to Home Page & Shortlet Tab */}
-      {showCityModal && activeCategory === 'shortlet' && isHomePage && (
+      {showCityModal && welcomeDone && !showAuthModal && activeCategory === 'shortlet' && isHomePage && (
         <CitySelectorModal onSelect={handleCitySelect} />
       )}
       
       {/* Header Wrapper */}
-      <div className="sticky top-0 z-50 bg-white flex flex-col">
+      <div className="lg:sticky lg:top-0 z-50 bg-white flex flex-col">
         
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar
@@ -87,7 +109,7 @@ function App() {
       </div>
 
       <div className="flex-grow">
-        <ErrorBoundary><Routes>
+        <ErrorBoundary><Suspense fallback={<PageLoader />}><Routes>
           <Route 
             path="/" 
             element={
@@ -107,8 +129,8 @@ function App() {
           <Route path="/vip-success" element={<VipSuccess />} />
           
           <Route path="/dashboard/guest" element={<GuestDashboard />} />
-          <Route path="/dashboard/landlord" element={<LandlordDashboard />} />
-          <Route path="/dashboard/admin" element={<AdminDashboard />} />
+          <Route path="/dashboard/landlord" element={<RequireRole roles={['LANDLORD', 'ADMIN']}><LandlordDashboard /></RequireRole>} />
+          <Route path="/dashboard/admin" element={<RequireRole roles={['ADMIN']}><AdminDashboard /></RequireRole>} />
           <Route path="/list-property" element={<ListYourProperty />} />
           <Route path="/about" element={<About />} />
           <Route path="/help" element={<Help />} />
@@ -123,7 +145,8 @@ function App() {
           <Route path="/sitemap" element={<Sitemap />} />
           <Route path='/vip/services/:id' element={<VipServiceDetails/>} />
           <Route path="/reset-password" element={<ResetPassword />} />
-        </Routes></ErrorBoundary>
+          <Route path="*" element={<NotFound />} />
+        </Routes></Suspense></ErrorBoundary>
       </div>
 
       {/* Conditionally hide the Footer on Dashboards */}

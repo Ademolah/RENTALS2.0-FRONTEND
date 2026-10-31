@@ -936,8 +936,7 @@ export default function LandlordDashboard() {
               onChange={(e) => setCodeValue(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && findByCode()}
               placeholder="#A1B2C3"
-              className="mt-5 w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-brand-dark outline-none text-xl font-display font-bold tracking-widest uppercase"
-            />
+              className="mt-5 w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-brand-dark outline-none text-xl font-display font-bold tracking-widest uppercase" aria-label="#A1B2C3" />
             <div className="mt-6 flex gap-3 justify-end">
               <Button variant="outline" onClick={() => setCodeOpen(false)}>Cancel</Button>
               <Button variant="dark" onClick={findByCode} disabled={!codeValue.trim()}>Find booking</Button>

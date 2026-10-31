@@ -268,7 +268,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
             <button 
               onClick={onClose}
               className="p-2.5 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
-            >
+             aria-label="Close">
               <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
@@ -298,8 +298,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       type="text" required maxLength={70}
                       placeholder="e.g. Minimalist Luxury Suite with Lagoon View"
                       value={title} onChange={(e) => setTitle(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
-                    />
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white" aria-label="e.g. Minimalist Luxury Suite with Lagoon View" />
                   </div>
 
                   <div>
@@ -361,8 +360,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       type="text" required
                       placeholder="e.g. 15 Bourdillon Road"
                       value={street} onChange={(e) => setStreet(e.target.value)}
-                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
-                    />
+                      className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white" aria-label="e.g. 15 Bourdillon Road" />
                   </div>
 
                   <div>

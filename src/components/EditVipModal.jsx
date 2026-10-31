@@ -182,7 +182,7 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
           <div>
             <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Edit VIP Listing</h2>
           </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors">
+          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Close">
             <X className="w-5 h-5 text-gray-600" />
           </button>
         </div>

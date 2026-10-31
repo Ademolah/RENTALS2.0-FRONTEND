@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDocumentMeta } from '../lib/seo';
 import { useLocation, Link } from 'react-router-dom';
 import { ChevronDown, ShieldCheck, CalendarX, Mail, LifeBuoy } from 'lucide-react';
 import { Container, PageHero, Card, SectionTitle, Button, WhatsAppIcon } from '../components/ui';
@@ -28,6 +29,7 @@ function Faq({ q, a }) {
 }
 
 export default function Help() {
+  useDocumentMeta('Help Center', 'Answers, safety and cancellation information, and WhatsApp checkout.');
   const { hash } = useLocation();
 
   useEffect(() => {
@@ -36,17 +38,17 @@ export default function Help() {
   }, [hash]);
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <main className="bg-gray-50 min-h-screen">
       <PageHero
         eyebrow="Support"
         title="How can we help?"
         subtitle="Answers, safety guidance and cancellation terms. On WhatsApp you can check out your booking or ask our concierge for help."
       >
         <div className="flex flex-wrap gap-3">
-          <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank')}>
+          <Button variant="whatsapp" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}`, '_blank', 'noopener,noreferrer')}>
             <WhatsAppIcon className="w-5 h-5" /> Check out via WhatsApp
           </Button>
-          <Button variant="outline" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello Rentals Africa Concierge, I need some help.')}`, '_blank')}>
+          <Button variant="outline" size="lg" onClick={() => window.open(`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello Rentals Africa Concierge, I need some help.')}`, '_blank', 'noopener,noreferrer')}>
             <WhatsAppIcon className="w-5 h-5 text-[#25D366]" /> Ask the concierge for help
           </Button>
         </div>
@@ -110,11 +112,11 @@ export default function Help() {
                 <a href={`https://wa.me/${WHATSAPP}?text=${encodeURIComponent('Hello Rentals Africa Concierge, I need some help.')}`} target="_blank" rel="noreferrer" className="inline-block mt-1 text-base font-semibold text-[#128C7E] hover:underline">Get help on WhatsApp</a>
               </div>
             </Card>
-            <Card className="p-6 flex items-center gap-4">
-              <Mail className="w-8 h-8 text-brand-primary" />
-              <div>
+            <Card className="p-6 flex items-center gap-4 min-w-0">
+              <Mail className="w-8 h-8 text-brand-primary shrink-0" />
+              <div className="min-w-0">
                 <p className="text-lg font-bold text-brand-dark">Email</p>
-                <a href="mailto:privacy@rentalsafrica.com" className="text-base text-brand-primary font-semibold">privacy@rentalsafrica.com</a>
+                <a href="mailto:privacy@rentalsafrica.com" className="text-base text-brand-primary font-semibold break-all">privacy@rentalsafrica.com</a>
               </div>
             </Card>
           </div>
@@ -123,6 +125,6 @@ export default function Help() {
           </p>
         </section>
       </Container>
-    </div>
+    </main>
   );
 }

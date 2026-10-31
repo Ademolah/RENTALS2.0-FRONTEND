@@ -336,7 +336,7 @@ export default function InteractiveMap({
                         {formatMapPrice(item.pricePerNight || item.pricePer12Hours || item.startingPrice)}
                       </div>
                       <Link 
-                        to={`/${type.toLowerCase() === 'car' ? 'cars' : 'properties'}/${item._id}`}
+                        to={`/${({ car: 'cars', hotel: 'hotel', vip: 'vip' })[type.toLowerCase()] || 'property'}/${item._id}`}
                         className="text-xs font-bold text-brand-primary hover:underline flex items-center"
                       >
                         View <ExternalLink className="w-2.5 h-2.5 ml-0.5" />

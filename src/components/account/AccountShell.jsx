@@ -29,7 +29,7 @@ export function AccountShell({ title, subtitle, actions, children }) {
   }
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-24">
+    <main className="bg-gray-50 min-h-screen pb-24">
       <section className="bg-brand-dark relative overflow-hidden">
         <CityBackdrop seed={title} />
         <Container className="relative py-10 md:py-14 flex flex-col md:flex-row md:items-end md:justify-between gap-6">
@@ -69,7 +69,7 @@ export function AccountShell({ title, subtitle, actions, children }) {
         </nav>
         <div className="flex-1 min-w-0">{children}</div>
       </Container>
-    </div>
+    </main>
   );
 }
 

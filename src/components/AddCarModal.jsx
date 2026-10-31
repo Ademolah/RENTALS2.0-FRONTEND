@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { API_URL } from '../lib/config';
 import { 
   X, UploadCloud, AlertCircle, CheckCircle2, 
   Car, Check, MapPin, Settings2, Image as ImageIcon, Video // 💡 NEW: Imported Video icon
@@ -11,7 +12,7 @@ import ArrivalGuideFields from './host/ArrivalGuideFields';
 
 
 
-const API = import.meta.env.VITE_API_URL;
+const API = API_URL;
 
 export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [loading, setLoading] = useState(false);
@@ -203,7 +204,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
           <button 
             onClick={onClose}
             className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-          >
+           aria-label="Close">
             <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
@@ -232,8 +233,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="Mercedes-Benz"
                   value={make}
                   onChange={(e) => setMake(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors" aria-label="Mercedes-Benz" />
               </div>
 
               <div>
@@ -244,8 +244,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="G63 AMG"
                   value={carModel}
                   onChange={(e) => setCarModel(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-brand-primary outline-none text-base transition-colors" aria-label="G63 AMG" />
               </div>
             </div>
 
@@ -395,8 +394,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                   placeholder="Victoria Island"
                   value={city}
                   onChange={(e) => setCity(e.target.value)}
-                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-base transition-colors"
-                />
+                  className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-gray-900 outline-none text-base transition-colors" aria-label="Victoria Island" />
               </div>
             </div>
           </div>
@@ -441,7 +439,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                     type="button" 
                     onClick={(e) => { e.stopPropagation(); removeVideo(); }}
                     className="absolute top-2 right-2 p-1.5 bg-black/50 hover:bg-red-500 rounded-full text-white backdrop-blur-sm transition-colors opacity-0 group-hover:opacity-100"
-                  >
+                   aria-label="Close">
                     <X className="w-4 h-4" />
                   </button>
                   <div className="absolute top-2 left-2 bg-white/95 backdrop-blur-sm px-2.5 py-1 rounded text-xs font-bold text-gray-900 shadow-sm uppercase tracking-wider">
@@ -500,7 +498,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
                         type="button"
                         onClick={(e) => removeImage(index, e)}
                         className="absolute top-3 right-3 p-1.5 bg-white/95 backdrop-blur-sm hover:bg-red-50 hover:text-red-600 text-gray-700 rounded-full shadow-sm opacity-0 group-hover:opacity-100 transition-all duration-200"
-                      >
+                       aria-label="Close">
                         <X className="w-4 h-4 stroke-[2.5]" />
                       </button>
                     </div>

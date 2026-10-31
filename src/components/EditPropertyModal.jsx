@@ -130,7 +130,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
               <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Update Property Specs</p>
             </div>
           </div>
-          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors">
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors" aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -193,7 +193,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
                 {formData.existingImages.map((img, idx) => (
                   <div key={`old-${idx}`} className="relative aspect-square rounded-xl overflow-hidden group border border-gray-200">
                     <img src={img} alt={`Existing ${idx}`} className="w-full h-full object-cover" />
-                    <button type="button" onClick={() => removeExistingImage(idx)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
+                    <button type="button" onClick={() => removeExistingImage(idx)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110" aria-label="Delete">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -202,7 +202,7 @@ export default function EditPropertyModal({ isOpen, onClose, onSuccess, property
                 {formData.newImages.map((file, idx) => (
                   <div key={`new-${idx}`} className="relative aspect-square rounded-xl overflow-hidden group border-2 border-brand-primary shadow-sm">
                     <img src={URL.createObjectURL(file)} alt={`New ${idx}`} className="w-full h-full object-cover opacity-80" />
-                    <button type="button" onClick={() => removeNewImage(idx)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110">
+                    <button type="button" onClick={() => removeNewImage(idx)} className="absolute top-2 right-2 bg-white/90 text-red-500 p-1.5 rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:scale-110" aria-label="Delete">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>

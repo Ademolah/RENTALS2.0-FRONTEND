@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { API_URL } from '../lib/config';
 
 // Fallback to localhost if environment variable is missing
-const baseURL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
+const baseURL = API_URL;
 
 export const apiClient = axios.create({
   baseURL,

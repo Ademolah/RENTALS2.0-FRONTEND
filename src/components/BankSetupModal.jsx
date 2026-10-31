@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../lib/config';
 import { X, Landmark, Loader2, CheckCircle2, AlertCircle, ShieldCheck } from 'lucide-react';
 import axios from 'axios'; // Or use your custom axios instance
 import { useAuth } from '../context/AuthContext';// Adjust path if needed
@@ -18,7 +19,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  const API = import.meta.env.VITE_API_URL;
+  const API = API_URL;
 
   // Axios config helper
   // SURGICAL FIX: Use 'rentals_token' exactly like we did for the Car upload!
@@ -131,7 +132,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
           <button 
             onClick={onClose}
             className="p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors"
-          >
+           aria-label="Close">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -190,8 +191,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
                   onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))} // Numbers only
                   placeholder="0000000000"
                   disabled={!selectedBankCode || isSaving}
-                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all font-semibold tracking-widest disabled:opacity-50"
-                />
+                  className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all font-semibold tracking-widest disabled:opacity-50" aria-label="0000000000" />
               </div>
 
               {/* Resolved Name Display */}

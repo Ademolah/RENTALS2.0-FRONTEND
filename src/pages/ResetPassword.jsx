@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useDocumentMeta } from '../lib/seo';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
 import { resetPasswordApi } from '../api/auth';
 
 export default function ResetPassword() {
+  useDocumentMeta('Reset password', 'Choose a new password for your account.');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token');
@@ -59,7 +61,7 @@ export default function ResetPassword() {
   };
 
   return (
-    <div className="min-h-screen bg-brand-dark relative overflow-hidden flex flex-col justify-center items-center p-4">
+    <main className="min-h-screen bg-brand-dark relative overflow-hidden flex flex-col justify-center items-center p-4">
       <div className="absolute -top-32 -right-32 w-[28rem] h-[28rem] rounded-full bg-brand-primary/20 blur-3xl" />
       <div className="w-full max-w-lg bg-white rounded-3xl shadow-elevated overflow-hidden relative">
 
@@ -117,8 +119,7 @@ export default function ResetPassword() {
                       onChange={handleChange} 
                       placeholder="••••••••" 
                       disabled={!token || loading}
-                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" 
-                    />
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" aria-label="••••••••" />
                     <button 
                       type="button" 
                       onClick={() => setShowPassword(!showPassword)} 
@@ -142,8 +143,7 @@ export default function ResetPassword() {
                       onChange={handleChange} 
                       placeholder="••••••••" 
                       disabled={!token || loading}
-                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" 
-                    />
+                      className="w-full px-4 py-4 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-base transition-all pr-12" aria-label="••••••••" />
                     <button 
                       type="button" 
                       onClick={() => setShowConfirm(!showConfirm)} 
@@ -166,6 +166,6 @@ export default function ResetPassword() {
           )}
         </div>
       </div>
-    </div>
+    </main>
   );
 }

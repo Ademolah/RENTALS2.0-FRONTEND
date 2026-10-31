@@ -302,7 +302,7 @@ export default function PropertyDetail() {
 
             <div className="relative w-full max-w-7xl px-4 flex items-center justify-center" {...swipe}>
               {imgs.length > 1 && (
-                <button onClick={prevLightboxImage} className="absolute left-4 md:left-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50">
+                <button onClick={prevLightboxImage} className="absolute left-4 md:left-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50" aria-label="Previous">
                   <ChevronLeft className="w-8 h-8" />
                 </button>
               )}
@@ -313,7 +313,7 @@ export default function PropertyDetail() {
                 onClick={(e) => e.stopPropagation()}
               />
               {imgs.length > 1 && (
-                <button onClick={nextLightboxImage} className="absolute right-4 md:right-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50">
+                <button onClick={nextLightboxImage} className="absolute right-4 md:right-8 p-3.5 bg-white/10 hover:bg-white/25 text-white rounded-full transition-colors z-50" aria-label="Next">
                   <ChevronRight className="w-8 h-8" />
                 </button>
               )}
@@ -372,8 +372,8 @@ export default function PropertyDetail() {
             </div>
             {imgs.length > 1 && (
               <>
-                <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90"><ChevronLeft className="w-5 h-5" /></button>
-                <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90"><ChevronRight className="w-5 h-5" /></button>
+                <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90" aria-label="Previous"><ChevronLeft className="w-5 h-5" /></button>
+                <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 text-brand-dark p-2 rounded-full shadow-md z-10 active:scale-90" aria-label="Next"><ChevronRight className="w-5 h-5" /></button>
               </>
             )}
           </div>

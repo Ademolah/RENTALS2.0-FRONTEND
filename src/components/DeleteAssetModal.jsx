@@ -43,7 +43,7 @@ export default function DeleteAssetModal({ isOpen, onClose, onSuccess, assetId, 
         <button 
           onClick={onClose}
           className="absolute top-5 right-5 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors z-10"
-        >
+         aria-label="Close">
           <X className="w-5 h-5" />
         </button>
 

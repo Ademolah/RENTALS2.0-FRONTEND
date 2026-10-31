@@ -265,7 +265,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
             <button 
               onClick={onClose}
               className="p-2.5 rounded-full bg-gray-50 hover:bg-gray-100 transition-colors border border-gray-200"
-            >
+             aria-label="Close">
               <X className="w-5 h-5 text-gray-600" />
             </button>
           </div>
@@ -364,8 +364,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                                 type="text" placeholder="e.g. Golf Resort" 
                                 value={customCategory} onChange={(e) => setCustomCategory(e.target.value)}
                                 className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-white"
-                                required={establishmentType === 'OTHER'}
-                              />
+                                required={establishmentType === 'OTHER'} aria-label="e.g. Golf Resort" />
                             </div>
                           )}
                         </>
@@ -388,8 +387,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                                 type="text" placeholder="e.g. VIP Event Security" 
                                 value={customServiceType} onChange={(e) => setCustomServiceType(e.target.value)}
                                 className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-white"
-                                required={serviceType === 'OTHER'}
-                              />
+                                required={serviceType === 'OTHER'} aria-label="e.g. VIP Event Security" />
                             </div>
                           )}
                         </>
@@ -404,8 +402,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                           type="text" required
                           placeholder="e.g. Smart Elegant. No athletic wear."
                           value={dressCode} onChange={(e) => setDressCode(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
-                        />
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white" aria-label="e.g. Smart Elegant. No athletic wear." />
                       </div>
                     )}
                   </div>
@@ -483,16 +480,14 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                         <input 
                           type="text" required placeholder="e.g. 10:00 PM"
                           value={openTime} onChange={(e) => setOpenTime(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
-                        />
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white" aria-label="e.g. 10:00 PM" />
                       </div>
                       <div>
                         <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Closing Time</label>
                         <input 
                           type="text" required placeholder="e.g. 04:00 AM"
                           value={closeTime} onChange={(e) => setCloseTime(e.target.value)}
-                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white"
-                        />
+                          className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-base transition-all bg-gray-50/30 focus:bg-white" aria-label="e.g. 04:00 AM" />
                       </div>
                     </div>
 

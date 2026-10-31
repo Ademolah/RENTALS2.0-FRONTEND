@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useDocumentMeta } from '../lib/seo';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Crown, CheckCircle2, ArrowRight, 
@@ -6,6 +7,7 @@ import {
 } from 'lucide-react';
 
 export default function VipSuccess() {
+  useDocumentMeta('VIP reservation', 'Your VIP reservation status.');
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reference = searchParams.get('reference') || searchParams.get('trxref') || '';
@@ -19,6 +21,21 @@ export default function VipSuccess() {
     }, 2000);
     return () => clearTimeout(timer);
   }, []);
+
+  if (!reference) {
+    return (
+      <main className="min-h-[70vh] bg-gray-50 flex items-center justify-center p-6">
+        <div className="max-w-md text-center">
+          <h1 className="text-3xl font-display font-bold text-brand-dark">No reservation to show</h1>
+          <p className="mt-3 text-lg text-brand-text-secondary">This page appears after a payment. If you just paid, check your trips for the booking.</p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <button onClick={() => navigate('/trips')} className="px-6 py-3 rounded-xl bg-brand-primary text-white font-semibold hover:bg-brand-hover">View my trips</button>
+            <button onClick={() => navigate('/')} className="px-6 py-3 rounded-xl border border-gray-200 text-brand-dark font-semibold hover:border-brand-dark">Go home</button>
+          </div>
+        </div>
+      </main>
+    );
+  }
 
   if (verifying) {
     return (

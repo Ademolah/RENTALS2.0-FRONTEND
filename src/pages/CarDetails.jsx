@@ -350,7 +350,7 @@ export default function CarDetails() {
         `Could you please assist me with this reservation?`
       );
 
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank');
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setBookingError("Failed to initialize secure chat. Please try again.");
     } finally {
@@ -392,7 +392,7 @@ export default function CarDetails() {
             <button 
               onClick={(e) => { e.stopPropagation(); setLightboxIndex(null); }} 
               className="text-white hover:bg-white/20 bg-white/10 rounded-full p-2.5 transition-colors"
-            >
+             aria-label="Close">
               <X className="w-6 h-6" />
             </button>
           </div>
@@ -402,7 +402,7 @@ export default function CarDetails() {
               <button 
                 onClick={(e) => { e.stopPropagation(); prevImage(); }} 
                 className="absolute left-4 md:left-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
-              >
+               aria-label="Previous">
                 <ChevronLeft className="w-8 h-8" />
               </button>
             )}
@@ -418,7 +418,7 @@ export default function CarDetails() {
               <button 
                 onClick={(e) => { e.stopPropagation(); nextImage(); }} 
                 className="absolute right-4 md:right-8 p-3 bg-white/10 hover:bg-white/20 text-white rounded-full transition-colors z-50"
-              >
+               aria-label="Next">
                 <ChevronRight className="w-8 h-8" />
               </button>
             )}
@@ -445,6 +445,7 @@ export default function CarDetails() {
           {car.make} {car.model} <span className="text-brand-text-muted font-medium ml-2">{car.year}</span>
         </h1>
         <div className="mt-4 flex flex-wrap items-center gap-3"><ShareButton /><WhatsAppPill /></div>
+        <p className="mt-3 text-base font-medium text-brand-text-secondary">Managed by Rentals Africa</p>
       </div>
 
       {/* --- GALLERY SECTION --- */}
@@ -464,8 +465,8 @@ export default function CarDetails() {
           </div>
           {images.length > 1 && (
             <>
-              <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><ChevronLeft className="w-5 h-5"/></button>
-              <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><ChevronRight className="w-5 h-5"/></button>
+              <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10" aria-label="Previous"><ChevronLeft className="w-5 h-5"/></button>
+              <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10" aria-label="Next"><ChevronRight className="w-5 h-5"/></button>
             </>
           )}
         </div>
@@ -525,8 +526,8 @@ export default function CarDetails() {
                   </div>
                   {images.length > 3 && (
                     <>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
+                      <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200" aria-label="Previous"><ChevronLeft className="w-5 h-5" /></button>
+                      <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-brand-dark p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200" aria-label="Next"><ChevronRight className="w-5 h-5" /></button>
                     </>
                   )}
                 </div>
@@ -659,11 +660,11 @@ export default function CarDetails() {
                   {showCalendar && (
                     <div className="absolute top-[70px] left-0 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
                       <div className="flex justify-between items-center mb-4">
-                        <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                        <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Previous"><ChevronLeft className="w-4 h-4"/></button>
                         <span className="font-display font-bold text-base tracking-widest uppercase text-brand-dark">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                        <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Next"><ChevronRight className="w-4 h-4"/></button>
                       </div>
                       <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-display font-bold text-brand-text-muted tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -795,8 +796,7 @@ export default function CarDetails() {
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
                       placeholder="Where should we bring it?"
-                      className="mt-3 w-full px-4 py-3 rounded-xl border border-gray-200 text-base text-brand-dark outline-none focus:border-brand-dark"
-                    />
+                      className="mt-3 w-full px-4 py-3 rounded-xl border border-gray-200 text-base text-brand-dark outline-none focus:border-brand-dark" aria-label="Where should we bring it?" />
                   )}
                 </div>
               )}

@@ -246,7 +246,7 @@ export default function BookingWidget({ property }) {
         `Could you please assist me with this reservation?`
       );
 
-      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank');
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } catch (err) {
       setError("Failed to initialize secure chat. Please try again.");
     } finally {
@@ -324,7 +324,7 @@ export default function BookingWidget({ property }) {
                   onClick={() => setGuests(prev => Math.max(1, prev - 1))}
                   disabled={guests <= 1}
                   className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-brand-dark hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
-                >
+                 aria-label="Remove">
                   <Minus className="w-4 h-4" />
                 </button>
                 <span className="text-lg font-semibold text-brand-dark w-5 text-center">{guests}</span>
@@ -333,7 +333,7 @@ export default function BookingWidget({ property }) {
                   onClick={() => setGuests(prev => Math.min(maxAllowedGuests, prev + 1))}
                   disabled={guests >= maxAllowedGuests}
                   className="w-9 h-9 rounded-full border border-gray-300 flex items-center justify-center text-brand-text-secondary hover:border-brand-dark hover:text-brand-dark disabled:opacity-30 disabled:hover:border-gray-300 transition-colors"
-                >
+                 aria-label="Add">
                   <Plus className="w-4 h-4" />
                 </button>
               </div>
@@ -344,11 +344,11 @@ export default function BookingWidget({ property }) {
           {showCalendar && (
             <div className="absolute top-[75px] left-0 mt-2 w-full bg-white border border-gray-200 shadow-elevated rounded-2xl p-5 z-50 animate-in fade-in zoom-in-95">
               <div className="flex justify-between items-center mb-4">
-                <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronLeft className="w-4 h-4"/></button>
+                <button onClick={prevMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Previous"><ChevronLeft className="w-4 h-4"/></button>
                 <span className="font-display font-bold text-base tracking-wider uppercase text-brand-dark">
                   {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </span>
-                <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors" aria-label="Next"><ChevronRight className="w-4 h-4"/></button>
               </div>
               <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-display font-bold text-brand-text-muted tracking-widest uppercase">
                 {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X, ArrowRight } from 'lucide-react';
 
-export default function WelcomeOverlay() {
+export default function WelcomeOverlay({ onDone }) {
   const [isVisible, setIsVisible] = useState(false);
 
   useEffect(() => {
@@ -14,6 +14,7 @@ export default function WelcomeOverlay() {
   const handleClose = () => {
     setIsVisible(false);
     sessionStorage.setItem('hasSeenWelcome', 'true');
+    onDone?.();
   };
 
   if (!isVisible) return null;

@@ -121,7 +121,7 @@ export default function VipServiceDetails() {
 *Reference:* ${reference}
 
 Please assist with securing my deposit.`;
-      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank');
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     } catch {
       setBookingError('Could not start the WhatsApp booking. Please try again.');
     }
@@ -197,12 +197,12 @@ Please assist with securing my deposit.`;
       {/* FULL SCREEN LIGHTBOX */}
       {lightboxIndex !== null && (
         <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200" onClick={() => setLightboxIndex(null)} {...swipe}>
-          <button onClick={() => setLightboxIndex(null)} className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors">
+          <button onClick={() => setLightboxIndex(null)} className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors" aria-label="Close">
             <X className="w-8 h-8" />
           </button>
           
           {images.length > 1 && (
-            <button onClick={prevImage} className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all">
+            <button onClick={prevImage} className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all" aria-label="Previous">
               <ChevronLeft className="w-10 h-10" />
             </button>
           )}
@@ -215,7 +215,7 @@ Please assist with securing my deposit.`;
           />
 
           {images.length > 1 && (
-            <button onClick={nextImage} className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all">
+            <button onClick={nextImage} className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all" aria-label="Next">
               <ChevronRight className="w-10 h-10" />
             </button>
           )}
@@ -231,7 +231,7 @@ Please assist with securing my deposit.`;
         <button 
           onClick={() => navigate(-1)}
           className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full hover:bg-amber-500 hover:text-black transition-all text-white shadow-lg"
-        >
+         aria-label="Previous">
           <ChevronLeft className="w-6 h-6" />
         </button>
       </div>
@@ -279,7 +279,7 @@ Please assist with securing my deposit.`;
             
             {images.slice(1).map((img, idx) => (
               <div key={`mob-${idx}`} onClick={() => setLightboxIndex(idx + 1)} className="w-full h-full relative shrink-0 snap-center md:hidden cursor-pointer">
-                <img src={img} className="w-full h-full object-cover" />
+                <img src={img} alt={`${service.title} photo ${idx + 2}`} className="w-full h-full object-cover" />
                 <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
               </div>
             ))}
@@ -396,11 +396,11 @@ Please assist with securing my deposit.`;
                   {showCalendar && (
                     <div className="absolute top-full left-0 mt-2 w-full bg-gray-900 border border-white/10 rounded-2xl shadow-elevated p-5 z-50 animate-in fade-in zoom-in-95">
                       <div className="flex justify-between items-center mb-4">
-                        <button onClick={prevMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronLeft className="w-5 h-5"/></button>
+                        <button onClick={prevMonth} className="p-1 hover:bg-white/10 rounded-full text-white" aria-label="Previous"><ChevronLeft className="w-5 h-5"/></button>
                         <span className="font-bold text-sm tracking-widest uppercase text-white">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronRight className="w-5 h-5"/></button>
+                        <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white" aria-label="Next"><ChevronRight className="w-5 h-5"/></button>
                       </div>
                       <div className="grid grid-cols-7 gap-1 mb-2 text-center text-xs font-bold text-white/60 tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}

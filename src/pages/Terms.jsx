@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useDocumentMeta } from '../lib/seo';
 import { PageHero } from '../components/ui';
 import { 
   ShieldCheck, 
@@ -12,6 +13,7 @@ import {
 } from 'lucide-react';
 
 export default function Terms() {
+  useDocumentMeta('Terms of Service', 'The terms for using Rentals Africa.');
   const [activeSection, setActiveSection] = useState('acceptance');
 
   const sections = [
@@ -54,7 +56,7 @@ export default function Terms() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50/50 text-gray-900 font-sans pb-24">
+    <main className="min-h-screen bg-gray-50/50 text-gray-900 font-sans pb-24">
       
       {/* HERO HEADER */}
       <PageHero
@@ -171,6 +173,6 @@ export default function Terms() {
         </div>
       </div>
 
-    </div>
+    </main>
   );
 }

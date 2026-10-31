@@ -479,8 +479,7 @@ export default function AdminDashboard() {
                                disabled={!!link} // Lock input if link is already generated
                                value={draftPrices[draft._id] || ''}
                                onChange={(e) => setDraftPrices(prev => ({ ...prev, [draft._id]: e.target.value }))}
-                               className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-brand-text-muted"
-                             />
+                               className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-brand-text-muted" aria-label="e.g. 450000" />
                            </td>
                            
                            <td className="p-4 text-right whitespace-nowrap">
@@ -792,7 +791,7 @@ export default function AdminDashboard() {
                 <h2 className="text-lg md:text-xl font-display font-bold text-brand-dark">Application Review</h2>
                 <p className="text-xs md:text-xs text-brand-text-secondary font-medium mt-1">ID: {selectedApp._id}</p>
               </div>
-              <button onClick={() => setSelectedApp(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors">
+              <button onClick={() => setSelectedApp(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors" aria-label="Close">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -847,7 +846,7 @@ export default function AdminDashboard() {
                   {selectedListing.make ? `${selectedListing.make} ${selectedListing.model}` : selectedListing.title} • {selectedListing.make ? 'CAR' : selectedListing.category}
                 </p>
               </div>
-              <button onClick={() => setSelectedListing(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors">
+              <button onClick={() => setSelectedListing(null)} className="p-2 hover:bg-gray-200 rounded-full text-brand-text-secondary transition-colors" aria-label="Close">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -920,7 +919,7 @@ export default function AdminDashboard() {
           <button 
             onClick={() => setMediaViewer(null)} 
             className="absolute top-4 right-4 md:top-6 md:right-6 p-3 bg-white/10 hover:bg-white/20 rounded-full text-white transition-colors z-50"
-          >
+           aria-label="Close">
             <X className="w-6 h-6" />
           </button>
           

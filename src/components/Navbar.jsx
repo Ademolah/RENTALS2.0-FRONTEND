@@ -75,7 +75,7 @@ export default function Navbar({ center }) {
 
   return (
     <>
-      <nav className={`sticky top-0 z-[99999] w-full border-b ${dark ? 'bg-brand-dark border-white/10' : 'bg-white border-gray-100'}`}>
+      <nav className={`lg:sticky lg:top-0 z-[99999] w-full border-b ${dark ? 'bg-brand-dark border-white/10' : 'bg-white border-gray-100'}`}>
         <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap justify-between items-center">
 
@@ -96,7 +96,7 @@ export default function Navbar({ center }) {
 
             {/* Desktop links */}
             <div className="hidden lg:flex flex-1 h-[72px] items-center justify-end gap-1">
-              {links.map(({ to, label, icon: Icon, badge }) => (
+              {links.map(({ to, label }) => (
                 <NavLink key={to} to={to} end className={linkClass} aria-label={label} title={label}>
                   <span>{label}</span>
                 </NavLink>
@@ -120,7 +120,7 @@ export default function Navbar({ center }) {
                 >
                   <Bell className="w-5 h-5" />
                   {unread > 0 && (
-                    <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-primary text-white text-[11px] font-bold flex items-center justify-center border-2 border-white">{unread > 9 ? '9+' : unread}</span>
+                    <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-primary text-white text-xs font-bold flex items-center justify-center border-2 border-white">{unread > 9 ? '9+' : unread}</span>
                   )}
                 </NavLink>
               )}

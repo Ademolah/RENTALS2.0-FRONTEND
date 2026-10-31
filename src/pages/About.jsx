@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom';
+import { useDocumentMeta } from '../lib/seo';
 import {
   Building2,
   ShieldCheck,
@@ -10,6 +11,7 @@ import {
 import { Button, Badge, Container, PageHero, SectionTitle } from '../components/ui';
 
 export default function About() {
+  useDocumentMeta('About Rentals Africa', 'Premium stays, cars and VIP services in Lagos and Abuja.');
   const navigate = useNavigate();
 
   const metrics = [
@@ -62,7 +64,7 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen bg-white text-brand-dark flex flex-col">
+    <main className="min-h-screen bg-white text-brand-dark flex flex-col">
 
       <PageHero
         eyebrow="Redefining African Mobility & Hospitality"
@@ -224,6 +226,6 @@ export default function About() {
         </Container>
       </section>
 
-    </div>
+    </main>
   );
 }
