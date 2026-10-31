@@ -107,10 +107,17 @@ export default function LandlordDashboard() {
             phone: b.userId?.phoneNumber || 'N/A' 
           },
           asset: { 
-            title: b.propertyId?.title || 'Asset', 
-            location: normalizeLocation(b.propertyId?.address),
-            image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=800&q=80'
-          },
+          title: b.carId ? `${b.carId.make} ${b.carId.carModel} ${b.carId.year}` : 'Vehicle', 
+          
+          // 💡 BULLETPROOF FIX: Handles object, plain string, or fallback
+          location: typeof b.carId?.location === 'object' && b.carId?.location !== null
+            ? [b.carId.location.address, b.carId.location.city, b.carId.location.state].filter(Boolean).join(', ')
+            : typeof b.carId?.location === 'string'
+              ? b.carId.location
+              : 'Platform Pickup',
+              
+          image: b.carId?.images?.[0] || 'https://images.unsplash.com/photo-1503376760302-83f0453a4574?auto=format&fit=crop&w=800&q=80'
+        },
           createdAt: new Date(b.createdAt)
         };
       });
