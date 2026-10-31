@@ -204,7 +204,18 @@ export function useCarBooking({ car, images, user, setShowAuthModal, navigate })
 
       window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } catch {
-      setBookingError('Failed to initialize secure chat. Please try again.');
+      // Fallback: open WhatsApp without a reference so the user is never blocked
+      const waMessage = encodeURIComponent(
+        `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
+        `🚘 Vehicle: ${car.make} ${car.carModel} ${car.year}\n` +
+        `📍 Location: ${car.location?.city || 'Not specified'}\n` +
+        `📅 Pickup: ${pickupDate} at ${pickupTime}\n` +
+        `⏱ Duration: ${durationSlots * 12} hours\n` +
+        `👨‍✈️ Chauffeur: ${needsChauffeur ? 'Yes' : 'No'}\n` +
+        (needsDelivery && car.deliveryAvailable ? `🚚 Delivery to: ${deliveryAddress.trim() || 'to be confirmed'}\n` : '') +
+        `\nCould you please assist me with this reservation?`
+      );
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } finally {
       setIsWhatsappLoading(false);
     }

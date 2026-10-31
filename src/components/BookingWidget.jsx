@@ -252,7 +252,18 @@ export default function BookingWidget({ property }) {
 
       window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } catch {
-      setError("Failed to initialize secure chat. Please try again.");
+      // Fallback: open WhatsApp without a reference so the user is never blocked
+      const WHATSAPP_NUMBER = CONCIERGE_WHATSAPP;
+      const propertyIdText = property?.propertyId ? ` (ID: ${property.propertyId})` : '';
+      const waMessage = encodeURIComponent(
+        `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I am interested in booking:\n\n` +
+        `🏠 Property: ${property?.title || 'Luxury Shortlet'}${propertyIdText}\n` +
+        `📍 Location: ${property?.location || 'Not specified'}\n` +
+        `📅 Dates: ${checkIn} to ${checkOut}\n` +
+        `👥 Guests: ${guests}\n\n` +
+        `Could you please assist me with this reservation?`
+      );
+      window.open(`https://wa.me/${WHATSAPP_NUMBER}?text=${waMessage}`, '_blank', 'noopener,noreferrer');
     } finally {
       setIsWhatsappLoading(false);
     }

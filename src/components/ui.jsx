@@ -137,7 +137,7 @@ export function WhatsAppPill({ className = '' }) {
       onClick={go}
       className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#25D366] hover:bg-[#1FB955] text-white text-sm font-bold shadow-md shadow-[#25D366]/30 transition-colors ${className}`}
     >
-      <WhatsAppIcon className="w-4 h-4" /> Check out via WhatsApp
+      <WhatsAppIcon className="w-4 h-4" /> Book via WhatsApp
     </button>
   );
 }
@@ -165,7 +165,7 @@ export function WhatsAppCheckout({ onClick, loading = false, disabled = false, c
     <div className={className} data-whatsapp-checkout>
       <div className="flex items-center gap-3 my-4" aria-hidden="true">
         <span className="flex-1 h-px bg-gray-200" />
-        <span className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text-muted">or check out on WhatsApp</span>
+        <span className="text-xs font-bold uppercase tracking-[0.18em] text-brand-text-muted">or book via WhatsApp</span>
         <span className="flex-1 h-px bg-gray-200" />
       </div>
       <button
@@ -178,7 +178,7 @@ export function WhatsAppCheckout({ onClick, loading = false, disabled = false, c
           <WhatsAppIcon className="w-8 h-8" />
         </span>
         <span className="flex-1 min-w-0">
-          <span className="block text-lg font-display font-bold leading-tight">{loading ? 'Opening WhatsApp...' : 'Check out via WhatsApp'}</span>
+          <span className="block text-lg font-display font-bold leading-tight">{loading ? 'Opening WhatsApp...' : 'Book via WhatsApp'}</span>
           <span className="block text-sm text-white/90 leading-snug">Book and pay through WhatsApp</span>
         </span>
         <svg viewBox="0 0 24 24" className="w-5 h-5 shrink-0 transition-transform group-hover:translate-x-0.5" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>

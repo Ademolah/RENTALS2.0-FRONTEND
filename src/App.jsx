@@ -100,6 +100,7 @@ function App() {
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar
             activeCategory={activeCategory}
+            onCategoryChange={isHomePage ? setActiveCategory : undefined}
             center={isHomePage ? (
               <AdvancedSearch
                 activeCategory={activeCategory}

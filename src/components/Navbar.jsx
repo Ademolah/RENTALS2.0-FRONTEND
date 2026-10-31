@@ -3,12 +3,20 @@ import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import {
   Menu, X, LogOut, LayoutDashboard, ChevronRight, Repeat, Home,
   User as UserIcon, Briefcase, Heart, Bell, LifeBuoy, Store, Plane,
+  Key, CarFront, Crown, Building2,
 } from 'lucide-react';
+
+const CATEGORIES = [
+  { id: 'shortlet', label: 'Shortlets', icon: Key },
+  { id: 'car', label: 'Car Rentals', icon: CarFront },
+  { id: 'vip', label: 'VIP Reservations', icon: Crown },
+  { id: 'hotel', label: 'Hotels', icon: Building2 },
+];
 import { getUnreadCountApi } from '../api/user';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
-export default function Navbar({ center }) {
+export default function Navbar({ center, activeCategory, onCategoryChange }) {
   const { pathname } = useLocation();
   const navigate = useNavigate();
   const { user, logout, showAuthModal, setShowAuthModal } = useAuth();
@@ -239,6 +247,30 @@ export default function Navbar({ center }) {
 
           </div>
         </div>
+
+        {/* Category tabs — home page only */}
+        {onCategoryChange && !dark && (
+          <div className="border-t border-gray-100">
+            <div className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="flex gap-1 py-2 overflow-x-auto scrollbar-hide">
+                {CATEGORIES.map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    onClick={() => onCategoryChange(id)}
+                    className={`flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold whitespace-nowrap transition-all ${
+                      activeCategory === id
+                        ? 'bg-brand-dark text-white shadow-sm'
+                        : 'text-brand-text-secondary hover:text-brand-dark hover:bg-gray-100'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
       </nav>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />

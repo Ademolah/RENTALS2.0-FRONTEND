@@ -138,7 +138,9 @@ export default function VipDetails() {
       const encodedMessage = encodeURIComponent(message);
       window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodedMessage}`, '_blank', 'noopener,noreferrer');
     } catch {
-      setBookingError("Failed to initialize secure chat. Please try again.");
+      // Fallback: open WhatsApp without a reference so the user is never blocked
+      const message = `Hi Rentals Africa, I am ${user.firstName}, a verified guest. I would like to request a VIP reservation.\n\n*Venue:* ${establishment.title}\n*Date:* ${reservationDate}\n*Time:* ${arrivalTime}\n*Guests:* ${guestCount}\n\nPlease assist with securing my deposit.`;
+      window.open(`https://wa.me/${CONCIERGE_WHATSAPP}?text=${encodeURIComponent(message)}`, '_blank', 'noopener,noreferrer');
     } finally {
       setIsWhatsappLoading(false);
     }
