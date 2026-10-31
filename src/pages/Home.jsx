@@ -346,17 +346,17 @@ export default function Home({
 
           {/* Trust badges */}
           {showCuratedHome && (
-            <div className="mb-10 grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-up" style={{ animationDelay: '0.15s' }}>
+            <div className="mb-10 rounded-3xl bg-gradient-to-br from-gray-100 via-gray-100 to-gray-50 border border-gray-200/70 grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-gray-200 animate-fade-up" style={{ animationDelay: '0.15s' }}>
               {TRUST_BADGES.map((badge) => {
                 const Icon = badge.icon;
                 return (
-                  <div key={badge.label} className="flex items-center gap-3 p-4 rounded-xl bg-gray-50/80 border border-gray-100/60">
-                    <div className="w-9 h-9 rounded-lg bg-white flex items-center justify-center flex-shrink-0 shadow-soft">
-                      <Icon className="w-4 h-4 text-brand-dark" />
+                  <div key={badge.label} className="flex items-center gap-4 px-6 py-5">
+                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center flex-shrink-0 shadow-card ring-1 ring-gray-200/60">
+                      <Icon className="w-5 h-5 text-brand-dark" />
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-brand-dark truncate">{badge.label}</p>
-                      <p className="text-sm text-brand-text-muted truncate">{badge.desc}</p>
+                      <p className="text-base font-bold text-brand-dark truncate">{badge.label}</p>
+                      <p className="text-sm text-brand-text-secondary truncate">{badge.desc}</p>
                     </div>
                   </div>
                 );
