@@ -4,6 +4,9 @@ import { toLocalISO } from '../lib/dates';
 import { useParams, useNavigate } from 'react-router-dom';
 import { MapPin, Clock, Calendar as CalendarIcon, Users, ShieldCheck, ChevronLeft, ChevronRight, CheckCircle2, Wine, Loader2, AlertCircle, X } from 'lucide-react';
 import { getVipEstablishmentById, initiateVipReservation } from '../api/vip';
+import { checkPropertyAvailability } from '../api/properties';
+import AvailabilityNotice from '../components/AvailabilityNotice';
+import { addDays } from '../lib/availability';
 import ShareButton from '../components/ShareButton';
 import { useDocumentMeta } from '../lib/seo';
 import { WhatsAppCheckout, WhatsAppPill } from '../components/ui';
@@ -11,6 +14,7 @@ import ReviewsSection from '../components/detail/ReviewsSection';
 import { DirectionsLink, ManageListingCard, isOwnListing, useSwipe, coordsOf } from '../components/detail/extras';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
+import { cleanList } from '../lib/lists';
 
 export default function VipDetails() {
   const { id } = useParams();
@@ -30,6 +34,9 @@ export default function VipDetails() {
   const [arrivalTime, setArrivalTime] = useState('');
   const [isReserving, setIsReserving] = useState(false);
   const [bookingError, setBookingError] = useState('');
+
+  // Availability check state
+  const [availabilityStatus, setAvailabilityStatus] = useState('idle'); // 'idle' | 'checking' | 'free' | 'booked'
 
   // Image Lightbox State
   const [lightboxIndex, setLightboxIndex] = useState(null);
@@ -61,6 +68,10 @@ export default function VipDetails() {
       setBookingError("Please select a date and your expected arrival time.");
       return;
     }
+    if (availabilityStatus === 'booked') {
+      setBookingError("These dates have been booked. Please choose another date.");
+      return;
+    }
     setIsReserving(true);
     setBookingError('');
     try {
@@ -77,17 +88,21 @@ export default function VipDetails() {
       } else {
         setBookingError("Failed to initialize payment gateway.");
       }
-    } catch {
+    } catch (err) {
       setBookingError(err.response?.data?.message || "Failed to initiate reservation.");
     } finally {
       setIsReserving(false);
     }
   };
 
- const handleWhatsAppReservation = async () => {
+  const handleWhatsAppReservation = async () => {
     if (!reservationDate || !arrivalTime) {
       setBookingError("Please select a date and your expected arrival time first.");
       setShowCalendar(true);
+      return;
+    }
+    if (availabilityStatus === 'booked') {
+      setBookingError("These dates have been booked. Please choose another date.");
       return;
     }
 
@@ -151,10 +166,19 @@ export default function VipDetails() {
     return days;
   };
 
-  const handleDateSelect = (dateObj) => {
+  const handleDateSelect = async (dateObj) => {
     const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-    setReservationDate(offsetDate.toISOString().split('T')[0]);
+    const selected = offsetDate.toISOString().split('T')[0];
+    setReservationDate(selected);
     setShowCalendar(false);
+    setBookingError('');
+    setAvailabilityStatus('checking');
+    try {
+      const result = await checkPropertyAvailability(id, { startDate: selected, endDate: addDays(selected, 1) });
+      setAvailabilityStatus(result?.available === false ? 'booked' : 'free');
+    } catch {
+      setAvailabilityStatus('idle');
+    }
   };
 
   const nextMonth = () => setCalendarViewDate(new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth() + 1, 1));
@@ -350,11 +374,11 @@ export default function VipDetails() {
             </div>
           </div>
 
-          {establishment.services && establishment.services.length > 0 && (
+          {cleanList(establishment.services).length > 0 && (
             <div>
               <h3 className="text-sm font-bold uppercase tracking-widest text-amber-500 mb-6">Concierge Services Available</h3>
               <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                {establishment.services.map((service, idx) => (
+                {cleanList(establishment.services).map((service, idx) => (
                   <div key={idx} className="flex items-center space-x-3 text-gray-200">
                     <CheckCircle2 className="w-5 h-5 text-amber-500 shrink-0" />
                     <span className="text-base font-bold tracking-wide">{service}</span>
@@ -384,6 +408,24 @@ export default function VipDetails() {
                 </div>
               </div>
 
+              {availabilityStatus === 'checking' && (
+                <div className="mb-6 flex items-center gap-2 text-sm text-white/70">
+                  <Loader2 className="w-4 h-4 animate-spin" /> Checking availability…
+                </div>
+              )}
+              {availabilityStatus === 'booked' && reservationDate && (
+                <div className="mb-6">
+                  <AvailabilityNotice
+                    start={reservationDate}
+                    end={addDays(reservationDate, 1)}
+                    isFree={async (s) => {
+                      const r = await checkPropertyAvailability(id, { startDate: s, endDate: addDays(s, 1) });
+                      return r?.available !== false;
+                    }}
+                    onPick={(s) => { setReservationDate(s); setAvailabilityStatus('free'); setBookingError(''); }}
+                  />
+                </div>
+              )}
               {bookingError && (
                 <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-xl flex items-start text-red-400 text-sm">
                   <AlertCircle className="w-5 h-5 mr-3 shrink-0" />

@@ -3,20 +3,21 @@ import { useDocumentMeta } from '../lib/seo';
 import { PageHero } from '../components/ui';
 import { ChevronRight, UserCheck } from 'lucide-react';
 
+const sections = [
+  { id: 'data-collection', title: '1. Information We Collect' },
+  { id: 'how-we-use', title: '2. How We Use Your Data' },
+  { id: 'identity-verification', title: '3. Identity & Background Checks' },
+  { id: 'data-sharing', title: '4. Third-Party Data Sharing' },
+  { id: 'security', title: '5. Data Security & Storage' },
+  { id: 'cookies', title: '6. Cookies & Tracking Technologies' },
+  { id: 'your-rights', title: '7. Your Privacy Rights & Access' },
+  { id: 'updates', title: '8. Policy Updates & Contact' },
+];
+
 export default function Privacy() {
   useDocumentMeta('Privacy Policy', 'How Rentals Africa handles your data.');
   const [activeSection, setActiveSection] = useState('data-collection');
 
-  const sections = [
-    { id: 'data-collection', title: '1. Information We Collect' },
-    { id: 'how-we-use', title: '2. How We Use Your Data' },
-    { id: 'identity-verification', title: '3. Identity & Background Checks' },
-    { id: 'data-sharing', title: '4. Third-Party Data Sharing' },
-    { id: 'security', title: '5. Data Security & Storage' },
-    { id: 'cookies', title: '6. Cookies & Tracking Technologies' },
-    { id: 'your-rights', title: '7. Your Privacy Rights & Access' },
-    { id: 'updates', title: '8. Policy Updates & Contact' },
-  ];
 
   const scrollToSection = (id) => {
     setActiveSection(id);

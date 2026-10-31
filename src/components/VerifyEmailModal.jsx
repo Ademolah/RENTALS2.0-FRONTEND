@@ -35,18 +35,47 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
   };
 
   // 15-Minute Countdown Timer
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (isOpen) setTimeLeft(15 * 60); // reset the timer each time the modal opens
+  }
+
   useEffect(() => {
-    if (!isOpen) return;
-    
-    // Reset timer when modal opens
-    setTimeLeft(15 * 60); 
-    
+    if (!isOpen) return undefined;
+
     const interval = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
     }, 1000);
 
     return () => clearInterval(interval);
   }, [isOpen]);
+
+  const submitCode = async (otpCode) => {
+    
+    if (otpCode.length !== 6) {
+      setError('Please enter the full 6-digit verification code.');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await verifyEmailApi(email, otpCode);
+      // Pass the token and user data back to the parent to complete login
+      onSuccess(response.token, response.data.user);
+    } catch (err) {
+      const backendMessage = err.response?.data?.message || 'Invalid or expired verification code. Please try again.';
+      
+      setError(backendMessage);
+      // Vibrate input boxes on error (handled via CSS class below)
+      setOtp(['', '', '', '', '', '']);
+      inputRefs.current[0].focus();
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   // Handle OTP Input Changes
   const handleChange = (e, index) => {
@@ -57,6 +86,7 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
     // Take only the last character to prevent multi-character bugs
     newOtp[index] = value.substring(value.length - 1);
     setOtp(newOtp);
+    if (newOtp.join('').length === 6) submitCode(newOtp.join(''));
 
     // Auto-focus next input
     if (value && index < 5 && inputRefs.current[index + 1]) {
@@ -84,46 +114,17 @@ export const VerifyEmailModal = ({ isOpen, onClose, email, onSuccess, onResend }
       newOtp[i] = char;
     });
     setOtp(newOtp);
+    if (newOtp.join('').length === 6) submitCode(newOtp.join(''));
 
     // Focus the last filled input
     const focusIndex = pasteData.length < 6 ? pasteData.length : 5;
     inputRefs.current[focusIndex].focus();
   };
 
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e?.preventDefault();
-    const otpCode = otp.join('');
-    
-    if (otpCode.length !== 6) {
-      setError('Please enter the full 6-digit verification code.');
-      return;
-    }
-
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const response = await verifyEmailApi(email, otpCode);
-      // Pass the token and user data back to the parent to complete login
-      onSuccess(response.token, response.data.user);
-    } catch (err) {
-      const backendMessage = err.response?.data?.message || 'Invalid or expired verification code. Please try again.';
-      
-      setError(backendMessage);
-      // Vibrate input boxes on error (handled via CSS class below)
-      setOtp(['', '', '', '', '', '']);
-      inputRefs.current[0].focus();
-    } finally {
-      setIsLoading(false);
-    }
+    return submitCode(otp.join(''));
   };
-
-  // Auto-submit when all 6 digits are entered
-  useEffect(() => {
-    if (otp.join('').length === 6) {
-      handleSubmit();
-    }
-  }, [otp]);
 
   // Format Time for Display
   const minutes = Math.floor(timeLeft / 60);

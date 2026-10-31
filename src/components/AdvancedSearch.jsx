@@ -48,14 +48,16 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const isStandard = !isCar && !isVip; // Catches both shortlets and hotels for standard layout
 
   // Automatically clear search bar inputs when switching service categories
-  useEffect(() => {
+  const [formCategory, setFormCategory] = useState(activeCategory);
+  if (formCategory !== activeCategory) {
+    setFormCategory(activeCategory);
     setLocation('');
     setCheckIn('');
     setCheckOut('');
     setServiceType('');
     setGuests({ adults: 1, children: 0 });
     setActiveMenu(null);
-  }, [activeCategory]);
+  }
 
   // Prevent background scrolling when mobile modal is open
   useEffect(() => {

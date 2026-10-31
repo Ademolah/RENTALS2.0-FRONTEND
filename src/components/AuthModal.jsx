@@ -94,21 +94,28 @@ export default function AuthModal({ isOpen, onClose }) {
     finishSignIn(u);
   };
 
+  // Forget anything typed once the dialog is closed, and always reopen on Sign in.
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (!isOpen) {
+      setIsLogin(true);
+      setError('');
+      setFieldErrors({});
+      setLocalPhone('');
+      setShowPassword(false);
+      setShowConfirmPassword(false);
+      setShowForgot(false);
+      setShowVerifyEmail(false);
+      setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber: '', role: 'USER' });
+    }
+  }
+
+  // Make Google ask which account to use every time the dialog opens.
   useEffect(() => {
     if (isOpen) {
       try { googleLogout(); } catch { /* ignore */ }
-      return;
     }
-    // Forget anything typed once the dialog is closed, and always reopen on Sign in.
-    setIsLogin(true);
-    setError('');
-    setFieldErrors({});
-    setLocalPhone('');
-    setShowPassword(false);
-    setShowConfirmPassword(false);
-    setShowForgot(false);
-    setShowVerifyEmail(false);
-    setFormData({ email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber: '', role: 'USER' });
   }, [isOpen]);
 
   if (!isOpen) return null;

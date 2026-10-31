@@ -10,7 +10,12 @@ export default function SearchBox({ value = '', onChange, placeholder = 'Search 
   const [recent, setRecent] = useState(getRecentSearches);
   const wrapRef = useRef(null);
 
-  useEffect(() => { setText(value); }, [value]);
+  // Keep the box in step with the value the page passes in (adjusted during render).
+  const [lastValue, setLastValue] = useState(value);
+  if (lastValue !== value) {
+    setLastValue(value);
+    setText(value);
+  }
 
   useEffect(() => {
     const close = (e) => { if (wrapRef.current && !wrapRef.current.contains(e.target)) setOpen(false); };

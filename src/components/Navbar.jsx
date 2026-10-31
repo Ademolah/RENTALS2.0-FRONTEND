@@ -20,10 +20,17 @@ export default function Navbar({ center }) {
   const hostMode = pathname.startsWith('/dashboard/landlord');
   const dark = hostMode && isHost;
 
-  useEffect(() => { setMenuOpen(false); }, [pathname]);
+  // Navigating closes the menu (adjusted during render instead of in an effect).
+  const [menuPath, setMenuPath] = useState(pathname);
+  if (menuPath !== pathname) {
+    setMenuPath(pathname);
+    setMenuOpen(false);
+  }
+
+  const unreadCount = user ? unread : 0;
 
   useEffect(() => {
-    if (!user) { setUnread(0); return; }
+    if (!user) return undefined;
     let active = true;
     getUnreadCountApi().then((n) => active && setUnread(n)).catch(() => active && setUnread(0));
     return () => { active = false; };
@@ -108,7 +115,7 @@ export default function Navbar({ center }) {
               {user && (
                 <NavLink
                   to="/notifications"
-                  aria-label={unread ? `Notifications, ${unread} unread` : 'Notifications'}
+                  aria-label={unreadCount ? `Notifications, ${unreadCount} unread` : 'Notifications'}
                   title="Notifications"
                   className={({ isActive }) =>
                     `relative w-11 h-11 rounded-full flex items-center justify-center transition-colors ${
@@ -119,8 +126,8 @@ export default function Navbar({ center }) {
                   }
                 >
                   <Bell className="w-5 h-5" />
-                  {unread > 0 && (
-                    <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-primary text-white text-xs font-bold flex items-center justify-center border-2 border-white">{unread > 9 ? '9+' : unread}</span>
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-brand-primary text-white text-xs font-bold flex items-center justify-center border-2 border-white">{unreadCount > 9 ? '9+' : unreadCount}</span>
                   )}
                 </NavLink>
               )}

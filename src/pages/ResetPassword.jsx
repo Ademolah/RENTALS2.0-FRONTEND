@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useDocumentMeta } from '../lib/seo';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Eye, EyeOff, Lock, Loader2, CheckCircle2, AlertCircle, ArrowRight } from 'lucide-react';
@@ -17,11 +17,7 @@ export default function ResetPassword() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
-  useEffect(() => {
-    if (!token) {
-      setError("Invalid or missing recovery token. Please request a new password reset link.");
-    }
-  }, [token]);
+  const shownError = error || (!token ? 'Invalid or missing recovery token. Please request a new password reset link.' : '');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -97,10 +93,10 @@ export default function ResetPassword() {
                 Your new password must be at least 8 characters long and include a number and a letter.
               </p>
 
-              {error && (
+              {shownError && (
                 <div className="mb-6 p-4 bg-red-50 border border-red-100 text-red-600 rounded-xl text-base font-semibold flex items-start animate-in fade-in">
                   <AlertCircle className="w-4 h-4 mr-2 shrink-0 mt-0.5" />
-                  <span>{error}</span>
+                  <span>{shownError}</span>
                 </div>
               )}
 

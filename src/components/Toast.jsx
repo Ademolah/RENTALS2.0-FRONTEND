@@ -46,6 +46,7 @@ export function ToastProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- useToast is imported by many files and tests, so it stays beside the provider
 export function useToast() {
   const ctx = useContext(ToastContext);
   if (!ctx) return { show() {}, success() {}, error() {}, info() {} };

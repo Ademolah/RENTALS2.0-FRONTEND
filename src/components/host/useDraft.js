@@ -8,6 +8,12 @@ export function useDraft(key, isOpen, values, restore) {
   const initial = useRef(null);
   const json = JSON.stringify(values);
 
+  // Always-current copies for the effects below, so they only re-run when the form opens or its values change.
+  const latest = useRef({ values, restore });
+  useEffect(() => {
+    latest.current = { values, restore };
+  });
+
   useEffect(() => {
     if (!isOpen) {
       ready.current = false;
@@ -21,28 +27,31 @@ export function useDraft(key, isOpen, values, restore) {
       if (raw) {
         const draft = JSON.parse(raw);
         if (draft?.values) {
-          restore(draft.values);
+          latest.current.restore(draft.values);
+          // eslint-disable-next-line react-hooks/set-state-in-effect -- restoring a saved draft happens once when the form opens and also sets the parent's fields
           setSavedAt(draft.savedAt || Date.now());
         }
       }
     } catch {
       /* storage unavailable or corrupt draft */
     }
-  }, [isOpen]);
+    // json is read only to remember the form's starting values; re-running on every change would re-restore the draft
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, key]);
 
   useEffect(() => {
     if (!isOpen || !ready.current || json === initial.current) return undefined;
     const timer = setTimeout(() => {
       try {
         const now = Date.now();
-        localStorage.setItem(key, JSON.stringify({ savedAt: now, values }));
+        localStorage.setItem(key, JSON.stringify({ savedAt: now, values: latest.current.values }));
         setSavedAt(now);
       } catch {
         /* storage unavailable */
       }
     }, 800);
     return () => clearTimeout(timer);
-  }, [isOpen, json]);
+  }, [isOpen, json, key]);
 
   const clearDraft = () => {
     try {

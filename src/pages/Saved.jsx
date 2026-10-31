@@ -20,22 +20,31 @@ const toCard = (p) => ({
   isRentalVerified: p.isVerified ?? true,
 });
 
+const hasToken = () => !!localStorage.getItem('rentals_token');
+
 export default function Saved() {
   useDocumentMeta('Saved stays', 'The stays you have saved on Rentals Africa.');
-  const [items, setItems] = useState(null);
+  const [items, setItems] = useState(() => (hasToken() ? null : []));
   const [error, setError] = useState(false);
   const [removing, setRemoving] = useState(null);
+
+  const fetchItems = useCallback(
+    () => getMyFavoritesApi()
+      .then((r) => setItems(r?.data?.favorites || r?.favorites || []))
+      .catch(() => setError(true)),
+    []
+  );
 
   const load = useCallback(() => {
     setError(false);
     setItems(null);
-    if (!localStorage.getItem('rentals_token')) return setItems([]);
-    getMyFavoritesApi()
-      .then((r) => setItems(r?.data?.favorites || r?.favorites || []))
-      .catch(() => setError(true));
-  }, []);
+    if (!hasToken()) return setItems([]);
+    return fetchItems();
+  }, [fetchItems]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    if (hasToken()) fetchItems();
+  }, [fetchItems]);
 
   const unsave = async (p) => {
     setRemoving(idOf(p));

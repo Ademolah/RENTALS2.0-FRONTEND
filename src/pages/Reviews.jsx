@@ -11,26 +11,29 @@ export default function Reviews() {
   const navigate = useNavigate();
   useDocumentMeta('Guest reviews', 'What guests say about this listing on Rentals Africa.');
 
-  const [state, setState] = useState({ status: 'loading', items: [], summary: null });
+  const [result, setResult] = useState({ key: null, status: 'loading', items: [], summary: null });
   const [filter, setFilter] = useState(0);
   const [attempt, setAttempt] = useState(0);
+
+  // Until the answer for this listing (and this retry) arrives, the page shows the loading state.
+  const requestKey = `${id}|${attempt}`;
+  const state = result.key === requestKey ? result : { status: 'loading', items: [], summary: null };
 
   useEffect(() => {
     window.scrollTo(0, 0);
     let active = true;
-    setState((s) => ({ ...s, status: 'loading' }));
     getListingReviews(id)
-      .then((r) => active && setState({ status: 'ready', ...r }))
+      .then((r) => active && setResult({ key: requestKey, status: 'ready', ...r }))
       .catch((e) => {
         if (!active) return;
         if (e?.response?.status === 404) {
-          setState({ status: 'ready', items: [], summary: { average: 0, count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } } });
+          setResult({ key: requestKey, status: 'ready', items: [], summary: { average: 0, count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } } });
         } else {
-          setState({ status: 'error', items: [], summary: null });
+          setResult({ key: requestKey, status: 'error', items: [], summary: null });
         }
       });
     return () => { active = false; };
-  }, [id, attempt]);
+  }, [id, requestKey]);
 
   const visible = filter ? state.items.filter((r) => Math.round(r.rating) === filter) : state.items;
 

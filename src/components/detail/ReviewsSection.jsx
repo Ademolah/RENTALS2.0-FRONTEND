@@ -62,23 +62,26 @@ export function ReviewCard({ review }) {
 // Shared reviews block for shortlet, hotel and VIP detail pages.
 // `refreshKey` lets a page reload the list after a review is submitted.
 export default function ReviewsSection({ listingId, fallback, onWrite, refreshKey = 0, limit = 4 }) {
-  const [state, setState] = useState({ status: 'loading', items: [], summary: null });
   const [attempt, setAttempt] = useState(0);
+  const requestKey = `${listingId}|${refreshKey}|${attempt}`;
+  const [result, setResult] = useState({ key: null, status: 'loading', items: [], summary: null });
 
   useEffect(() => {
-    if (!listingId) return;
+    if (!listingId) return undefined;
     let active = true;
-    setState((s) => ({ ...s, status: 'loading' }));
     getListingReviews(listingId)
-      .then((r) => active && setState({ status: 'ready', ...r }))
+      .then((r) => active && setResult({ key: requestKey, status: 'ready', ...r }))
       .catch((e) => {
         if (!active) return;
         // A listing with no review record answers 404: treat as "no reviews yet".
-        if (e?.response?.status === 404) setState({ status: 'ready', items: [], summary: { average: 0, count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } } });
-        else setState({ status: 'error', items: [], summary: null });
+        if (e?.response?.status === 404) setResult({ key: requestKey, status: 'ready', items: [], summary: { average: 0, count: 0, distribution: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } } });
+        else setResult({ key: requestKey, status: 'error', items: [], summary: null });
       });
     return () => { active = false; };
-  }, [listingId, refreshKey, attempt]);
+  }, [listingId, requestKey]);
+
+  // A newer request (another listing, a refresh or a retry) shows the skeleton until its answer arrives.
+  const state = result.key === requestKey ? result : { ...result, status: 'loading' };
 
   const count = state.summary?.count || 0;
 

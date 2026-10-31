@@ -19,27 +19,32 @@ export default function VipListingView({ defaultLocation, query }) {
   const [activeTab, setActiveTab] = useState('venues'); // 'venues' | 'services'
   const [selectedLocation, setSelectedLocation] = useState(defaultLocation || null);
 
-  const loadVipData = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(false);
-      const [venuesRes, servicesRes] = await Promise.allSettled([getVipEstablishments(), getVipServices()]);
-      if (venuesRes.status === 'rejected' && servicesRes.status === 'rejected') setError(true);
-      if (venuesRes.status === 'fulfilled') {
-        setEstablishments(venuesRes.value.data?.establishments || venuesRes.value.data || []);
-      }
-      if (servicesRes.status === 'fulfilled') {
-        setServices(servicesRes.value.data?.services || servicesRes.value.data || []);
-      }
-    } catch (e) {
-      console.error('Failed to load VIP data', e);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchVipData = useCallback(
+    () => Promise.allSettled([getVipEstablishments(), getVipServices()])
+      .then(([venuesRes, servicesRes]) => {
+        if (venuesRes.status === 'rejected' && servicesRes.status === 'rejected') setError(true);
+        if (venuesRes.status === 'fulfilled') {
+          setEstablishments(venuesRes.value.data?.establishments || venuesRes.value.data || []);
+        }
+        if (servicesRes.status === 'fulfilled') {
+          setServices(servicesRes.value.data?.services || servicesRes.value.data || []);
+        }
+      })
+      .catch((e) => {
+        console.error('Failed to load VIP data', e);
+        setError(true);
+      })
+      .finally(() => setLoading(false)),
+    []
+  );
 
-  useEffect(() => { loadVipData(); }, [loadVipData]);
+  const loadVipData = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    return fetchVipData();
+  }, [fetchVipData]);
+
+  useEffect(() => { fetchVipData(); }, [fetchVipData]);
 
   // Helper to filter by city
   const filterByLocation = (items, targetCity) => {

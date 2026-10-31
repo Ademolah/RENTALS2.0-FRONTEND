@@ -1,13 +1,8 @@
-import { useRef } from 'react';
 import { LogIn, LogOut, Moon, CalendarDays, Navigation, Settings2 } from 'lucide-react';
 import { Card, Button } from '../ui';
+import { timeText, directionsUrl } from './detailUtils';
 
 const isTime = (t) => typeof t === 'string' && /^\d{1,2}:\d{2}/.test(t);
-
-export const timeText = (t) => {
-  const [h, m] = t.split(':').map(Number);
-  return `${((h + 11) % 12) + 1}:${String(m).padStart(2, '0')} ${h < 12 ? 'AM' : 'PM'}`;
-};
 
 const naira = (n) => `₦${Math.round(n).toLocaleString()}`;
 
@@ -38,22 +33,6 @@ export function StayFacts({ checkInTime, checkOutTime, price, nightly = true }) 
   );
 }
 
-// Accepts {lat,lng}, {latitude,longitude} or GeoJSON [lng, lat].
-export function coordsOf(c) {
-  if (!c) return {};
-  if (Array.isArray(c) && c.length === 2 && c.every((n) => Number.isFinite(Number(n)))) return { lat: Number(c[1]), lng: Number(c[0]) };
-  const lat = Number(c.lat ?? c.latitude);
-  const lng = Number(c.lng ?? c.lon ?? c.longitude);
-  return Number.isFinite(lat) && Number.isFinite(lng) ? { lat, lng } : {};
-}
-
-export function directionsUrl({ lat, lng, address }) {
-  if (lat !== undefined && lat !== null && lng !== undefined && lng !== null && !Number.isNaN(Number(lat))) {
-    return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
-  }
-  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address || '')}`;
-}
-
 export function DirectionsLink({ lat, lng, address, className = '' }) {
   if (!address && (lat === undefined || lat === null)) return null;
   return (
@@ -66,13 +45,6 @@ export function DirectionsLink({ lat, lng, address, className = '' }) {
       <Navigation className="w-5 h-5" /> Get directions
     </a>
   );
-}
-
-// The signed-in host viewing their own listing sees this instead of the booking panel.
-export function isOwnListing(user, ownerId) {
-  if (!user || !ownerId) return false;
-  const uid = String(user._id || user.id || '');
-  return !!uid && uid === String(ownerId);
 }
 
 export function ManageListingCard({ status, className = '' }) {
@@ -92,20 +64,6 @@ export function ManageListingCard({ status, className = '' }) {
       <Button to="/dashboard/landlord" className="mt-5 w-full">Manage listing</Button>
     </Card>
   );
-}
-
-// Touch swipe for the lightbox: onSwipe(-1) = next, onSwipe(1) = previous.
-export function useSwipe(onSwipe) {
-  const start = useRef(null);
-  return {
-    onTouchStart: (e) => { start.current = e.touches[0].clientX; },
-    onTouchEnd: (e) => {
-      if (start.current === null) return;
-      const dx = e.changedTouches[0].clientX - start.current;
-      start.current = null;
-      if (Math.abs(dx) > 50) onSwipe(dx < 0 ? -1 : 1);
-    },
-  };
 }
 
 export function PhotoCount({ current, total, className = '' }) {

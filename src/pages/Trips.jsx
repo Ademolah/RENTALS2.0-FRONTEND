@@ -22,25 +22,28 @@ const TABS = [
   { id: 'cancelled', label: 'Cancelled', empty: 'No cancelled bookings', hint: 'Bookings you cancel will be listed here.' },
 ];
 
+const hasToken = () => !!localStorage.getItem('rentals_token');
+
 export default function Trips() {
   useDocumentMeta('My trips', 'Your upcoming, past and cancelled bookings on Rentals Africa.');
-  const [bookings, setBookings] = useState(null);
+  const [bookings, setBookings] = useState(() => (hasToken() ? null : []));
   const [error, setError] = useState(false);
   const [tab, setTab] = useState('upcoming');
   const [openId, setOpenId] = useState(null);
   const [category, setCategory] = useState('all');
   const [params, setParams] = useSearchParams();
 
+  const fetchBookings = useCallback(() => fetchGuestBookings().then(setBookings).catch(() => setError(true)), []);
+
   const load = useCallback(() => {
     setError(false);
     setBookings(null);
-    fetchGuestBookings().then(setBookings).catch(() => setError(true));
-  }, []);
+    return fetchBookings();
+  }, [fetchBookings]);
 
   useEffect(() => {
-    if (localStorage.getItem('rentals_token')) load();
-    else setBookings([]);
-  }, [load]);
+    if (hasToken()) fetchBookings();
+  }, [fetchBookings]);
 
   const inCategory = useMemo(() => {
     const cat = CATEGORIES.find((c) => c.id === category);
@@ -55,19 +58,25 @@ export default function Trips() {
 
   const visible = inCategory.filter((b) => b.bucket === tab);
 
+  // A link like /trips?booking=ID opens that booking once the list has loaded (adjusted during render).
   const wanted = params.get('booking');
-  useEffect(() => {
-    if (!wanted || !bookings) return;
+  const [openedFor, setOpenedFor] = useState(null);
+  if (wanted && bookings && openedFor !== wanted) {
+    setOpenedFor(wanted);
     const match = bookings.find((b) => b.id === wanted);
     if (match) {
       setCategory('all');
       setTab(match.bucket);
       setOpenId(match.id);
     }
+  }
+
+  useEffect(() => {
+    if (!wanted || !bookings) return;
     const next = new URLSearchParams(params);
     next.delete('booking');
     setParams(next, { replace: true });
-  }, [wanted, bookings]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [wanted, bookings, params, setParams]);
   const selected = bookings?.find((b) => b.id === openId);
 
   const applyChange = (id, patch) => setBookings((prev) => prev.map((b) => (b.id === id ? { ...b, ...patch } : b)));

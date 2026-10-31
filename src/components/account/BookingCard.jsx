@@ -1,15 +1,7 @@
 import { MapPin, Calendar } from 'lucide-react';
-import { Badge } from '../ui';
+import { statusBadge } from './statusBadge';
 
 const fmt = (d) => d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
-
-export function statusBadge(b) {
-  if (b.cancelled) return <Badge tone="gray">Cancelled</Badge>;
-  if (b.released || b.completed) return <Badge tone="green">Completed</Badge>;
-  if (!b.paid) return <Badge tone="amber">Awaiting payment</Badge>;
-  if (b.guestConfirmed) return <Badge tone="dark">Checked in</Badge>;
-  return <Badge tone="green">Confirmed</Badge>;
-}
 
 export default function BookingCard({ booking, onOpen }) {
   const showEnd = booking.end && booking.type !== 'VIP' && booking.type !== 'VIP_SERVICE';

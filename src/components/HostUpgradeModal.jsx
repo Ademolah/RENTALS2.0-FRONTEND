@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { X, Loader2, ShieldCheck, Clock, XCircle, Building, MapPin, CreditCard } from 'lucide-react';
 import { HostService } from '../api/host';
 
@@ -15,6 +15,11 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
   });
 
   
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
+
   useEffect(() => {
     const fetchStatus = async () => {
       if (isOpen) {
@@ -27,7 +32,7 @@ export default function HostUpgradeModal({ isOpen, onClose }) {
           const dbStatus = res.data?.status || 'IDLE';
           
           if (dbStatus === 'APPROVED') {
-            onClose(); // If they are somehow already approved, just close it
+            onCloseRef.current(); // If they are somehow already approved, just close it
           } else {
             setAppStatus(dbStatus);
             // If rejected, inject the exact reason the admin typed!

@@ -41,10 +41,13 @@ export default function BookingWidget({ property }) {
   const [calendarMode, setCalendarMode] = useState('checkIn'); // 'checkIn' | 'checkOut'
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
 
-  useEffect(() => {
+  // Changing the dates clears any earlier availability result (adjusted during render).
+  const [datesKey, setDatesKey] = useState(`${checkIn}|${checkOut}`);
+  if (datesKey !== `${checkIn}|${checkOut}`) {
+    setDatesKey(`${checkIn}|${checkOut}`);
     setAvailabilityStatus(null);
     setError('');
-  }, [checkIn, checkOut]);
+  }
 
   const pricingDetails = useMemo(() => {
     if (!checkIn || !checkOut || !property?.price) return null;

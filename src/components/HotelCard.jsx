@@ -147,22 +147,27 @@ export default function HotelListingView({ activeCityContext, query }) {
   const [sort, setSort] = useState('recommended');
   const [view, setView] = useState('list');
 
-  const load = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(false);
-      const response = await getHotels();
-      const fetched = response?.data?.hotels || response?.data?.properties || response?.data || [];
-      setHotels(Array.isArray(fetched) ? fetched : []);
-    } catch (err) {
-      console.error('Failed to fetch hotels:', err);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const fetchHotels = useCallback(
+    () => getHotels()
+      .then((response) => {
+        const fetched = response?.data?.hotels || response?.data?.properties || response?.data || [];
+        setHotels(Array.isArray(fetched) ? fetched : []);
+      })
+      .catch((err) => {
+        console.error('Failed to fetch hotels:', err);
+        setError(true);
+      })
+      .finally(() => setLoading(false)),
+    []
+  );
 
-  useEffect(() => { load(); }, [load]);
+  const load = useCallback(() => {
+    setLoading(true);
+    setError(false);
+    return fetchHotels();
+  }, [fetchHotels]);
+
+  useEffect(() => { fetchHotels(); }, [fetchHotels]);
 
   const visible = useMemo(
     () => sortItems(applyFilters(hotels, { ...filters, query }, { custom: (h, f) => !f.breakfast || h.hasBreakfast }), sort),

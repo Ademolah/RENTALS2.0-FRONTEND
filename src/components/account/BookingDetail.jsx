@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { X, ShieldCheck, Printer, Star, Loader2, MapPin, Navigation } from 'lucide-react';
 import { Button } from '../ui';
 import { useToast } from '../Toast';
-import { statusBadge } from './BookingCard';
+import { statusBadge } from './statusBadge';
 import { getArrivalGuide, confirmArrival, cancelBookingApi, submitReview, errorText } from '../../api/trips';
 
 const fmt = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -11,7 +11,7 @@ const REFUND_NOTE = 'Terms and conditions apply. Payment processing fees are non
 const ARRIVE_LABEL = { CAR: 'Confirm pickup', VIP: 'Confirm arrival', VIP_SERVICE: 'Confirm service delivered' };
 
 export default function BookingDetail({ booking, onClose, onChange }) {
-  const [guide, setGuide] = useState(undefined);
+  const [guideState, setGuideState] = useState({ key: null, value: undefined });
   const [busy, setBusy] = useState('');
   const toast = useToast();
   const [cancelling, setCancelling] = useState(false);
@@ -25,14 +25,19 @@ export default function BookingDetail({ booking, onClose, onChange }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
+  const hasGuide = booking.paid && !booking.cancelled && booking.type !== 'CAR';
+  const guideKey = `${booking.id}|${hasGuide}`;
+  // undefined = still loading, null = none, object = the guide
+  const guide = !hasGuide ? null : guideState.key === guideKey ? guideState.value : undefined;
+
   useEffect(() => {
+    if (!hasGuide) return undefined;
     let live = true;
-    setGuide(undefined);
-    if (booking.paid && !booking.cancelled && booking.type !== 'CAR') {
-      getArrivalGuide(booking.id).then((g) => live && setGuide(g)).catch(() => live && setGuide(null));
-    } else setGuide(null);
+    getArrivalGuide(booking.id)
+      .then((g) => live && setGuideState({ key: guideKey, value: g }))
+      .catch(() => live && setGuideState({ key: guideKey, value: null }));
     return () => { live = false; };
-  }, [booking.id, booking.paid, booking.cancelled, booking.type]);
+  }, [booking.id, hasGuide, guideKey]);
 
   const run = async (key, fn, okText) => {
     setBusy(key);

@@ -24,13 +24,22 @@ export default function BookModal({
   const [error, setError] = useState('');
   const [booked, setBooked] = useState(false);
 
-  useEffect(() => { setBooked(false); setError(''); }, [checkIn, checkOut, roomData?._id]);
+  // New dates or a different room clear any earlier result; closing resets the hold timer.
+  const bookingKey = `${checkIn}|${checkOut}|${roomData?._id}`;
+  const [lastKey, setLastKey] = useState(bookingKey);
+  if (lastKey !== bookingKey) {
+    setLastKey(bookingKey);
+    setBooked(false);
+    setError('');
+  }
+  const [wasOpen, setWasOpen] = useState(isOpen);
+  if (wasOpen !== isOpen) {
+    setWasOpen(isOpen);
+    if (!isOpen) setTimeLeft(1200);
+  }
 
   useEffect(() => {
-    if (!isOpen) {
-      setTimeLeft(1200); 
-      return;
-    }
+    if (!isOpen) return undefined;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));

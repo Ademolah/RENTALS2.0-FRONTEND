@@ -34,23 +34,29 @@ const ago = (t) => {
 
 const errText = (e) => e?.response?.data?.message || e?.message || 'Please try again.';
 
+const hasToken = () => !!localStorage.getItem('rentals_token');
+
 export default function Notifications() {
   useDocumentMeta('Notifications', 'Updates about your bookings on Rentals Africa.');
   const navigate = useNavigate();
-  const [items, setItems] = useState(null);
+  const [items, setItems] = useState(() => (hasToken() ? null : []));
   const [error, setError] = useState(false);
   const [busy, setBusy] = useState(false);
   const toast = useToast();
   const [confirm, setConfirm] = useState(null);
   const [detail, setDetail] = useState(null);
 
+  const fetchItems = useCallback(() => getNotifications().then(setItems).catch(() => setError(true)), []);
+
   const load = useCallback(() => {
     setError(false);
-    if (!localStorage.getItem('rentals_token')) return setItems([]);
-    getNotifications().then(setItems).catch(() => setError(true));
-  }, []);
+    if (!hasToken()) return setItems([]);
+    return fetchItems();
+  }, [fetchItems]);
 
-  useEffect(load, [load]);
+  useEffect(() => {
+    if (hasToken()) fetchItems();
+  }, [fetchItems]);
 
   const unread = (items || []).filter((n) => !n.isRead).length;
 

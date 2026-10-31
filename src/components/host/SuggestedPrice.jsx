@@ -4,27 +4,25 @@ import { fetchSuggestedPrice } from './hostApi';
 
 // Typical nightly rate of similar live listings, so a host can price with confidence.
 export default function SuggestedPrice({ category, state, area, bedrooms, onUse }) {
-  const [result, setResult] = useState(null);
-  const [loading, setLoading] = useState(false);
+  // The last finished lookup, tagged with the inputs it answered. Loading is derived from it.
+  const [lookup, setLookup] = useState({ key: null, result: null });
+  const key = JSON.stringify([category, state, area, bedrooms]);
+  const loading = !!state && lookup.key !== key;
+  const result = state && lookup.key === key ? lookup.result : null;
 
   useEffect(() => {
-    if (!state) {
-      setResult(null);
-      return undefined;
-    }
+    if (!state) return undefined;
     let active = true;
-    setLoading(true);
     const timer = setTimeout(() => {
       fetchSuggestedPrice({ category, state, area, bedrooms })
-        .then((r) => active && setResult(r))
-        .catch(() => active && setResult(null))
-        .finally(() => active && setLoading(false));
+        .then((r) => active && setLookup({ key, result: r }))
+        .catch(() => active && setLookup({ key, result: null }));
     }, 400);
     return () => {
       active = false;
       clearTimeout(timer);
     };
-  }, [category, state, area, bedrooms]);
+  }, [category, state, area, bedrooms, key]);
 
   if (!state) {
     return <p className="text-sm text-gray-500 flex items-center gap-2 mt-4"><Sparkles className="w-4 h-4" /> Choose a location to see a suggested price.</p>;

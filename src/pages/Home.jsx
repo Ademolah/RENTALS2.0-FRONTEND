@@ -106,7 +106,8 @@ export default function Home({
     const remove = setTimeout(() => setWelcome('gone'), 5800);
     return () => { clearTimeout(fade); clearTimeout(remove); };
   }, [user, welcome]);
-  const [nextTrip, setNextTrip] = useState(null);
+  const [fetchedTrip, setFetchedTrip] = useState(null);
+  const nextTrip = user ? fetchedTrip : null;
 
   const cat = activeCategory.toLowerCase();
   const isHotel = cat === 'hotel';
@@ -119,55 +120,63 @@ export default function Home({
     'Verified stays, cars and VIP services in Lagos and Abuja, managed by Rentals Africa.'
   );
 
-  useEffect(() => {
+  // Switching category resets the filters, sort and view (adjusted during render instead of in an effect).
+  const [shownCategory, setShownCategory] = useState(activeCategory);
+  if (shownCategory !== activeCategory) {
+    setShownCategory(activeCategory);
     setFilters((f) => (f.query ? { query: f.query } : {}));
     setSort('recommended');
     setView('list');
-  }, [activeCategory]);
+    setLoading(true);
+    setError(false);
+  }
 
   useEffect(() => {
     let active = true;
-    if (!user) {
-      setNextTrip(null);
-      return undefined;
-    }
+    if (!user) return undefined;
     fetchGuestBookings()
       .then((rows) => {
         if (!active) return;
         const upcoming = rows
           .filter((r) => r.bucket === 'upcoming' && r.start.getTime() > Date.now() - 24 * 3600 * 1000)
           .sort((a, b) => a.start - b.start);
-        setNextTrip(upcoming[0] || null);
+        setFetchedTrip(upcoming[0] || null);
       })
-      .catch(() => active && setNextTrip(null));
+      .catch(() => active && setFetchedTrip(null));
     return () => { active = false; };
   }, [user]);
 
-  const load = useCallback(async () => {
-    if (isHotel || isVip) {
-      setLoading(false);
-      return;
-    }
+  const fetchListings = useCallback(
+    () => (isCar ? getCars() : getProperties({ category: activeCategory }))
+      .then((responseData) => {
+        const results = Array.isArray(responseData)
+          ? responseData
+          : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
+        setRaw(results);
+      })
+      .catch((err) => {
+        console.error('Failed to load listings:', err);
+        setRaw([]);
+        setError(true);
+      })
+      .finally(() => setLoading(false)),
+    [activeCategory, isCar]
+  );
+
+  const load = useCallback(() => {
     setLoading(true);
     setError(false);
-    try {
-      const responseData = isCar ? await getCars() : await getProperties({ category: activeCategory });
-      const results = Array.isArray(responseData)
-        ? responseData
-        : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
-      setRaw(results);
-    } catch (err) {
-      console.error('Failed to load listings:', err);
-      setRaw([]);
-      setError(true);
-    } finally {
-      setLoading(false);
-    }
-  }, [activeCategory, isHotel, isVip, isCar]);
+    return fetchListings();
+  }, [fetchListings]);
 
-  useEffect(() => { load(); }, [load]);
+  useEffect(() => {
+    if (isHotel || isVip) return;
+    fetchListings();
+  }, [fetchListings, isHotel, isVip]);
 
-  const searchKey = JSON.stringify(searchFilters);
+  // Hotels and VIP have their own views, so the shortlet/car loading state never shows for them.
+  const showLoading = loading && !isHotel && !isVip;
+
 
   const listings = useMemo(() => {
     let results = raw;
@@ -203,7 +212,7 @@ export default function Home({
     }
 
     return sortItems(applyFilters(results, { ...filters, city: undefined }), sort);
-  }, [raw, filters, sort, searchKey, activeCityContext, isCar]);
+  }, [raw, filters, sort, searchFilters, activeCityContext, isCar]);
 
   const hasFilters = isActiveFilters(filters);
   const typeOptions = useMemo(
@@ -315,7 +324,7 @@ export default function Home({
       ) : (
         <>
           {/* Featured card */}
-          {showCuratedHome && !loading && !error && listings.length > 0 && (
+          {showCuratedHome && !showLoading && !error && listings.length > 0 && (
             <div className="mb-10 animate-fade-up" style={{ animationDelay: '0.1s' }}>
               <Link
                 to={`/property/${listings[0]._id}`}
@@ -378,11 +387,11 @@ export default function Home({
             view={view}
             setView={setView}
           >
-            {showCuratedHome && !loading && !error && listings.length > 1 && (
+            {showCuratedHome && !showLoading && !error && listings.length > 1 && (
               <SectionHeader title="Recommended for you" subtitle={`${listings.length - 1} more in ${activeCityContext}`} />
             )}
 
-            {loading ? (
+            {showLoading ? (
               <SkeletonGrid count={8} className="xl:grid-cols-3" />
             ) : error ? (
               <ErrorState onRetry={load} />

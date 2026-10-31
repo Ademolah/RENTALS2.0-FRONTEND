@@ -19,60 +19,56 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
 
   const API = API_URL;
 
-  // Axios config helper
   // SURGICAL FIX: Use 'rentals_token' exactly like we did for the Car upload!
-  const config = {
-    headers: { 
-      'Authorization': `Bearer ${localStorage.getItem('rentals_token')}` 
-    }
-  };
+  const authConfig = () => ({
+    headers: { 'Authorization': `Bearer ${localStorage.getItem('rentals_token')}` }
+  });
 
-  // 1. Fetch Banks on Mount
+  // 1. Fetch Banks when the modal opens
   useEffect(() => {
-    if (isOpen) {
-      fetchBanks();
-    }
+    if (!isOpen) return;
+    const fetchBanks = async () => {
+      setIsLoadingBanks(true);
+      try {
+        const { data } = await axios.get(`${API_URL}/payouts/banks`, authConfig());
+        setBanks(data.data.banks);
+      } catch (err) {
+        setError('Failed to load supported banks. Please try again later.');
+        console.error(err);
+      } finally {
+        setIsLoadingBanks(false);
+      }
+    };
+    fetchBanks();
   }, [isOpen]);
 
-  const fetchBanks = async () => {
-    setIsLoadingBanks(true);
-    try {
-      // Adjust URL to match your backend port/route
-      const { data } = await axios.get(`${API}/payouts/banks`, config);
-      setBanks(data.data.banks);
-    } catch (err) {
-      setError('Failed to load supported banks. Please try again later.');
-      console.error(err);
-    } finally {
-      setIsLoadingBanks(false);
-    }
-  };
-
-  // 2. Auto-Verify Account Number when 10 digits are entered
-  useEffect(() => {
-    if (accountNumber.length === 10 && selectedBankCode) {
-      verifyAccount();
-    } else {
-      setResolvedName('');
-    }
-  }, [accountNumber, selectedBankCode]);
-
-  const verifyAccount = async () => {
+  // 2. Auto-verify the account once a bank and 10 digits are entered
+  const verifyAccount = async (number, bankCode) => {
     setIsVerifying(true);
     setError('');
     setResolvedName('');
-    
+
     try {
       const { data } = await axios.post(
-        `${API}/payouts/banks/verify`, 
-        { accountNumber, bankCode: selectedBankCode },
-        config
+        `${API}/payouts/banks/verify`,
+        { accountNumber: number, bankCode },
+        authConfig()
       );
       setResolvedName(data.data.accountDetails.account_name);
     } catch (err) {
       setError(err.response?.data?.message || 'Invalid account number or bank code.');
     } finally {
       setIsVerifying(false);
+    }
+  };
+
+  const updateAccountFields = (number, bankCode) => {
+    setAccountNumber(number);
+    setSelectedBankCode(bankCode);
+    if (number.length === 10 && bankCode) {
+      verifyAccount(number, bankCode);
+    } else {
+      setResolvedName('');
     }
   };
 
@@ -95,7 +91,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
           bankName: bank.name,
           accountName: resolvedName
         },
-        config
+        authConfig()
       );
       
       setSuccess(true);
@@ -162,7 +158,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
                 <div className="relative">
                   <select 
                     value={selectedBankCode}
-                    onChange={(e) => setSelectedBankCode(e.target.value)}
+                    onChange={(e) => updateAccountFields(accountNumber, e.target.value)}
                     disabled={isLoadingBanks || isSaving}
                     className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all appearance-none font-medium text-sm disabled:opacity-50"
                   >
@@ -186,7 +182,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
                   type="text" 
                   maxLength="10"
                   value={accountNumber}
-                  onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ''))} // Numbers only
+                  onChange={(e) => updateAccountFields(e.target.value.replace(/\D/g, ''), selectedBankCode)} // Numbers only
                   placeholder="0000000000"
                   disabled={!selectedBankCode || isSaving}
                   className="w-full bg-gray-50 border border-gray-200 text-gray-900 rounded-xl px-4 py-3.5 outline-none focus:ring-2 focus:ring-gray-900 focus:border-transparent transition-all font-semibold tracking-widest disabled:opacity-50" aria-label="0000000000" />

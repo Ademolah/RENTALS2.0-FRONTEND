@@ -1,168 +1,117 @@
-import { useState, useRef, useEffect } from 'react';
-import { X, UploadCloud, AlertCircle, XCircle, Loader2, MapPin, Clock, Wine, Tags } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Loader2, MapPin, Clock, Wine, Tags } from 'lucide-react';
 import { getVipEstablishmentById, updateVipEstablishment } from '../api/vip';
-import DeleteAssetModal from './DeleteAssetModal';
+import { Field, SelectField, TextAreaField } from './host/forms/Field';
+import { ChipGroup, ErrorAlert } from './host/forms/controls';
+import DangerZone from './host/forms/DangerZone';
+import { toggleItem } from './host/forms/helpers';
+import { StudioEditShell } from './host/forms/shells';
+import { useImageList } from './host/forms/useMedia';
+import { StateCityFields, StudioDivider, StudioSectionTitle } from './host/forms/studio';
+import VipEditPhotos from './host/forms/VipEditPhotos';
+import { COMMON_VENUE_SERVICES, DAYS_OF_WEEK } from './host/forms/constants';
 
-
-const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-const COMMON_SERVICES = ['Bottle Service', 'Private Cabana', 'Valet Parking', 'VIP Host', 'Private Security', 'Shisha', 'Fine Dining'];
-
-const LOCATION_DATA = {
-  "Lagos": [
-    "Ikoyi", "Banana Island", "Victoria Island", "Lekki Phase 1", 
-    "Lekki", "Ajah", "Ikeja", "Magodo", "Maryland", "Gbagada", 
-    "Surulere", "Yaba", "Festac"
-  ].sort(),
-  "Abuja": [
-    "Asokoro", "Maitama", "Wuse 2", "Wuse", "Garki", 
-    "Central Business District", "Jabi", "Utako", "Gwarinpa", 
-    "Apo", "Kubwa", "Lugbe"
-  ].sort()
+const INITIAL_FORM = {
+  title: '',
+  description: '',
+  establishmentType: 'LOUNGE',
+  depositAmount: 150000,
+  dressCode: '',
+  street: '',
+  city: '',
+  stateName: '',
+  openTime: '',
+  closeTime: '',
+  daysOpen: [],
+  services: [],
+  existingImages: [],
 };
+
+const MAX_PHOTOS = 10;
+
+function toForm(response) {
+  const est = response.data?.data?.establishment || response.data?.establishment;
+  return {
+    title: est.title || '',
+    description: est.description || '',
+    establishmentType: est.establishmentType || 'LOUNGE',
+    depositAmount: est.depositAmount || est.pricePerNight || 0,
+    dressCode: est.dressCode || '',
+    street: est.address?.street || '',
+    city: est.address?.city || '',
+    stateName: est.address?.state || '',
+    openTime: est.openHours?.open || '',
+    closeTime: est.openHours?.close || '',
+    daysOpen: est.openHours?.daysOpen || [],
+    services: est.services || [],
+    existingImages: est.images || [],
+  };
+}
+
+function buildPayload(form, newFiles) {
+  const data = new FormData();
+  data.append('title', form.title);
+  data.append('description', form.description);
+  data.append('establishmentType', form.establishmentType);
+  data.append('depositAmount', form.depositAmount);
+  data.append('dressCode', form.dressCode);
+  data.append('street', form.street);
+  data.append('city', form.city);
+  data.append('state', form.stateName);
+  data.append('open', form.openTime);
+  data.append('close', form.closeTime);
+  data.append('daysOpen', JSON.stringify(form.daysOpen));
+  data.append('services', JSON.stringify(form.services));
+  data.append('existingImages', JSON.stringify(form.existingImages));
+  newFiles.forEach((file) => data.append('images', file));
+  return data;
+}
 
 export default function EditVipModal({ isOpen, onClose, establishmentId, onSuccess }) {
   const fileInputRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [fetching, setFetching] = useState(false);
   const [error, setError] = useState('');
-
-  // Form State
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [establishmentType, setEstablishmentType] = useState('LOUNGE');
-  const [depositAmount, setDepositAmount] = useState(150000);
-  const [dressCode, setDressCode] = useState('');
-  
-  // Location
-  const [street, setStreet] = useState('');
-  const [city, setCity] = useState('');
-  const [stateName, setStateName] = useState('');
-
-  // Operations
-  const [openTime, setOpenTime] = useState('');
-  const [closeTime, setCloseTime] = useState('');
-  const [daysOpen, setDaysOpen] = useState([]);
-  const [services, setServices] = useState([]);
-  
-  // Images
-  const [existingImages, setExistingImages] = useState([]);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [previewUrls, setPreviewUrls] = useState([]);
-
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [form, setForm] = useState(INITIAL_FORM);
+  const photos = useImageList(setError);
 
   useEffect(() => {
-    if (isOpen && establishmentId) {
-      loadEstablishmentData();
-    }
+    if (!isOpen || !establishmentId) return undefined;
+    let active = true;
+    (async () => {
+      setFetching(true);
+      setError('');
+      try {
+        const response = await getVipEstablishmentById(establishmentId);
+        if (active) setForm(toForm(response));
+      } catch {
+        if (active) setError('Failed to load establishment details.');
+      } finally {
+        if (active) setFetching(false);
+      }
+    })();
+    return () => { active = false; };
   }, [isOpen, establishmentId]);
-
-  useEffect(() => {
-    return () => previewUrls.forEach(url => URL.revokeObjectURL(url));
-  }, [previewUrls]);
-
-  const loadEstablishmentData = async () => {
-    setFetching(true);
-    setError('');
-    try {
-      const response = await getVipEstablishmentById(establishmentId);
-      // SURGICAL FIX: Handle Axios nesting safely
-      const est = response.data?.data?.establishment || response.data?.establishment;
-      
-      setTitle(est.title || '');
-      setDescription(est.description || '');
-      setEstablishmentType(est.establishmentType || 'LOUNGE');
-      setDepositAmount(est.depositAmount || est.pricePerNight || 0);
-      setDressCode(est.dressCode || '');
-      
-      setStreet(est.address?.street || '');
-      setCity(est.address?.city || '');
-      setStateName(est.address?.state || '');
-
-      setOpenTime(est.openHours?.open || '');
-      setCloseTime(est.openHours?.close || '');
-      setDaysOpen(est.openHours?.daysOpen || []);
-      setServices(est.services || []);
-      setExistingImages(est.images || []);
-      
-    } catch {
-      setError('Failed to load establishment details.');
-    } finally {
-      setFetching(false);
-    }
-  };
 
   if (!isOpen) return null;
 
-  const handleStateChange = (e) => {
-    setStateName(e.target.value);
-    setCity(''); 
-  };
+  const patch = (fields) => setForm((prev) => ({ ...prev, ...fields }));
+  const text = (key) => ({ value: form[key], onChange: (e) => patch({ [key]: e.target.value }) });
 
   const handleFileSelect = (e) => {
-    const files = Array.from(e.target.files);
-    if (existingImages.length + selectedFiles.length + files.length > 10) {
-      setError("Maximum of 10 photos allowed.");
-      return;
-    }
-    setError('');
-    setSelectedFiles(prev => [...prev, ...files]);
-    setPreviewUrls(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
-  };
-
-  const removeExistingImage = (index) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== index));
-  };
-
-  const removeNewFile = (index) => {
-    setSelectedFiles(prev => prev.filter((_, i) => i !== index));
-    setPreviewUrls(prev => prev.filter((_, i) => {
-      if (i === index) URL.revokeObjectURL(prev[i]);
-      return i !== index;
-    }));
-  };
-
-  const toggleDay = (day) => {
-    setDaysOpen(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
-  };
-
-  const toggleService = (service) => {
-    setServices(prev => prev.includes(service) ? prev.filter(s => s !== service) : [...prev, service]);
+    photos.add(e.target.files, MAX_PHOTOS - form.existingImages.length, 'Maximum of 10 photos allowed.');
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (existingImages.length === 0 && selectedFiles.length === 0) {
-      setError("Please upload or keep at least one photograph.");
+    if (form.existingImages.length === 0 && photos.files.length === 0) {
+      setError('Please upload or keep at least one photograph.');
       return;
     }
-
     setLoading(true);
     setError('');
-
     try {
-      const formData = new FormData();
-      formData.append('title', title);
-      formData.append('description', description);
-      formData.append('establishmentType', establishmentType);
-      formData.append('depositAmount', depositAmount);
-      formData.append('dressCode', dressCode);
-      
-      formData.append('street', street);
-      formData.append('city', city);
-      formData.append('state', stateName);
-
-      formData.append('open', openTime);
-      formData.append('close', closeTime);
-      formData.append('daysOpen', JSON.stringify(daysOpen));
-      formData.append('services', JSON.stringify(services));
-      
-      formData.append('existingImages', JSON.stringify(existingImages));
-      
-      selectedFiles.forEach(file => formData.append('images', file));
-
-      await updateVipEstablishment(establishmentId, formData);
-      
+      await updateVipEstablishment(establishmentId, buildPayload(form, photos.files));
       if (onSuccess) onSuccess();
       onClose();
     } catch (err) {
@@ -172,232 +121,110 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-0 md:p-6">
-      <div className="bg-white md:rounded-3xl w-full h-full md:h-auto md:max-h-[90vh] max-w-4xl flex flex-col shadow-2xl relative animate-in fade-in duration-200">
-        
-        <div className="sticky top-0 z-10 bg-white/95 backdrop-blur-md px-8 py-6 border-b border-gray-100 flex justify-between items-center md:rounded-t-3xl">
-          <div>
-            <h2 className="text-2xl font-bold text-gray-900 tracking-tight">Edit VIP Listing</h2>
-          </div>
-          <button onClick={onClose} className="p-2 rounded-full hover:bg-gray-100 transition-colors" aria-label="Close">
-            <X className="w-5 h-5 text-gray-600" />
-          </button>
+    <StudioEditShell title="Edit VIP Listing" onClose={onClose} formId="edit-vip-form" loading={fetching} saving={loading}>
+      {fetching ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-4" />
+          <p className="text-sm font-medium text-gray-500">Loading details...</p>
         </div>
+      ) : (
+        <form id="edit-vip-form" onSubmit={handleSubmit} className="space-y-12">
+          <ErrorAlert variant="inline" message={error} />
 
-        <div className="overflow-y-auto p-6 md:p-8 custom-scrollbar">
-          {fetching ? (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-amber-500 mb-4" />
-              <p className="text-sm font-medium text-gray-500">Loading details...</p>
+          <section>
+            <StudioSectionTitle icon={Wine}>Establishment Details</StudioSectionTitle>
+            <div className="space-y-6">
+              <Field theme="studioEdit" label="Establishment Name" type="text" required {...text('title')} />
+              <TextAreaField theme="studioEdit" label="Description" required rows={3} {...text('description')} />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <SelectField theme="studioEdit" label="Category" {...text('establishmentType')}>
+                  <option value="LOUNGE">Premium Lounge</option>
+                  <option value="CLUB">Nightclub</option>
+                  <option value="FINE_DINING">Fine Dining</option>
+                  <option value="BEACH_CLUB">Beach Club</option>
+                  <option value="PRIVATE_YACHT">Private Yacht</option>
+                  <option value="OTHER">Other</option>
+                </SelectField>
+                <Field theme="studioEdit" label="Dress Code" type="text" required {...text('dressCode')} />
+              </div>
             </div>
-          ) : (
-            <form id="edit-vip-form" onSubmit={handleSubmit} className="space-y-12">
-              
-              {error && (
-                <div className="p-4 bg-red-50 text-red-600 rounded-xl text-sm font-medium flex items-center">
-                  <AlertCircle className="w-5 h-5 mr-2" /> {error}
-                </div>
-              )}
+          </section>
 
-              {/* Establishment Details */}
-              <section>
-                <div className="flex items-center space-x-2 mb-6">
-                  <Wine className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Establishment Details</h3>
-                </div>
-                
-                <div className="space-y-6">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Establishment Name</label>
-                    <input type="text" required value={title} onChange={(e) => setTitle(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Description</label>
-                    <textarea required rows={3} value={description} onChange={(e) => setDescription(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 resize-none" />
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Category</label>
-                      <select value={establishmentType} onChange={(e) => setEstablishmentType(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50">
-                        <option value="LOUNGE">Premium Lounge</option>
-                        <option value="CLUB">Nightclub</option>
-                        <option value="FINE_DINING">Fine Dining</option>
-                        <option value="BEACH_CLUB">Beach Club</option>
-                        <option value="PRIVATE_YACHT">Private Yacht</option>
-                        <option value="OTHER">Other</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Dress Code</label>
-                      <input type="text" required value={dressCode} onChange={(e) => setDressCode(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
-                    </div>
-                  </div>
-                </div>
-              </section>
+          <StudioDivider />
 
-              <hr className="border-gray-100" />
+          <section>
+            <StudioSectionTitle icon={MapPin}>Location</StudioSectionTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field theme="studioEdit" wrapperClass="md:col-span-2" label="Street Address" type="text" required {...text('street')} />
+              <StateCityFields
+                theme="studioEdit"
+                stateName={form.stateName}
+                city={form.city}
+                onState={(e) => patch({ stateName: e.target.value, city: '' })}
+                onCity={(city) => patch({ city })}
+                cityLabel="City"
+                stateExtra="appearance-none"
+                cityExtra="appearance-none disabled:opacity-50"
+              />
+            </div>
+          </section>
 
-              {/* Location */}
-              <section>
-                <div className="flex items-center space-x-2 mb-6">
-                  <MapPin className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Location</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Street Address</label>
-                    <input type="text" required value={street} onChange={(e) => setStreet(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">State</label>
-                    <select required value={stateName} onChange={handleStateChange} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 appearance-none">
-                      <option value="" disabled>Select State</option>
-                      {Object.keys(LOCATION_DATA).map(state => <option key={state} value={state}>{state}</option>)}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">City</label>
-                    <select required value={city} onChange={(e) => setCity(e.target.value)} disabled={!stateName} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50 appearance-none disabled:opacity-50">
-                      <option value="" disabled>{stateName ? 'Select City' : 'Select State First'}</option>
-                      {stateName && LOCATION_DATA[stateName]?.map(loc => <option key={loc} value={loc}>{loc}</option>)}
-                    </select>
-                  </div>
-                </div>
-              </section>
+          <StudioDivider />
 
-              <hr className="border-gray-100" />
-
-              {/* Operations & Services */}
-              <section>
-                <div className="flex items-center space-x-2 mb-6">
-                  <Clock className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Operations</h3>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Opening Time</label>
-                    <input type="text" required value={openTime} onChange={(e) => setOpenTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-bold uppercase text-gray-500 mb-2">Closing Time</label>
-                    <input type="text" required value={closeTime} onChange={(e) => setCloseTime(e.target.value)} className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 outline-none text-base bg-gray-50/50" />
-                  </div>
-                </div>
-                <div className="mb-8">
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Operating Days</label>
-                  <div className="flex flex-wrap gap-2">
-                    {DAYS_OF_WEEK.map(day => (
-                      <button key={day} type="button" onClick={() => toggleDay(day)} className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all border ${daysOpen.includes(day) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-900'}`}>
-                        {day.substring(0, 3)}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Services</label>
-                  <div className="flex flex-wrap gap-2">
-                    {COMMON_SERVICES.map(service => (
-                      <button key={service} type="button" onClick={() => toggleService(service)} className={`px-4 py-2 rounded-full text-xs font-semibold transition-all border ${services.includes(service) ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-900'}`}>
-                        {service}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              </section>
-
-              <hr className="border-gray-100" />
-
-              {/* Photos */}
-              <section>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Photos</h3>
-                  <span className="text-xs font-bold text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
-                    {existingImages.length + selectedFiles.length} / 10
-                  </span>
-                </div>
-                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-                   {existingImages.map((url, idx) => (
-                     <div key={`exist-${idx}`} className="relative aspect-square rounded-xl overflow-hidden border border-gray-200 group">
-                       <img src={url} className="w-full h-full object-cover" alt="Property" />
-                       <button type="button" onClick={() => removeExistingImage(idx)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white"><XCircle className="w-8 h-8" /></button>
-                     </div>
-                   ))}
-                   {previewUrls.map((url, idx) => (
-                     <div key={`new-${idx}`} className="relative aspect-square rounded-xl overflow-hidden border border-brand-primary group">
-                       <img src={url} className="w-full h-full object-cover" alt="Preview" />
-                       <div className="absolute top-2 left-2 bg-brand-primary text-white text-xs font-bold px-2 py-1 rounded">NEW</div>
-                       <button type="button" onClick={() => removeNewFile(idx)} className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all text-white"><XCircle className="w-8 h-8" /></button>
-                     </div>
-                   ))}
-                 </div>
-                 <div onClick={() => fileInputRef.current?.click()} className="border-2 border-dashed border-gray-300 hover:border-gray-900 rounded-2xl p-8 flex flex-col items-center justify-center cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
-                    <input type="file" multiple accept="image/*" className="hidden" ref={fileInputRef} onChange={handleFileSelect} />
-                    <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
-                    <span className="text-sm font-semibold">Upload More Photos</span>
-                 </div>
-              </section>
-
-              <hr className="border-gray-100" />
-
-              {/* Deposit Config */}
-              <section className="pb-8">
-                <div className="flex items-center space-x-2 mb-6">
-                  <Tags className="w-5 h-5 text-gray-400" />
-                  <h3 className="text-xl font-bold text-gray-900 tracking-tight">Deposit Configuration</h3>
-                </div>
-                <div className="p-6 rounded-2xl border border-gray-200 bg-gray-50/50">
-                  <div className="flex justify-between items-end mb-6">
-                    <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Required Deposit</label>
-                    </div>
-                    <span className="text-3xl font-bold text-gray-900">₦{Number(depositAmount).toLocaleString()}</span>
-                  </div>
-                  <input type="range" min="50000" max="5000000" step="50000" value={depositAmount} onChange={(e) => setDepositAmount(Number(e.target.value))} className="w-full h-2 bg-gray-200 rounded-lg appearance-none accent-gray-900" />
-                </div>
-              </section>
-
-                      {/* Danger Zone */}
-        <div className="mt-8 pt-8 border-t border-red-100">
-          <div className="flex items-center justify-between p-4 bg-red-50/50 rounded-xl border border-red-100">
+          <section>
+            <StudioSectionTitle icon={Clock}>Operations</StudioSectionTitle>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <Field theme="studioEdit" label="Opening Time" type="text" required {...text('openTime')} />
+              <Field theme="studioEdit" label="Closing Time" type="text" required {...text('closeTime')} />
+            </div>
+            <div className="mb-8">
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Operating Days</label>
+              <ChipGroup style="editDay" items={DAYS_OF_WEEK} selected={form.daysOpen} onToggle={(d) => patch({ daysOpen: toggleItem(form.daysOpen, d) })} labelOf={(d) => d.substring(0, 3)} />
+            </div>
             <div>
-              <h4 className="text-sm font-bold text-red-900">Danger Zone</h4>
-              <p className="text-xs font-medium text-red-700/80">Permanently remove this listing from Rentals Africa.</p>
+              <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-3">Services</label>
+              <ChipGroup style="editService" items={COMMON_VENUE_SERVICES} selected={form.services} onToggle={(s) => patch({ services: toggleItem(form.services, s) })} />
             </div>
-            <button
-              type="button" // Important: type="button" so it doesn't submit the edit form
-              onClick={() => setIsDeleteModalOpen(true)}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold rounded-lg transition-colors shadow-sm"
-            >
-              Delete Listing
-            </button>
-          </div>
-        </div>
+          </section>
 
+          <StudioDivider />
 
-        <DeleteAssetModal
-          isOpen={isDeleteModalOpen}
-          onClose={() => setIsDeleteModalOpen(false)}
-          onSuccess={() => {
-            setIsDeleteModalOpen(false);
-            onClose();
-            onSuccess();
-          }}
-          assetId={establishmentId} 
-          assetType="VIP" 
-          assetName={title} 
-        />
+          <VipEditPhotos
+            existing={form.existingImages}
+            newUrls={photos.urls}
+            max={MAX_PHOTOS}
+            inputRef={fileInputRef}
+            onRemoveExisting={(i) => patch({ existingImages: form.existingImages.filter((_, x) => x !== i) })}
+            onRemoveNew={photos.remove}
+            onPick={handleFileSelect}
+          />
 
-            </form>
-          )}
-        </div>
+          <StudioDivider />
 
-        <div className="sticky bottom-0 bg-white border-t border-gray-100 p-6 flex justify-end md:rounded-b-3xl">
-          <button type="submit" form="edit-vip-form" disabled={loading || fetching} className="bg-gray-900 hover:bg-black text-white px-10 py-4 rounded-xl font-bold transition-all disabled:opacity-50">
-            {loading ? <Loader2 className="w-5 h-5 animate-spin mx-auto" /> : 'Save Changes'}
-          </button>
-        </div>
+          <section className="pb-8">
+            <StudioSectionTitle icon={Tags}>Deposit Configuration</StudioSectionTitle>
+            <div className="p-6 rounded-2xl border border-gray-200 bg-gray-50/50">
+              <div className="flex justify-between items-end mb-6">
+                <div>
+                  <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Required Deposit</label>
+                </div>
+                <span className="text-3xl font-bold text-gray-900">₦{Number(form.depositAmount).toLocaleString()}</span>
+              </div>
+              <input
+                type="range"
+                min="50000"
+                max="5000000"
+                step="50000"
+                value={form.depositAmount}
+                onChange={(e) => patch({ depositAmount: Number(e.target.value) })}
+                className="w-full h-2 bg-gray-200 rounded-lg appearance-none accent-gray-900"
+              />
+            </div>
+          </section>
 
-      </div>
-    </div>
+          <DangerZone assetId={establishmentId} assetType="VIP" assetName={form.title} onClose={onClose} onSuccess={onSuccess} />
+        </form>
+      )}
+    </StudioEditShell>
   );
 }

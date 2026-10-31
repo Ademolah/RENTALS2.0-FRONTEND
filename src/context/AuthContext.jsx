@@ -4,12 +4,28 @@ import { loginUser as loginApi, registerUser as registerApi } from '../api/auth'
 
 const AuthContext = createContext(null);
 
+// The signed-in user is restored from this device before the first render.
+function readStoredUser() {
+  const storedToken = localStorage.getItem('rentals_token');
+  const storedUser = localStorage.getItem('rentals_user');
+  if (!storedToken || !storedUser) return null;
+  try {
+    return JSON.parse(storedUser);
+  } catch {
+    localStorage.removeItem('rentals_token');
+    localStorage.removeItem('rentals_user');
+    return null;
+  }
+}
+
+const sessionExpiredInUrl = () => new URLSearchParams(window.location.search).get('session') === 'expired';
+
 export function AuthProvider({ children }) {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(readStoredUser);
+  const loading = false;
   
-  // NEW: Global state for the Auth Modal
-  const [showAuthModal, setShowAuthModalState] = useState(false);
+  // NEW: Global state for the Auth Modal (opens straight away after a session expiry redirect)
+  const [showAuthModal, setShowAuthModalState] = useState(sessionExpiredInUrl);
   const pendingRef = useRef(null);
 
   // Closing the modal without signing in drops the action that was waiting.
@@ -21,23 +37,7 @@ export function AuthProvider({ children }) {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const storedToken = localStorage.getItem('rentals_token');
-    const storedUser = localStorage.getItem('rentals_user');
-    
-    if (storedToken && storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch {
-        localStorage.removeItem('rentals_token');
-        localStorage.removeItem('rentals_user');
-      }
-    }
-    const params = new URLSearchParams(window.location.search);
-    if (params.get('session') === 'expired') {
-      setShowAuthModal(true);
-      window.history.replaceState({}, '', window.location.pathname);
-    }
-    setLoading(false);
+    if (sessionExpiredInUrl()) window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
   const updateUser = (patch) => {
@@ -155,6 +155,7 @@ export function AuthProvider({ children }) {
   );
 }
 
+// eslint-disable-next-line react-refresh/only-export-components -- useAuth is imported from every page, so it stays beside the provider
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

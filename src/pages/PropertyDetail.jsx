@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Share, Heart, ArrowLeft, Loader2, ChevronLeft, ChevronRight, MapPin, X, Star, Video, Grid3x3, BedDouble, Bath, Users, ShieldCheck, Check } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -12,6 +12,7 @@ import { useToast } from '../components/Toast';
 import ReviewsSection from '../components/detail/ReviewsSection';
 import { StayFacts, DirectionsLink, ManageListingCard, isOwnListing, useSwipe, PhotoCount, coordsOf } from '../components/detail/extras';
 import { toggleFavoriteApi } from '../api/user';
+import { cleanList } from '../lib/lists';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -60,15 +61,15 @@ export default function PropertyDetail() {
   };
 
   // 💡 NEW: Lightbox Navigation Handlers
-  const nextLightboxImage = (e) => {
+  const nextLightboxImage = useCallback((e) => {
     e?.stopPropagation();
     setLightboxIndex((prev) => (prev + 1) % property.images.length);
-  };
+  }, [property]);
   
-  const prevLightboxImage = (e) => {
+  const prevLightboxImage = useCallback((e) => {
     e?.stopPropagation();
     setLightboxIndex((prev) => (prev === 0 ? property.images.length - 1 : prev - 1));
-  };
+  }, [property]);
 
   // 💡 NEW: Keyboard Navigation for Lightbox
   useEffect(() => {
@@ -80,7 +81,7 @@ export default function PropertyDetail() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [lightboxIndex]);
+  }, [lightboxIndex, nextLightboxImage, prevLightboxImage]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -109,7 +110,7 @@ export default function PropertyDetail() {
           checkOutTime: dbProp.checkOutTime,
           coordinates: dbProp.address?.coordinates || dbProp.location?.coordinates,
           status: dbProp.status,
-          amenities: dbProp.amenities || [],
+          amenities: cleanList(dbProp.amenities),
           video: dbProp.video || null, // 💡 NEW: Extract Video URL
           images: dbProp.images?.length > 0 
             ? dbProp.images 

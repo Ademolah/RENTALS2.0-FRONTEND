@@ -70,9 +70,12 @@ function App() {
   const location = useLocation();
   const isHomePage = location.pathname === '/';
 
-  useEffect(() => {
+  // Switching category clears the search (adjusted during render instead of in an effect).
+  const [filtersCategory, setFiltersCategory] = useState(activeCategory);
+  if (filtersCategory !== activeCategory) {
+    setFiltersCategory(activeCategory);
     setSearchFilters({});
-  }, [activeCategory]);
+  }
 
   const handleCitySelect = (selectedState) => {
     // 3. Update the tracker so it remembers the selection globally

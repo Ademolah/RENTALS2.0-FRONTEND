@@ -77,14 +77,10 @@ export default function Profile() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.email]);
 
-  const loadHostStatus = async () => {
-    try {
-      const res = await HostService.checkStatus();
-      setHostStatus(res?.data?.status || null);
-    } catch {
-      setHostStatus(null);
-    }
-  };
+  const loadHostStatus = () => Promise.resolve()
+    .then(() => HostService.checkStatus())
+    .then((res) => setHostStatus(res?.data?.status || null))
+    .catch(() => setHostStatus(null));
 
   useEffect(() => {
     if (isGuest) loadHostStatus();

@@ -3,20 +3,21 @@ import { useDocumentMeta } from '../lib/seo';
 import { PageHero } from '../components/ui';
 import { ShieldCheck, ChevronRight } from 'lucide-react';
 
+const sections = [
+  { id: 'acceptance', title: '1. Acceptance of Terms' },
+  { id: 'eligibility', title: '2. User Verification & Eligibility' },
+  { id: 'bookings', title: '3. Booking & Payments' },
+  { id: 'cancellations', title: '4. Cancellations & Refunds' },
+  { id: 'host-terms', title: '5. Host Obligations & Guarantees' },
+  { id: 'vip-vehicle', title: '6. Vehicle & VIP Escort Services' },
+  { id: 'liability', title: '7. Limitation of Liability' },
+  { id: 'governing-law', title: '8. Governing Law & Dispute Resolution' },
+];
+
 export default function Terms() {
   useDocumentMeta('Terms of Service', 'The terms for using Rentals Africa.');
   const [activeSection, setActiveSection] = useState('acceptance');
 
-  const sections = [
-    { id: 'acceptance', title: '1. Acceptance of Terms' },
-    { id: 'eligibility', title: '2. User Verification & Eligibility' },
-    { id: 'bookings', title: '3. Booking & Payments' },
-    { id: 'cancellations', title: '4. Cancellations & Refunds' },
-    { id: 'host-terms', title: '5. Host Obligations & Guarantees' },
-    { id: 'vip-vehicle', title: '6. Vehicle & VIP Escort Services' },
-    { id: 'liability', title: '7. Limitation of Liability' },
-    { id: 'governing-law', title: '8. Governing Law & Dispute Resolution' },
-  ];
 
   const scrollToSection = (id) => {
     setActiveSection(id);

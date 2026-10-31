@@ -44,7 +44,7 @@ export function Container({ className = '', children }) {
 
 const CITY_IMAGES = ['/lagos.jpg', '/abuja.jpg'];
 
-export function cityFor(key = '') {
+function cityFor(key = '') {
   const n = [...String(key)].reduce((a, c) => a + c.charCodeAt(0), 0);
   return CITY_IMAGES[n % CITY_IMAGES.length];
 }
