@@ -213,30 +213,30 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             </div>
 
           </div>
+
+          {/* Category tabs on small screens */}
+          <div className="md:hidden -mx-4 px-4 pb-3 overflow-x-auto no-scrollbar">
+            <div className="flex gap-2 w-max">
+              {categories.map((cat) => {
+                const Icon = cat.icon;
+                const isActive = activeCategory === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => selectCategory(cat.id)}
+                    className={`flex items-center gap-2 px-4 py-2.5 rounded-full text-base font-medium whitespace-nowrap transition-colors ${
+                      isActive ? 'bg-brand-dark text-white' : 'bg-gray-50 text-brand-text-secondary'
+                    }`}
+                  >
+                    <Icon className={`w-4 h-4 ${isActive ? 'text-white' : ''}`} />
+                    <span>{cat.label}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </div>
       </nav>
-
-      {/* MOBILE BOTTOM NAVIGATION */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 z-[99999]">
-        <div className="flex justify-around items-center h-16 pb-safe">
-          {categories.map((cat) => {
-            const Icon = cat.icon;
-            const isActive = activeCategory === cat.id;
-            return (
-              <button
-                key={cat.id}
-                onClick={() => selectCategory(cat.id)}
-                className="flex flex-col items-center justify-center w-full h-full gap-1"
-              >
-                <Icon className={`w-5 h-5 transition-colors ${isActive ? 'text-brand-primary' : 'text-brand-text-muted'}`} />
-                <span className={`text-xs transition-colors ${isActive ? 'text-brand-dark font-semibold' : 'text-brand-text-muted'}`}>
-                  {cat.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
 
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
     </>
