@@ -48,12 +48,13 @@ export function cityFor(key = '') {
   return CITY_IMAGES[n % CITY_IMAGES.length];
 }
 
-export function CityBackdrop({ seed = '', image }) {
+export function CityBackdrop({ seed = '', image, tone = 'navy' }) {
+  const coral = tone === 'coral';
   return (
     <>
       <img src={image || cityFor(seed)} alt="" aria-hidden="true" className="absolute inset-0 w-full h-full object-cover" />
-      <div className="absolute inset-0 bg-gradient-to-r from-brand-dark/95 via-brand-dark/85 to-brand-dark/60" />
-      <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-brand-dark/70 to-transparent" />
+      <div className={`absolute inset-0 bg-gradient-to-r ${coral ? 'from-[#D6403D]/95 via-[#E5504D]/88 to-[#F25F5C]/70' : 'from-brand-dark/95 via-brand-dark/85 to-brand-dark/60'}`} />
+      <div className={`absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t ${coral ? 'from-[#B93432]/60' : 'from-brand-dark/70'} to-transparent`} />
     </>
   );
 }
