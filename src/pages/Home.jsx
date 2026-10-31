@@ -52,11 +52,6 @@ const shortletFilters = (typeOptions) => [
 
 const isActiveFilters = (f) => Object.values(f).some((v) => v !== undefined && v !== '' && !(Array.isArray(v) && v.length === 0));
 
-const greetingFor = () => {
-  const h = new Date().getHours();
-  return h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
-};
-
 const fmtDay = (d) => d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 
 const CAR_FILTERS = [
@@ -210,14 +205,11 @@ export default function Home({
   return (
     <main className="max-w-[1360px] mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-12">
 
-      {/* Greeting + notifications */}
+      {/* Welcome back (signed-in guests and hosts only) */}
       {user && (
-        <div className="flex items-center justify-between mb-5 animate-fade-up">
-          <div>
-            <p className="text-base text-brand-text-secondary">{greetingFor()}</p>
-            <p className="text-2xl font-display font-bold text-brand-dark">{user.firstName || 'Welcome back'}</p>
-          </div>
-        </div>
+        <p className="mb-5 text-2xl font-display font-bold text-brand-dark animate-fade-up">
+          Welcome back{user.firstName ? `, ${user.firstName}` : ''}
+        </p>
       )}
 
       {/* Hero */}
