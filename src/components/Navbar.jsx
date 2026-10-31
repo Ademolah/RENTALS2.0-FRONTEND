@@ -1,21 +1,15 @@
 import { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import {
-  Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
-  CarFront, Crown, ChevronRight, User as UserIcon,
+  Menu, UserCircle, LogOut, LayoutDashboard,
+  Crown, ChevronRight, User as UserIcon,
   Briefcase, Heart, Bell, LifeBuoy
 } from 'lucide-react';
 import { getUnreadCountApi } from '../api/user';
 import { useAuth } from '../context/AuthContext';
 import AuthModal from './AuthModal';
 
-export default function Navbar({ activeCategory, onCategoryChange }) {
-  const navigate = useNavigate();
-  const selectCategory = (id) => {
-    onCategoryChange?.(id);
-    navigate('/');
-    window.scrollTo({ top: 0 });
-  };
+export default function Navbar({ activeCategory }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
   const [unread, setUnread] = useState(0);
@@ -33,13 +27,6 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
     { to: '/notifications', label: 'Notifications', icon: Bell, badge: unread },
     { to: '/profile', label: 'Profile', icon: UserIcon },
     { to: '/help', label: 'Help', icon: LifeBuoy },
-  ];
-
-  const categories = [
-    { id: 'shortlet', label: 'Shortlets', short: 'Shortlets', icon: Key },
-    { id: 'car', label: 'Car Rentals', short: 'Cars', icon: CarFront },
-    { id: 'vip', label: 'VIP Services', short: 'VIP', icon: Crown },
-    { id: 'hotel', label: 'Hotels', short: 'Hotels', icon: Building2 },
   ];
 
   const getCtaText = () => {
@@ -68,30 +55,6 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   draggable="false"
                 />
               </Link>
-            </div>
-
-            {/* Desktop Category Tabs */}
-            <div className="hidden md:flex flex-1 justify-center px-8">
-              <div className="flex gap-1 p-1 bg-gray-50 rounded-full">
-                {categories.map((cat) => {
-                  const Icon = cat.icon;
-                  const isActive = activeCategory === cat.id;
-                  return (
-                    <button
-                      key={cat.id}
-                      onClick={() => selectCategory(cat.id)}
-                      className={`relative flex items-center gap-2 px-5 py-2.5 rounded-full text-base font-medium transition-all duration-200 ${
-                        isActive
-                          ? 'bg-white shadow-sm text-brand-dark font-semibold'
-                          : 'text-brand-text-secondary hover:text-brand-dark'
-                      }`}
-                    >
-                      <Icon className={`w-4 h-4 ${isActive ? 'text-brand-primary' : ''}`} />
-                      <span>{cat.label}</span>
-                    </button>
-                  );
-                })}
-              </div>
             </div>
 
             {/* Right Actions */}

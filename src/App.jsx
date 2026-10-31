@@ -75,7 +75,6 @@ function App() {
         <div className="relative z-40 has-[.mobile-menu-open]:z-[70] md:z-[99]">
           <Navbar 
             activeCategory={activeCategory} 
-            onCategoryChange={setActiveCategory} 
           />
         </div>
         
