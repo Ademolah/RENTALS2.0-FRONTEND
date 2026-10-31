@@ -60,7 +60,47 @@ export async function fetchMyListings(userId) {
   ];
   const seen = new Set();
   const items = all.filter((l) => l.id && !seen.has(l.id) && seen.add(l.id));
+
+  // Listings the host just submitted may not be returned by the server until an admin approves them,
+  // so they are remembered on this device and shown as waiting for approval.
+  if (userId) {
+    const stillWaiting = readSubmitted(userId).filter((r) => !seen.has(r.id) && Date.now() - r.at < SUBMITTED_TTL_MS);
+    if (failed === 0) writeSubmitted(userId, stillWaiting);
+    stillWaiting.forEach((r) => items.push({ ...normalize(r.raw, r.type), status: 'pending', local: true }));
+  }
   return { items, failed };
+}
+
+const SUBMITTED_TTL_MS = 30 * 24 * 60 * 60 * 1000;
+const submittedKey = (userId) => `rentals_submitted_listings_${userId}`;
+
+function readSubmitted(userId) {
+  try {
+    const v = JSON.parse(localStorage.getItem(submittedKey(userId)) || '[]');
+    return Array.isArray(v) ? v : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeSubmitted(userId, list) {
+  try {
+    localStorage.setItem(submittedKey(userId), JSON.stringify(list.slice(-50)));
+  } catch {
+    /* storage unavailable */
+  }
+}
+
+const KEEP = ['_id', 'id', 'title', 'images', 'address', 'location', 'category', 'pricePerNight', 'startingPrice', 'pricePer12Hours', 'depositAmount', 'pricePerDay', 'make', 'carModel', 'year', 'status'];
+
+export function rememberSubmitted(userId, type, raw) {
+  if (!userId || !raw || !(raw._id || raw.id)) return;
+  const slim = {};
+  KEEP.forEach((k) => { if (raw[k] !== undefined) slim[k] = k === 'images' ? arr(raw.images).slice(0, 2) : raw[k]; });
+  const id = String(raw._id || raw.id);
+  const list = readSubmitted(userId).filter((r) => r.id !== id);
+  list.push({ id, type, raw: slim, at: Date.now() });
+  writeSubmitted(userId, list);
 }
 
 // Pause / resume = multipart PATCH (PUT for VIP venues) with isAvailable, resending the fields the API requires.

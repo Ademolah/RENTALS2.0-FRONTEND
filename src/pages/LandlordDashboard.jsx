@@ -8,7 +8,7 @@ import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 import { getLandlordHotelBookings, confirmHotelCheckIn } from '../api/hotel'; 
 import { confirmVipArrival } from '../api/vip'; 
 import { useAuth } from '../context/AuthContext';
-import { fetchMyListings, setListingAvailable, fetchHostReviews, lagosToday, dayOf } from '../components/host/hostApi';
+import { fetchMyListings, rememberSubmitted, setListingAvailable, fetchHostReviews, lagosToday, dayOf } from '../components/host/hostApi';
 
 import { Button, Badge, Card, Container, SectionTitle, EmptyState, ConfirmDialog, CityBackdrop, Skeleton } from '../components/ui';
 import { useToast } from '../components/Toast';
@@ -399,11 +399,16 @@ export default function LandlordDashboard() {
     return false;
   });
 
+  const pendingListings = listings.filter((l) => l.status === 'pending');
+  const approvedListings = listings.filter((l) => l.status === 'active' || l.status === 'paused');
+  const tabFor = (l) => (l.type === 'CAR' ? 'CARS' : l.type === 'HOTEL' ? 'HOTELS' : l.type === 'SHORTLET' ? 'SHORTLETS' : 'VIP ASSETS');
+  const remember = (type, created) => rememberSubmitted(user?._id || user?.id, type, created);
+
   const STATUS_BADGE = {
-    active: { tone: 'green', label: 'Live' },
-    paused: { tone: 'gray', label: 'Unavailable' },
-    pending: { tone: 'amber', label: 'Pending approval' },
-    rejected: { tone: 'brand', label: 'Rejected' },
+    active: { tone: 'green', label: 'Approved' },
+    paused: { tone: 'gray', label: 'Approved, unavailable' },
+    pending: { tone: 'amber', label: 'Waiting for admin approval' },
+    rejected: { tone: 'brand', label: 'Not approved' },
   };
 
   const handleManageListing = (l) => {
@@ -493,24 +498,45 @@ export default function LandlordDashboard() {
           </div>
         </section>
 
+        {/* WAITING FOR APPROVAL */}
+        {pendingListings.length > 0 && (
+          <section className="mb-8 rounded-3xl border border-brand-warning/30 bg-brand-warning-soft p-6 md:p-7 flex flex-col md:flex-row md:items-center gap-5">
+            <div className="w-14 h-14 rounded-2xl bg-white flex items-center justify-center shrink-0 shadow-soft"><Clock className="w-7 h-7 text-brand-warning" /></div>
+            <div className="flex-1">
+              <h2 className="text-xl md:text-2xl font-display font-bold text-brand-dark">
+                {pendingListings.length} listing{pendingListings.length === 1 ? ' is' : 's are'} waiting for admin approval
+              </h2>
+              <p className="text-base text-brand-text-secondary mt-1">Rentals Africa is reviewing {pendingListings.length === 1 ? 'it' : 'them'}. {pendingListings.length === 1 ? 'It goes' : 'They go'} live as soon as {pendingListings.length === 1 ? 'it is' : 'they are'} approved, and guests cannot see {pendingListings.length === 1 ? 'it' : 'them'} until then.</p>
+            </div>
+            <Button variant="dark" onClick={() => setActiveTab(tabFor(pendingListings[0]))}>View {pendingListings.length === 1 ? 'listing' : 'listings'}</Button>
+          </section>
+        )}
+
         {/* STAT TILES */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
-          <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-brand-accent-soft rounded-2xl flex items-center justify-center"><Building className="w-7 h-7 text-brand-accent" /></div>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          <Card className="p-5 md:p-6 flex items-center gap-4">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-brand-accent-soft rounded-2xl flex items-center justify-center shrink-0"><Building className="w-6 h-6 md:w-7 md:h-7 text-brand-accent" /></div>
             <div>
               <p className="text-sm font-semibold text-brand-text-secondary">Your listings</p>
               <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{listings.length}</h3>
             </div>
           </Card>
-          <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-status-available-soft rounded-2xl flex items-center justify-center"><Wallet className="w-7 h-7 text-status-available" /></div>
+          <Card className="p-5 md:p-6 flex items-center gap-4">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-brand-warning-soft rounded-2xl flex items-center justify-center shrink-0"><Clock className="w-6 h-6 md:w-7 md:h-7 text-brand-warning" /></div>
             <div>
-              <p className="text-sm font-semibold text-brand-text-secondary">Paid reservations</p>
-              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{payoutRows.length}</h3>
+              <p className="text-sm font-semibold text-brand-text-secondary">Waiting for approval</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{pendingListings.length}</h3>
             </div>
           </Card>
-          <Card className="p-6 flex items-center gap-4">
-            <div className="w-14 h-14 bg-brand-warning-soft rounded-2xl flex items-center justify-center"><CalendarCheck className="w-7 h-7 text-brand-warning" /></div>
+          <Card className="p-5 md:p-6 flex items-center gap-4">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-status-available-soft rounded-2xl flex items-center justify-center shrink-0"><CheckCircle className="w-6 h-6 md:w-7 md:h-7 text-status-available" /></div>
+            <div>
+              <p className="text-sm font-semibold text-brand-text-secondary">Approved</p>
+              <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{approvedListings.length}</h3>
+            </div>
+          </Card>
+          <Card className="p-5 md:p-6 flex items-center gap-4">
+            <div className="w-12 h-12 md:w-14 md:h-14 bg-brand-warning-soft rounded-2xl flex items-center justify-center shrink-0"><CalendarCheck className="w-6 h-6 md:w-7 md:h-7 text-brand-warning" /></div>
             <div>
               <p className="text-sm font-semibold text-brand-text-secondary">Arriving today</p>
               <h3 className="text-2xl md:text-3xl font-display font-bold text-brand-dark tracking-tight">{arrivingToday.length}</h3>
@@ -820,6 +846,13 @@ export default function LandlordDashboard() {
                               const st2 = statsFor(l.id);
                               return <p className="text-sm text-brand-text-secondary mb-4">{st2.count} paid booking{st2.count === 1 ? '' : 's'} · ₦{st2.earned.toLocaleString()} earned</p>;
                             })()}
+                            {l.status === 'pending' && (
+                              <div className="rounded-xl bg-brand-warning-soft border border-brand-warning/30 p-4 text-base text-brand-text-secondary flex gap-3">
+                                <Clock className="w-5 h-5 text-brand-warning shrink-0 mt-0.5" />
+                                <p>Waiting for admin approval. This listing goes live and becomes visible to guests once Rentals Africa approves it.</p>
+                              </div>
+                            )}
+                            {l.status !== 'pending' && (
                             <div className="flex gap-2 mb-2">
                               <Link to={viewAsGuestPath(l)} className="flex-1 inline-flex items-center justify-center gap-2 px-4 py-2 rounded-lg border border-gray-200 text-sm font-semibold text-brand-dark hover:border-brand-dark transition-colors">
                                 <ExternalLink className="w-4 h-4" /> View as guest
@@ -828,7 +861,9 @@ export default function LandlordDashboard() {
                                 <Button variant="outline" size="sm" onClick={() => setEditingHotelId(l.id)} className="flex-1"><BedDouble className="w-4 h-4" /> Rooms</Button>
                               )}
                             </div>
-                            <div className="flex gap-2">
+                            )}
+                            {!l.local && (
+                            <div className="flex gap-2 mt-2">
                               <Button variant="soft" size="sm" onClick={() => handleManageListing(l)} className="flex-1">Edit</Button>
                               {canToggle && (
                                 <Button variant="outline" size="sm" disabled={togglingId === l.id} onClick={() => handleToggleAvailability(l)} className="flex-1">
@@ -836,6 +871,7 @@ export default function LandlordDashboard() {
                                 </Button>
                               )}
                             </div>
+                            )}
                           </div>
                         </Card>
                       );
@@ -858,10 +894,10 @@ export default function LandlordDashboard() {
 
       {/* MODALS */}
       <BankSetupModal isOpen={isBankModalOpen} onClose={() => setIsBankModalOpen(false)} onSuccess={() => notify('Bank account saved. Your payouts are set up.', 'success')} />
-      <AddPropertyModal isOpen={isPropertyModalOpen} onClose={() => setIsPropertyModalOpen(false)} onPropertyAdded={() => { fetchPortfolioData(); loadListings(); }} />
-      <AddCarModal isOpen={isCarModalOpen} onClose={() => setIsCarModalOpen(false)} onCarAdded={() => { fetchPortfolioData(); loadListings(); }} />
-      <CreateHotelModal isOpen={isHotelModalOpen} onClose={() => setIsHotelModalOpen(false)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
-      <AddVipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} onEstablishmentAdded={() => { fetchPortfolioData(); loadListings(); }} />
+      <AddPropertyModal isOpen={isPropertyModalOpen} onClose={() => setIsPropertyModalOpen(false)} onPropertyAdded={(created) => { remember(String(created?.category || '').toUpperCase().includes('VIP') ? 'VIP' : 'SHORTLET', created); fetchPortfolioData(); loadListings(); }} />
+      <AddCarModal isOpen={isCarModalOpen} onClose={() => setIsCarModalOpen(false)} onCarAdded={(created) => { remember('CAR', created); fetchPortfolioData(); loadListings(); }} />
+      <CreateHotelModal isOpen={isHotelModalOpen} onClose={() => setIsHotelModalOpen(false)} onSuccess={(created) => { remember('HOTEL', created?.hotel || created); fetchPortfolioData(); loadListings(); }} />
+      <AddVipModal isOpen={isVipModalOpen} onClose={() => setIsVipModalOpen(false)} onEstablishmentAdded={(created) => { remember(String(created?.category || '').toUpperCase() === 'VIP_SERVICE' ? 'VIP_SERVICE' : 'VIP', created); fetchPortfolioData(); loadListings(); }} />
 
       <EditCarModal isOpen={!!editingCarId} carId={editingCarId} onClose={() => setEditingCarId(null)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
       <EditPropertyModal isOpen={!!editingPropertyId} propertyId={editingPropertyId} onClose={() => setEditingPropertyId(null)} onSuccess={() => { fetchPortfolioData(); loadListings(); }} />
