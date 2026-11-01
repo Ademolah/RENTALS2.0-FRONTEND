@@ -502,7 +502,7 @@ export default function VipDetails() {
 
               <div className="mt-6 flex items-start gap-3 text-xs text-gray-500 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Your deposit is held securely in escrow by Rentals. Funds are only released to the venue upon your physical arrival and check-in.</p>
+                <p>Your deposit is held securely in escrow by Rentals Africa. Funds are only released to the venue upon your physical arrival and check-in.</p>
               </div>
 
             </div>

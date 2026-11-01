@@ -43,9 +43,9 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             
             <div className="flex-shrink-0">
             <Link to="/" className="flex items-center group">
-              <img 
-                src="/Rentals-Navbar.png" 
-                alt="Rentals Platform" 
+              <img
+                src="/logo-coral.png"
+                alt="Rentals Africa"
                 className="h-6 w-auto sm:h-7 md:h-8 object-contain transition-transform duration-300 group-hover:scale-[1.02] select-none"
                 draggable="false"
               />

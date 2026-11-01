@@ -192,7 +192,7 @@ export default function AuthModal({ isOpen, onClose }) {
             {isLogin ? 'Welcome back.' : 'Create account.'}
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 mt-1.5 font-medium">
-            {isLogin ? 'Enter details to access your itinerary.' : 'Join Rentals to experience premium hospitality.'}
+            {isLogin ? 'Enter details to access your itinerary.' : 'Join Rentals Africa to experience premium hospitality.'}
           </p>
         </div>
 

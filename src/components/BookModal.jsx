@@ -125,7 +125,7 @@ Please assist me with the escrow payment.`;
               <CheckCircle2 className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="text-xl font-black tracking-tight">Rentals Concierge</h3>
+              <h3 className="text-xl font-black tracking-tight">Rentals Africa Concierge</h3>
               <p className="text-blue-200 text-xs font-medium uppercase tracking-wider">Secure Checkout</p>
             </div>
           </div>
