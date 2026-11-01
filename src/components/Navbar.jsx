@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { 
+import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
-  CarFront, Crown ,  ChevronRight, User as UserIcon, 
-  Sparkles, LogIn
+  CarFront, Crown, ChevronRight, User as UserIcon,
+  Sparkles, LogIn, Bell, Map
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 // Ensure this path points to your actual AuthModal location
@@ -78,8 +78,16 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             </div>
 
             <div className="flex items-center space-x-2 md:space-x-4">
-              {/* 3. UPDATE CTA BUTTON TO USE GLOBAL STATE */}
-              <button 
+              {user && (
+                <button
+                  onClick={() => navigate('/dashboard/guest?tab=NOTIFICATIONS')}
+                  className="p-2.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                </button>
+              )}
+              <button
                 onClick={() => user ? redirectUserByRole('LANDLORD') : setShowAuthModal(true)}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
               >
@@ -129,6 +137,19 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                                 <LayoutDashboard className="w-4 h-4" />
                               </div>
                               <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Control Panel</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                          </button>
+
+                          <button
+                            onClick={() => { setIsMenuOpen(false); navigate('/dashboard/guest?tab=ALL'); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                <Map className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">My Trips</span>
                             </div>
                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
                           </button>
