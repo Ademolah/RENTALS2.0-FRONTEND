@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
   CarFront, Crown ,  ChevronRight, User as UserIcon, 
@@ -17,6 +17,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   
   // 2. IMPORT GLOBAL MODAL STATE FROM CONTEXT
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
+  const navigate = useNavigate();
 
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
@@ -133,7 +134,12 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                           </button>
 
                           <button
-                            onClick={() => { setIsMenuOpen(false); redirectUserByRole(user.role); }}
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              const role = user.role?.toUpperCase();
+                              const path = role === 'LANDLORD' ? '/dashboard/landlord' : role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/guest';
+                              navigate(`${path}?tab=SETTINGS`);
+                            }}
                             className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                           >
                             <div className="flex items-center space-x-3">

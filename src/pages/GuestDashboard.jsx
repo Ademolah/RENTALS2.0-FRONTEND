@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Home, CarFront, Hotel, Crown, ShieldCheck, 
   MapPin, Calendar, Clock, Loader2, CheckCircle, 
@@ -365,8 +365,9 @@ const FavoriteCard = ({ property, onRemove }) => {
 export default function GuestDashboard() {
   const { logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'ALL');
   const [bookings, setBookings] = useState([]);
   const [favorites, setFavorites] = useState([]);
   
