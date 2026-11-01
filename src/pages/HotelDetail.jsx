@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 // Icons via Font Awesome CDN (index.html) — no lucide-react
-import { getHotelById, bookHotel } from '../api/hotels';
+import { getHotelById } from '../api/hotel';
+import { apiClient } from '../api/client';
+const bookHotel = (data) => apiClient.post('/reservations/book', { ...data, bookingType: 'HOTEL' }).then(r => r.data);
 import { initiateWhatsAppBooking, openWhatsApp } from '../api/whatsapp';
 import { useAuth } from '../context/AuthContext';
 
