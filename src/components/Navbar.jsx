@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
@@ -6,18 +6,25 @@ import {
   Sparkles, LogIn, Bell, Map
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-// Ensure this path points to your actual AuthModal location
+import { apiClient } from '../api/client';
 import AuthModal from './AuthModal'
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
-  // 1. DELETE LOCAL MODAL STATE
-  // const [isAuthOpen, setIsAuthOpen] = useState(false); 
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // 2. IMPORT GLOBAL MODAL STATE FROM CONTEXT
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    apiClient.get('/notifications')
+      .then(res => {
+        const list = res.data?.data?.notifications || res.data?.notifications || res.data || [];
+        const arr = Array.isArray(list) ? list : [];
+        setUnreadCount(arr.filter(n => !n.isRead).length);
+      })
+      .catch(() => setUnreadCount(0));
+  }, [user]);
 
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
@@ -81,10 +88,15 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
               {user && (
                 <button
                   onClick={() => navigate('/dashboard/guest?tab=NOTIFICATIONS')}
-                  className="p-2.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
+                  className="relative p-2.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
                   aria-label="Notifications"
                 >
                   <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-brand-primary text-white text-[9px] font-extrabold rounded-full flex items-center justify-center leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
                 </button>
               )}
               <button

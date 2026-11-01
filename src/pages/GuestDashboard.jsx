@@ -412,7 +412,6 @@ export default function GuestDashboard() {
     { id: 'HOTEL', label: 'Hotels', icon: Hotel },
     { id: 'VIP', label: 'VIP Assets', icon: Crown },
     { id: 'FAVORITES', label: 'Saved Stays', icon: Heart },
-    { id: 'NOTIFICATIONS', label: 'Notifications', icon: Bell },
     { id: 'SETTINGS', label: 'Account Settings', icon: Settings },
   ];
 
