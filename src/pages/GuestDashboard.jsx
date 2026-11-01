@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Home, CarFront, Hotel, Crown, ShieldCheck,
   MapPin, Calendar, Clock, Loader2, CheckCircle,
-  ChevronRight, LayoutGrid, AlertCircle, Heart, Star,
+  LayoutGrid, AlertCircle, Heart, Star,
   Settings, User, Phone, Trash2, X, Bell
 } from 'lucide-react';
 
@@ -607,38 +607,38 @@ export default function GuestDashboard() {
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
 
-      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col lg:flex-row gap-10">
-        
-        {/* Sidebar Tabs */}
-        <div className="lg:w-64 shrink-0 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
-          <div className="flex lg:flex-col gap-2 min-w-max lg:min-w-0 sticky top-28">
+      {/* Horizontal tab bar */}
+      <div className="bg-white border-b border-gray-100 sticky top-20 z-40">
+        <div className="max-w-7xl mx-auto px-4 md:px-12 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1 py-2 min-w-max">
             {TABS.map((tab) => {
               const Icon = tab.icon;
               const isActive = activeTab === tab.id;
               const isVipTab = tab.id === 'VIP';
-              const isSettingsTab = tab.id === 'SETTINGS';
-
               return (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left
-                    ${isActive ? isVipTab ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
-                    ${isSettingsTab && !isActive ? 'mt-4 border border-gray-200 bg-white' : ''}
-                  `}
+                  className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all whitespace-nowrap
+                    ${isActive
+                      ? isVipTab
+                        ? 'bg-amber-500 text-black shadow-sm'
+                        : 'bg-gray-900 text-white shadow-sm'
+                      : 'text-gray-500 hover:bg-gray-100 hover:text-gray-900'
+                    }`}
                 >
-                  <Icon className={`w-5 h-5 ${isActive && !isVipTab ? 'text-brand-primary' : ''}`} />
-                  <span className="whitespace-nowrap flex-1">{tab.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 hidden lg:block opacity-50" />}
+                  <Icon className="w-4 h-4 shrink-0" />
+                  {tab.label}
                 </button>
               );
             })}
-
           </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8">
         {/* Main Content Area */}
-        <div className="flex-1 space-y-6">
+        <div className="space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
