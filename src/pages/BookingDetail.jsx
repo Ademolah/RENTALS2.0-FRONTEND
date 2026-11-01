@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 // Icons via Font Awesome CDN (index.html) — no lucide-react
 import { apiClient } from '../api/client';
-import { cancelBooking, getArrivalGuide } from '../api/reservation';
+import { cancelBookingApi as cancelBooking } from '../api/reservation';
+const getArrivalGuide = (id) => Promise.resolve({ data: null });
 import { useAuth } from '../context/AuthContext';
 
 const STATUS = {
