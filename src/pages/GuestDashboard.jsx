@@ -369,6 +369,11 @@ export default function GuestDashboard() {
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'ALL');
   const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    const tab = searchParams.get('tab');
+    if (tab) setActiveTab(tab);
+  }, [searchParams]);
   const [favorites, setFavorites] = useState([]);
   
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
