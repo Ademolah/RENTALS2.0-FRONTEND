@@ -1,10 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  ShieldCheck, 
   Lock, 
-  Eye, 
-  Database, 
-  KeyRound, 
   ChevronRight,
   UserCheck
 } from 'lucide-react';
