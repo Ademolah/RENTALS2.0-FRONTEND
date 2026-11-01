@@ -404,7 +404,7 @@ export default function CarDetails() {
       <div className="relative mb-12">
         {/* MOBILE GALLERY */}
         <div className="md:hidden relative h-[300px] rounded-2xl overflow-hidden group">
-          <div ref={mobileScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+          <div ref={mobileScrollRef} className="absolute inset-0 flex overflow-x-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             {images.map((img, idx) => (
               <div 
                 key={idx} 
@@ -465,7 +465,7 @@ export default function CarDetails() {
                   <img src={images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2" />
                 </div>
                 <div className="w-full h-full relative group">
-                  <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
+                  <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
                     {images.slice(2).map((img, idx) => (
                       <div 
                         key={idx} 

@@ -440,7 +440,7 @@ export default function HotelDetails() {
           <ChevronRight className="w-8 h-8" />
         </button>
         
-        <div ref={galleryRef} className="flex overflow-x-auto snap-x snap-mandatory hide-scrollbar h-[40vh] md:h-[60vh] scroll-smooth">
+        <div ref={galleryRef} className="flex overflow-x-hidden snap-x snap-mandatory hide-scrollbar h-[40vh] md:h-[60vh] scroll-smooth">
           {hotel.images?.map((img, index) => (
             <div 
               key={index} 

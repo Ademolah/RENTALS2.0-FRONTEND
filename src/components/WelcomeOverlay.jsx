@@ -53,8 +53,9 @@ export default function WelcomeOverlay() {
             <div className="h-[1px] w-6 bg-brand-primary/50"></div>
           </div>
           
+          <img src="/logo-coral.png" alt="Rentals Africa" className="h-14 w-auto mx-auto mb-4" />
           <h2 className="text-2xl sm:text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">
-            Welcome to Rentals
+            Welcome to Rentals Africa
           </h2>
           <p className="text-gray-500 text-sm sm:text-base font-medium mb-8 leading-relaxed">
             The home of premium hospitality. Discover verified apartments, luxury shortlets, and top-tier hotels.

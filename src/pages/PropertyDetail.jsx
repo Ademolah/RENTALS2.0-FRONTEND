@@ -359,7 +359,7 @@ export default function PropertyDetail() {
             
             {/* MOBILE VIEW */}
             <div className="md:hidden relative h-[350px] w-full rounded-2xl overflow-hidden group shadow-sm">
-              <div ref={mobileScrollRef} className="flex overflow-x-auto snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div ref={mobileScrollRef} className="flex overflow-x-hidden snap-x snap-mandatory h-full w-full [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                 {property.images.map((img, idx) => (
                   <div 
                     key={idx} 
@@ -424,7 +424,7 @@ export default function PropertyDetail() {
                       <img src={property.images[1]} className="absolute inset-0 w-full h-full object-cover group-hover:opacity-95 transition-opacity duration-300" alt="Interior 1" />
                     </div>
                     <div className="w-full h-full relative group">
-                      <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+                      <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
                         {property.images.slice(2).map((img, idx) => (
                           <div 
                             key={idx} 

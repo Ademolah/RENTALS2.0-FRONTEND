@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Loader2, Eye, EyeOff } from 'lucide-react';
 import { useGoogleLogin } from '@react-oauth/google'; // 💡 INJECTED
@@ -15,6 +15,14 @@ export default function AuthModal({ isOpen, onClose }) {
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false); // 💡 INJECTED
   const [error, setError] = useState('');
+  const googleContainerRef = useRef(null);
+  const [googleBtnWidth, setGoogleBtnWidth] = useState(380);
+
+  useEffect(() => {
+    if (isOpen && googleContainerRef.current) {
+      setGoogleBtnWidth(googleContainerRef.current.offsetWidth);
+    }
+  }, [isOpen]);
   
   const { login } = useAuth(); 
 
@@ -195,16 +203,17 @@ export default function AuthModal({ isOpen, onClose }) {
         )}
 
         {/* 💡 INJECTED: Google Sign-In Button Component */}
-<div className="mb-4 flex justify-center">
-  <GoogleLogin
-    onSuccess={handleGoogleSuccess}
-    onError={() => setError('Google Sign-In failed.')}
-    shape="pill"
-    size="large"
-    width="400"
-    text="continue_with"
-  />
-</div>
+        <div ref={googleContainerRef} className="mb-4 w-full overflow-hidden flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={() => setError('Google Sign-In failed.')}
+            shape="rectangular"
+            size="large"
+            width={String(googleBtnWidth)}
+            text={isLogin ? 'signin_with' : 'signup_with'}
+            logo_alignment="left"
+          />
+        </div>
 
         <div className="flex items-center my-4">
           <div className="flex-grow border-t border-gray-200"></div>
