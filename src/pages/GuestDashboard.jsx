@@ -3,7 +3,7 @@ import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Home, CarFront, Hotel, Crown, ShieldCheck,
   MapPin, Calendar, Clock, Loader2, CheckCircle,
-  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star,
+  ChevronRight, LayoutGrid, AlertCircle, Heart, Star,
   Settings, User, Phone, Trash2, X, Bell
 } from 'lucide-react';
 
@@ -606,24 +606,6 @@ export default function GuestDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-12 md:px-12 md:py-16">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Your Itinerary</h1>
-            <p className="text-gray-500 font-medium mt-3 text-lg">Manage your luxury bookings and reservations.</p>
-          </div>
-          <div className="bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 flex items-center space-x-4">
-            <Wallet className="w-8 h-8 text-brand-primary" />
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">Total Escrow Value</div>
-              <div className="text-xl font-bold text-gray-900">
-                ₦{bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
       <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col lg:flex-row gap-10">
         
