@@ -23,7 +23,7 @@ export default function PaymentCallback() {
       return;
     }
 
-    apiClient.get(`/payments/verify/${reference}`)
+    apiClient.get(`/reservations/verify/${reference}`)
       .then(res => {
         const data = res.data?.data || res.data;
         if (data?.status === 'success' || data?.paid === true || res.data?.status === 'success') {
