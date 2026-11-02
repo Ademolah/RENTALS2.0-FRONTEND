@@ -155,7 +155,8 @@ export default function BookingWidget({ property }) {
         checkInDate: checkIn,
         checkOutDate: checkOut,
         guestsCount: guests,
-        totalAmount: pricingDetails.grandTotal
+        totalAmount: pricingDetails.grandTotal,
+        callbackUrl: `${window.location.origin}/booking-success`
       });
 
       const checkoutUrl = response.checkoutUrl || response.data?.checkoutUrl || response.authorization_url;

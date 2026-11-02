@@ -22,6 +22,7 @@ import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
 import ResetPassword from './pages/ResetPassword';
 import VipServiceDetails from './components/VipServiceDetails';
+import BookingSuccess from './components/BookingSuccess';
 
 // 1. Define the tracker completely outside the component memory
 let hasSeenCityModalThisSession = false;
@@ -112,6 +113,7 @@ function App() {
           <Route path="/sitemap" element={<Sitemap />} />
           <Route path='/vip/services/:id' element={<VipServiceDetails/>} />
           <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/booking-success" element={<BookingSuccess />} />
         </Routes>
       </div>
 

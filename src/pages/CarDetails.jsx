@@ -231,7 +231,8 @@ export default function CarDetails() {
         carId: car._id || car.id,
         pickupTime: pickupDateTime.toISOString(),
         dropoffTime: dropoffDateTime.toISOString(),
-        totalAmount: pricing.grandTotal
+        totalAmount: pricing.grandTotal,
+        callbackUrl: `${window.location.origin}/booking-success`
       };
 
       const response = await createCarReservation(payload);
