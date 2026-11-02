@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 // Icons via Font Awesome CDN (index.html) — no lucide-react
 import { getHotelById } from '../api/hotel';
@@ -6,6 +6,7 @@ import { apiClient } from '../api/client';
 const bookHotel = (data) => apiClient.post('/reservations/book', { ...data, bookingType: 'HOTEL' }).then(r => r.data);
 import { initiateWhatsAppBooking, openWhatsApp } from '../api/whatsapp';
 import { useAuth } from '../context/AuthContext';
+import ImageGallery from '../components/ImageGallery';
 
 const fmt = (n) => Number(n || 0).toLocaleString();
 const today = new Date().toISOString().split('T')[0];
@@ -13,7 +14,6 @@ const today = new Date().toISOString().split('T')[0];
 export default function HotelDetail() {
   const { id } = useParams();
   const { user, openAuthModal } = useAuth();
-  const mobileRef = useRef(null);
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -23,10 +23,6 @@ export default function HotelDetail() {
   const [guests, setGuests] = useState(1);
   const [bookLoading, setBookLoading] = useState(false);
   const [bookError, setBookError] = useState('');
-
-  const scrollGallery = (ref, dir) => {
-    if (ref.current) ref.current.scrollBy({ left: dir === 'left' ? -ref.current.offsetWidth : ref.current.offsetWidth, behavior: 'smooth' });
-  };
 
   useEffect(() => {
     getHotelById(id)
@@ -119,24 +115,7 @@ export default function HotelDetail() {
 
       {/* Gallery */}
       <div className="mb-10">
-        <div className="md:hidden relative h-[300px] rounded-2xl overflow-hidden">
-          <div ref={mobileRef} className="absolute inset-0 flex overflow-x-auto snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
-            {images.map((img, i) => (
-              <div key={i} className="w-full h-full flex-shrink-0 snap-center relative">
-                <img src={img} className="absolute inset-0 w-full h-full object-cover" alt={`View ${i + 1}`} />
-              </div>
-            ))}
-          </div>
-          {images.length > 1 && (
-            <>
-              <button onClick={() => scrollGallery(mobileRef, 'left')} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><i className="fa-solid fa-chevron-left text-base" /></button>
-              <button onClick={() => scrollGallery(mobileRef, 'right')} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><i className="fa-solid fa-chevron-right text-base" /></button>
-            </>
-          )}
-        </div>
-        <div className="hidden md:block h-[480px] rounded-2xl overflow-hidden">
-          <img src={images[0]} className="w-full h-full object-cover" alt="Main view" />
-        </div>
+        <ImageGallery images={images} alt={hotel.title} className="h-[300px] md:h-[480px] rounded-2xl" />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">

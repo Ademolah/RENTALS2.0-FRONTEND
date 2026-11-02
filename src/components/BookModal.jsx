@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, Clock, ShieldCheck, CreditCard, MessageCircle, 
-  CalendarDays, BedDouble, MapPin, CheckCircle2 
+import {
+  X, Clock, ShieldCheck, CreditCard, MessageCircle,
+  CalendarDays, BedDouble, MapPin, CheckCircle2
 } from 'lucide-react';
+import { savePaymentReturn } from '../utils/paymentReturn';
+import { toApiCheckoutDate } from '../utils/dateLimits';
 
 export default function BookModal({ 
   isOpen, 
@@ -70,26 +72,29 @@ Please assist me with the escrow payment.`;
       // 💡 THE FIX: Dynamic Base URL injection replacing the hardcoded localhost trap
       const baseURL = import.meta.env.VITE_API_URL;
       
+      const returnPath = window.location.pathname;
       const response = await fetch(`${baseURL}/reservations/book`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}` 
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           propertyId: hotelData._id,
           roomId: roomData._id,
           checkInDate: checkIn,
-          checkOutDate: checkOut,
+          checkOutDate: toApiCheckoutDate(checkIn, checkOut),
           guestsCount: roomData.capacity.adults || 1,
           totalAmount: totalPrice,
-          bookingType: 'HOTEL' 
+          bookingType: 'HOTEL',
+          callbackUrl: `${window.location.origin}/booking-success`
         })
       });
 
       const data = await response.json();
 
       if (data.status === 'success' && data.data.checkoutUrl) {
+        savePaymentReturn(returnPath);
         window.location.href = data.data.checkoutUrl;
       } else {
         console.error("Payment Error:", data);

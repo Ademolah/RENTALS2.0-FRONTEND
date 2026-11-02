@@ -6,11 +6,16 @@ import {
   Loader2, AlertCircle, X, Clock, UserCheck
 } from 'lucide-react';
 import { getVipServiceById, initiateVipServiceReservation } from '../api/vip';
+import ImageGallery from './ImageGallery';
+import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr } from '../utils/dateLimits';
+import { savePaymentReturn } from '../utils/paymentReturn';
+import useGoBack from '../utils/useGoBack';
 
 export default function VipServiceDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const goBack = useGoBack('/');
+
   const [service, setService] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -58,18 +63,20 @@ export default function VipServiceDetails() {
       // Calculate end date based on duration
       const end = new Date(startDate);
       end.setDate(end.getDate() + durationDays);
-      const endDate = end.toISOString().split('T')[0];
+      const endDate = toLocalDateStr(end);
 
+      const returnPath = window.location.pathname;
       const response = await initiateVipServiceReservation({
         serviceId: id,
         startDate,
         endDate,
-        callbackUrl: `${window.location.origin}/vip-success`
+        callbackUrl: `${window.location.origin}/vip-success?return=${encodeURIComponent(returnPath)}`
       });
-      
+
       const { checkoutUrl } = response.data?.data || response.data;
       if (checkoutUrl) {
-        window.location.href = checkoutUrl; 
+        savePaymentReturn(returnPath);
+        window.location.href = checkoutUrl;
       } else {
         setBookingError("Failed to initialize payment gateway.");
       }
@@ -108,8 +115,7 @@ export default function VipServiceDetails() {
   };
 
   const handleDateSelect = (dateObj) => {
-    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-    setStartDate(offsetDate.toISOString().split('T')[0]);
+    setStartDate(toLocalDateStr(dateObj));
     setShowCalendar(false);
   };
 
@@ -134,7 +140,7 @@ export default function VipServiceDetails() {
       <div className="min-h-screen bg-[#0a0a0a] flex flex-col items-center justify-center text-white">
         <AlertCircle className="w-16 h-16 text-red-500 mb-4" />
         <h2 className="text-2xl font-bold mb-4">Service Unavailable</h2>
-        <button onClick={() => navigate(-1)} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">Go Back</button>
+        <button onClick={goBack} className="px-6 py-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors">Go Back</button>
       </div>
     );
   }
@@ -152,6 +158,7 @@ export default function VipServiceDetails() {
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const maxBookableDate = getMaxBookableDate(today);
 
   return (
     <main className="min-h-screen bg-[#0a0a0a] text-gray-200 pb-24 selection:bg-amber-500 selection:text-black overflow-x-hidden relative">
@@ -189,8 +196,8 @@ export default function VipServiceDetails() {
 
       {/* IMMERSIVE HERO NAVIGATION */}
       <div className="absolute top-24 md:top-32 left-0 w-full z-50 px-6 md:px-12 flex justify-between items-center pointer-events-none">
-        <button 
-          onClick={() => navigate(-1)}
+        <button
+          onClick={goBack}
           className="pointer-events-auto flex items-center justify-center w-12 h-12 bg-black/40 backdrop-blur-xl border border-white/10 rounded-full hover:bg-amber-500 hover:text-black transition-all text-white shadow-lg"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -200,46 +207,9 @@ export default function VipServiceDetails() {
       {/* DYNAMIC IMAGE GRID */}
       <div className="w-full h-[50vh] md:h-[70vh] flex overflow-hidden">
         {images.length > 0 ? (
-          <div className={`w-full h-full flex ${images.length === 1 ? '' : 'gap-1 md:gap-2'} overflow-x-auto snap-x snap-mandatory md:overflow-hidden`}>
-            <div 
-              onClick={() => setLightboxIndex(0)}
-              className={`h-full relative group overflow-hidden shrink-0 snap-center cursor-pointer ${images.length === 1 ? 'w-full' : 'w-full md:w-1/2'}`}
-            >
-              <img src={images[0]} alt="Main" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-105" />
-              <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80 md:opacity-0 group-hover:bg-black/10 transition-colors"></div>
-            </div>
-            
-            {images.length > 1 && (
-              <div className={`hidden md:grid h-full gap-2 ${
-                images.length === 2 ? 'w-1/2 grid-cols-1 grid-rows-1' :
-                images.length === 3 ? 'w-1/2 grid-cols-1 grid-rows-2' :
-                'w-1/2 grid-cols-2 grid-rows-2'
-              }`}>
-                {images.slice(1, 5).map((img, idx) => (
-                  <div 
-                    key={idx} 
-                    onClick={() => setLightboxIndex(idx + 1)}
-                    className={`relative group overflow-hidden cursor-pointer ${images.length === 4 && idx === 0 ? 'col-span-2' : ''}`}
-                  >
-                    <img src={img} alt={`Gallery ${idx+1}`} className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" />
-                    <div className="absolute inset-0 group-hover:bg-black/10 transition-colors"></div>
-                    {images.length > 5 && idx === 3 && (
-                      <div className="absolute inset-0 bg-black/60 flex items-center justify-center backdrop-blur-sm">
-                        <span className="text-white font-bold tracking-widest text-lg">+{images.length - 5} MORE</span>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-            
-            {images.slice(1).map((img, idx) => (
-              <div key={`mob-${idx}`} onClick={() => setLightboxIndex(idx + 1)} className="w-full h-full relative shrink-0 snap-center md:hidden cursor-pointer">
-                <img src={img} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80"></div>
-              </div>
-            ))}
-          </div>
+          <ImageGallery images={images} alt="VIP service" onImageClick={setLightboxIndex} className="w-full h-full">
+            <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent opacity-80 md:opacity-0 pointer-events-none"></div>
+          </ImageGallery>
         ) : (
           <div className="w-full h-full bg-gray-900"></div>
         )}
@@ -349,7 +319,7 @@ export default function VipServiceDetails() {
                         <span className="font-bold text-sm tracking-widest uppercase text-white">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={nextMonth} className="p-1 hover:bg-white/10 rounded-full text-white"><ChevronRight className="w-5 h-5"/></button>
+                        <button onClick={nextMonth} disabled={isMonthBeyondMax(calendarViewDate, maxBookableDate)} className="p-1 hover:bg-white/10 rounded-full text-white disabled:opacity-30 disabled:hover:bg-transparent"><ChevronRight className="w-5 h-5"/></button>
                       </div>
                       <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[10px] font-bold text-gray-500 tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -357,15 +327,15 @@ export default function VipServiceDetails() {
                       <div className="grid grid-cols-7 gap-1">
                         {generateCalendarDays().map((dateObj, i) => {
                           if (!dateObj) return <div key={i} className="h-8"></div>;
-                          const isPast = dateObj < today;
-                          const isSelected = startDate && dateObj.toISOString().split('T')[0] === startDate;
+                          const isDisabled = dateObj < today || dateObj > maxBookableDate;
+                          const isSelected = startDate && toLocalDateStr(dateObj) === startDate;
                           return (
                             <button
                               key={i}
-                              disabled={isPast}
+                              disabled={isDisabled}
                               onClick={() => handleDateSelect(dateObj)}
                               className={`h-8 rounded-full text-xs font-bold transition-all flex items-center justify-center
-                                ${isPast ? 'text-gray-600 cursor-not-allowed' : 
+                                ${isDisabled ? 'text-gray-600 cursor-not-allowed' :
                                   isSelected ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/25' : 
                                   'text-gray-300 hover:bg-white/10'}
                               `}

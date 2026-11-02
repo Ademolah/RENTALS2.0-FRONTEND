@@ -7,14 +7,20 @@ import { getProperties } from '../api/properties';
 import { getCars } from '../api/car'; 
 import { Loader2, Search } from 'lucide-react';
 import FloatingPriceTag from '../components/FloatingPriceTag';
+import CitySwitcher from '../components/CitySwitcher';
 
-export default function Home({ 
-  searchFilters = {}, 
+export default function Home({
+  searchFilters = {},
   activeCategory = 'SHORTLET',
-  activeCityContext = 'Lagos' // Default to Lagos if not set
+  activeCityContext = 'Lagos', // Default to Lagos if not set
+  onCityChange
 }) {
   const [listings, setListings] = useState([]);
+  // Everything available in the active city that matches guests/dates, ignoring only the
+  // free-text neighborhood/keyword search — shown as a fallback when that search comes up empty.
+  const [fallbackListings, setFallbackListings] = useState([]);
   const [loading, setLoading] = useState(true);
+  const searchTerm = (searchFilters.location || '').toLowerCase().trim();
 
   useEffect(() => {
     async function fetchListings() {
@@ -36,39 +42,37 @@ export default function Home({
           responseData = await getProperties({ category: activeCategory });
         }
         
-        let results = Array.isArray(responseData) 
-          ? responseData 
+        let results = Array.isArray(responseData)
+          ? responseData
           : responseData?.data?.properties || responseData?.data?.cars || responseData?.properties || responseData?.cars || (Array.isArray(responseData?.data) ? responseData.data : []);
 
+        // A host can pause a listing (isAvailable: false) — paused listings must not be
+        // discoverable by guests at all, not just blocked at booking time.
+        results = results.filter(item => item.isAvailable !== false);
+
         // --- CITY CONTEXT ENFORCEMENT ---
-        // Always filter Shortlets by the active selected city (Lagos/Abuja) unless a specific search location overrides it
-        const targetCity = (searchFilters.location && searchFilters.location.trim() !== '')
-          ? searchFilters.location.toLowerCase().trim()
-          : activeCityContext.toLowerCase().trim();
+        // Always filter by the active selected city (Lagos/Abuja). The free-text search term
+        // is applied separately below, so a fallback list ("available in this city") can still
+        // be shown when that term matches nothing.
+        const targetCity = activeCityContext.toLowerCase().trim();
 
         if (normalizedCategory !== 'car') {
           results = results.filter(item => {
             const city = (item.address?.city || item.location?.city || '').toLowerCase();
             const state = (item.address?.state || item.location?.state || '').toLowerCase();
             const street = (item.address?.street || item.location?.street || '').toLowerCase();
-            
-            return city.includes(targetCity) || targetCity.includes(city) ||
-                   state.includes(targetCity) || targetCity.includes(state) ||
+
+            return (city && (city.includes(targetCity) || targetCity.includes(city))) ||
+                   (state && (state.includes(targetCity) || targetCity.includes(state))) ||
                    street.includes(targetCity);
           });
-        }
-
-        // --- SEARCH BAR SPECIFIC FILTERS ---
-        if (searchFilters.location && searchFilters.location.trim() !== '' && normalizedCategory === 'car') {
-          const searchStr = searchFilters.location.toLowerCase().trim();
+        } else {
+          // Cars with no saved location display as Lagos on their card, so they stay under Lagos
           results = results.filter(item => {
-            const city = (item.address?.city || item.location?.city || '').toLowerCase();
-            const state = (item.address?.state || item.location?.state || '').toLowerCase();
-            const title = (item.title || item.make || item.carModel || '').toLowerCase();
-            
-            return city.includes(searchStr) || searchStr.includes(city) ||
-                   state.includes(searchStr) || searchStr.includes(state) ||
-                   title.includes(searchStr);
+            const city = (item.location?.city || '').toLowerCase();
+            const state = (item.location?.state || '').toLowerCase();
+            if (!city && !state) return targetCity === 'lagos';
+            return city.includes(targetCity) || state.includes(targetCity);
           });
         }
 
@@ -102,11 +106,31 @@ export default function Home({
             return !hasOverlap;
           });
         }
-          
-        setListings(results);
+
+        // This city/guests/dates-matched set is the fallback shown when the search term below matches nothing
+        setFallbackListings(results);
+
+        // --- SEARCH BAR SPECIFIC FILTER (keyword / neighborhood) ---
+        const searchStr = (searchFilters.location || '').toLowerCase().trim();
+        let finalResults = results;
+        if (searchStr) {
+          finalResults = results.filter(item => {
+            const city = (item.address?.city || item.location?.city || '').toLowerCase();
+            const state = (item.address?.state || item.location?.state || '').toLowerCase();
+            const street = (item.address?.street || item.location?.street || '').toLowerCase();
+            const title = (item.title || item.make || item.carModel || '').toLowerCase();
+
+            return city.includes(searchStr) || searchStr.includes(city) ||
+                   state.includes(searchStr) || searchStr.includes(state) ||
+                   street.includes(searchStr) || title.includes(searchStr);
+          });
+        }
+
+        setListings(finalResults);
       } catch (err) {
         console.error("Failed to load listings:", err);
-        setListings([]); 
+        setListings([]);
+        setFallbackListings([]);
       } finally {
         setLoading(false);
       }
@@ -120,7 +144,8 @@ export default function Home({
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      
+      <CitySwitcher activeCity={activeCityContext} onChange={onCityChange} />
+
       {/* Hotel View */}
       {isHotel ? (
         <HotelListingView activeCityContext={activeCityContext} searchFilters={searchFilters} />
@@ -136,7 +161,7 @@ export default function Home({
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-2" />
           <p className="text-sm font-medium">Finding available listings...</p>
         </div>
-      ) : listings.length === 0 ? (
+      ) : listings.length === 0 && (!searchTerm || fallbackListings.length === 0) ? (
         <div className="flex flex-col items-center justify-center py-20 text-center animate-in fade-in duration-300">
           <div className="bg-gray-50 p-6 rounded-full mb-4">
             <Search className="w-8 h-8 text-gray-400" />
@@ -159,28 +184,37 @@ export default function Home({
             </div>
           )}
 
+          {listings.length === 0 && (
+            <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 text-amber-900 rounded-2xl p-4 mb-8 animate-in fade-in duration-300">
+              <Search className="w-5 h-5 shrink-0 mt-0.5" />
+              <p className="text-sm font-medium leading-relaxed">
+                "{searchFilters.location}" isn't available right now. Here's what's available in {activeCityContext} instead:
+              </p>
+            </div>
+          )}
+
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 gap-y-10">
-            {listings.map((item) => (
+            {(listings.length === 0 ? fallbackListings : listings).map((item) => (
               activeCategory.toLowerCase() === 'car' ? (
                 <CarCard key={item._id} car={item} />
               ) : (
-                <PropertyCard 
-                  key={item._id} 
+                <PropertyCard
+                  key={item._id}
                   property={{
                     id: item._id,
                     title: item.title,
-                    location: item.address?.city && item.address?.state 
+                    location: item.address?.city && item.address?.state
                       ? `${item.address.city}, ${item.address.state}`
                       : item.address?.city || item.address?.state || `${activeCityContext}, Nigeria`,
-                    price: Number(item.pricePerNight || item.price || 0), 
+                    price: Number(item.pricePerNight || item.price || 0),
                     rating: item.rating || 0, // ✅ Pass raw number
                     numReviews: item.numReviews || 0, // ✅ Ensure numReviews is passed down
                     dates: "Available Now",
-                    isRentalVerified: item.isVerified ?? true, 
+                    isRentalVerified: item.isVerified ?? true,
                     isAvailable: item.isAvailable,
                     images: item.images, // ✅ Pass the full array instead of just 'image' to match the Card's expectation
-                    image: item.images && item.images.length > 0 
-                      ? item.images[0] 
+                    image: item.images && item.images.length > 0
+                      ? item.images[0]
                       : "https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80"
                   }}
                 />

@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { Search, SlidersHorizontal, MapPin, Plus, Minus, X, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
+import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr } from '../utils/dateLimits';
 
 const LOCATION_TAXONOMY = {
   "Lagos": [
@@ -35,6 +36,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
   const searchBarRef = useRef(null);
 
   const today = stripTime(new Date());
+  const maxBookableDate = getMaxBookableDate(today);
   const [currentMonth, setCurrentMonth] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [hoveredDate, setHoveredDate] = useState(null);
 
@@ -54,6 +56,11 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     setGuests({ adults: 1, children: 0 });
     setActiveMenu(null);
   }, [activeCategory]);
+
+  // A neighborhood from the previous city no longer applies after switching city
+  useEffect(() => {
+    setLocation('');
+  }, [activeCityContext]);
 
   // Prevent background scrolling when mobile modal is open
   useEffect(() => {
@@ -105,24 +112,24 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
     const currentMenu = activeMenu || 'checkIn';
 
     if (currentMenu === 'checkIn') {
-      setCheckIn(date.toISOString().split('T')[0]);
+      setCheckIn(toLocalDateStr(date));
       if (isVip) {
         setActiveMenu('location');
         return;
       }
-      if (checkOut && selectedTime >= new Date(checkOut).getTime()) {
-        setCheckOut(''); 
+      if (checkOut && selectedTime > new Date(checkOut).getTime()) {
+        setCheckOut('');
       }
       setActiveMenu('checkOut');
     } else if (currentMenu === 'checkOut') {
-      if (checkInTime && selectedTime <= checkInTime) {
-        setCheckIn(date.toISOString().split('T')[0]);
+      if (checkInTime && selectedTime < checkInTime) {
+        setCheckIn(toLocalDateStr(date));
         setCheckOut('');
         setActiveMenu('checkOut');
       } else {
-        setCheckOut(date.toISOString().split('T')[0]);
+        setCheckOut(toLocalDateStr(date));
         if (isStandard) setActiveMenu('guests');
-        else setActiveMenu(null); 
+        else setActiveMenu(null);
       }
     }
   };
@@ -183,7 +190,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           <h3 className="text-base font-bold text-gray-900 tracking-tight">{monthName} {year}</h3>
           
           {monthOffset === (isMobile ? 0 : 1) ? (
-            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month + 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
+            <button onClick={(e) => { e.stopPropagation(); setCurrentMonth(new Date(year, month + 1, 1)); }} className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-30" disabled={isMonthBeyondMax(date, maxBookableDate)}>
               <ChevronRight className="w-5 h-5 text-gray-900" />
             </button>
           ) : <div className="w-9"></div>}
@@ -197,7 +204,7 @@ export default function AdvancedSearch({ onSearch, activeCityContext, activeCate
           {days.map((day, idx) => {
             if (!day) return <div key={`empty-${idx}`} />;
             
-            const isPast = day < today;
+            const isPast = day < today || day > maxBookableDate;
             const isCheckIn = checkIn && day.getTime() === stripTime(new Date(checkIn)).getTime();
             const isCheckOut = checkOut && day.getTime() === stripTime(new Date(checkOut)).getTime();
             

@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
   CarFront, Crown, ChevronRight, User as UserIcon,
-  Sparkles, LogIn, Bell, Map
+  Sparkles, LogIn, Bell, Map, Heart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
@@ -14,6 +14,19 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
   const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
   const navigate = useNavigate();
+  const menuRef = useRef(null);
+
+  // Close the dropdown when anything outside it is clicked or tapped
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isMenuOpen]);
 
   useEffect(() => {
     if (!user) { setUnreadCount(0); return; }
@@ -106,8 +119,8 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                 {getCtaText()}
               </button>
 
-              <div className="relative z-[99999]">
-                <button 
+              <div className="relative z-[99999]" ref={menuRef}>
+                <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white"
                 >
@@ -162,6 +175,19 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                                 <Map className="w-4 h-4" />
                               </div>
                               <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">My Trips</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                          </button>
+
+                          <button
+                            onClick={() => { setIsMenuOpen(false); navigate('/dashboard/guest?tab=FAVORITES'); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                <Heart className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Saved Stays</span>
                             </div>
                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
                           </button>

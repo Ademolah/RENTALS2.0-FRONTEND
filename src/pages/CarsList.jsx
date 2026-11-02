@@ -17,7 +17,8 @@ export default function CarsList() {
       const d = res.data;
       const list = Array.isArray(d) ? d
         : d?.data?.cars || d?.cars || (Array.isArray(d?.data) ? d.data : []);
-      setCars(list);
+      // A host can pause a car listing (isAvailable: false) — it must not be discoverable.
+      setCars(list.filter(c => c.isAvailable !== false));
     }).catch(() => {
       setError('Failed to load cars. Please try again.');
       setCars([]);

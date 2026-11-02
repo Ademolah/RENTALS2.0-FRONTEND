@@ -1,15 +1,20 @@
 import { useEffect, useState } from 'react';
-import { useSearchParams, Link } from 'react-router-dom';
+import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 // Icons via Font Awesome CDN (index.html) — no lucide-react
 import { apiClient } from '../api/client';
+import { consumePaymentReturn } from '../utils/paymentReturn';
 
 export default function PaymentCallback() {
   const [params] = useSearchParams();
+  const navigate = useNavigate();
   const reference = params.get('reference') || params.get('trxref');
 
   const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'failed'
   const [booking, setBooking] = useState(null);
   const [message, setMessage] = useState('');
+  // Read once on mount — reads the `return` query param if present, else the page saved
+  // just before heading to Paystack, and clears it so a later payment doesn't reuse it.
+  const [returnPath] = useState(() => consumePaymentReturn(params));
 
   useEffect(() => {
     if (!reference) {
@@ -80,8 +85,13 @@ export default function PaymentCallback() {
         )}
 
         <div className="space-y-3">
+          {returnPath && (
+            <button onClick={() => navigate(returnPath, { replace: true })} className="block w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors">
+              Continue Where You Left Off
+            </button>
+          )}
           {booking?.id && (
-            <Link to={`/bookings/${booking.id}`} className="block w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors">
+            <Link to={`/bookings/${booking.id}`} className="block w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors">
               View Booking Details
             </Link>
           )}
@@ -103,7 +113,10 @@ export default function PaymentCallback() {
         <p className="text-gray-500 mb-6">{message || 'Your payment was not completed. No charge has been made.'}</p>
 
         <div className="space-y-3">
-          <button onClick={() => window.history.back()} className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors">
+          <button
+            onClick={() => returnPath ? navigate(returnPath, { replace: true }) : window.history.back()}
+            className="w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors"
+          >
             Try Again
           </button>
           <Link to="/" className="flex items-center justify-center gap-2 w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors">

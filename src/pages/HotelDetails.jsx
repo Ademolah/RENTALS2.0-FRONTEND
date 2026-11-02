@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
   CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2,
-  Dumbbell, Leaf, X, MessageSquare 
+  Dumbbell, Leaf, X, MessageSquare, CalendarSearch
 } from 'lucide-react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useNavigate, useParams, Link } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
 import { getHotelById } from '../api/hotel';
@@ -13,6 +13,11 @@ import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
 import FloatingPriceTag from '../components/FloatingPriceTag';
+import ImageGallery from '../components/ImageGallery';
+import { checkHotelRoomAvailability } from '../api/hotel';
+import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr, toApiCheckoutDate } from '../utils/dateLimits';
+import { parseLocalDateStr, parseBookedRanges, parseApiBookedRanges, isDateBooked, rangeOverlapsBooking, buildConflictMessage, describeUnavailable } from '../utils/availability';
+import useGoBack from '../utils/useGoBack';
 
 // PRESET_AMENITIES Match
 const getAmenityIcon = (amenity) => {
@@ -33,10 +38,10 @@ const getAmenityIcon = (amenity) => {
 };
 
 export default function HotelDetails() {
-  const { id } = useParams(); 
+  const { id } = useParams();
   const navigate = useNavigate();
-  const galleryRef = useRef(null);
-  
+  const goBack = useGoBack('/');
+
   const { user, setShowAuthModal } = useAuth();
   const isLoggedIn = Boolean(user);
 
@@ -65,8 +70,16 @@ export default function HotelDetails() {
 
   // --- BESPOKE CALENDAR STATE ---
   const [showCalendar, setShowCalendar] = useState(false);
-  const [calendarMode, setCalendarMode] = useState('checkIn'); 
+  const [calendarMode, setCalendarMode] = useState('checkIn');
   const [calendarViewDate, setCalendarViewDate] = useState(new Date());
+
+  // --- AVAILABILITY CHECK STATE ---
+  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [availabilityStatus, setAvailabilityStatus] = useState(null); // 'available' | 'booked' | null
+
+  useEffect(() => {
+    setAvailabilityStatus(null);
+  }, [checkInDate, checkOutDate, selectedRoom]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -164,7 +177,66 @@ export default function HotelDetails() {
     }
   };
 
-  const handleBookClick = () => {
+  const handleCheckAvailability = async () => {
+    if (!checkInDate || !checkOutDate) {
+      showToast("Please select your check-in and check-out dates first.");
+      return false;
+    }
+    if (!selectedRoom) {
+      showToast("Please select a suite first.");
+      return false;
+    }
+
+    setIsCheckingAvailability(true);
+
+    // Local pre-check against the room's own booked ranges (the hotel's bookedDates
+    // entries are tagged with roomTypeId), so the guest gets an immediate, specific
+    // "pick from X" answer.
+    const roomBookedRanges = parseBookedRanges(hotel, selectedRoom);
+    const checkInObj = parseLocalDateStr(checkInDate);
+    const checkOutObj = parseLocalDateStr(checkOutDate);
+    const effectiveEndObj = checkInObj.getTime() === checkOutObj.getTime()
+      ? new Date(checkInObj.getTime() + 24 * 60 * 60 * 1000)
+      : checkOutObj;
+
+    if (rangeOverlapsBooking(checkInObj, effectiveEndObj, roomBookedRanges)) {
+      setAvailabilityStatus('booked');
+      showToast(buildConflictMessage(checkInObj, roomBookedRanges, maxBookableDate) || 'These dates are already booked. Please choose different dates.');
+      setIsCheckingAvailability(false);
+      return false;
+    }
+
+    try {
+      const response = await checkHotelRoomAvailability(hotel._id, selectedRoom, {
+        startDate: checkInDate,
+        endDate: toApiCheckoutDate(checkInDate, checkOutDate)
+      });
+      const available = response?.available ?? response?.data?.available;
+      if (available) {
+        setAvailabilityStatus('available');
+        return true;
+      }
+      setAvailabilityStatus('booked');
+      // Prefer the live, authoritative ranges the endpoint just returned for this
+      // exact stay; fall back to the room's own bookedDates if it didn't send any.
+      const liveRanges = parseApiBookedRanges(response?.bookedRanges ?? response?.data?.bookedRanges);
+      showToast(describeUnavailable({
+        isListingPaused: hotel?.isAvailable === false,
+        backendMessage: response?.message,
+        requestedDate: checkInObj,
+        bookedRanges: liveRanges.length ? liveRanges : roomBookedRanges,
+        maxBookableDate
+      }));
+      return false;
+    } catch (err) {
+      showToast(err.response?.data?.message || "Failed to verify dates. Please try again.");
+      return false;
+    } finally {
+      setIsCheckingAvailability(false);
+    }
+  };
+
+  const handleBookClick = async () => {
     if (!isLoggedIn) {
       if (setShowAuthModal) setShowAuthModal(true);
       else showToast("Please log in or register to secure a reservation.");
@@ -173,6 +245,16 @@ export default function HotelDetails() {
     if (!checkInDate || !checkOutDate) {
       showToast("Please select your check-in and check-out dates.");
       return;
+    }
+    // The accurate, specific reason was already shown via toast from the last
+    // availability check — don't replace it with a generic one here.
+    if (availabilityStatus === 'booked') {
+      return;
+    }
+    // Auto-check if the guest bypassed the manual Check Availability button
+    if (availabilityStatus !== 'available') {
+      const isAvailable = await handleCheckAvailability();
+      if (!isAvailable) return;
     }
     setIsBookModalOpen(true);
   };
@@ -232,16 +314,10 @@ export default function HotelDetails() {
   const nextImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev + 1) % hotel.images.length); };
   const prevImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev === 0 ? hotel.images.length - 1 : prev - 1)); };
 
-  const scrollGallery = (direction) => {
-    if (galleryRef.current) {
-      const scrollAmount = window.innerWidth * 0.6; 
-      galleryRef.current.scrollBy({ left: direction === 'left' ? -scrollAmount : scrollAmount, behavior: 'smooth' });
-    }
-  };
-
   // --- BESPOKE CALENDAR LOGIC ---
   const todayDateObj = new Date();
   todayDateObj.setHours(0, 0, 0, 0);
+  const maxBookableDate = getMaxBookableDate(todayDateObj);
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -260,12 +336,11 @@ export default function HotelDetails() {
   };
 
   const handleDateSelect = (dateObj) => {
-    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-    const dateStr = offsetDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(dateObj);
 
     if (calendarMode === 'checkIn') {
       setCheckInDate(dateStr);
-      if (checkOutDate && dateStr >= checkOutDate) {
+      if (checkOutDate && dateStr > checkOutDate) {
         setCheckOutDate('');
       }
       setCalendarMode('checkOut'); 
@@ -301,15 +376,19 @@ export default function HotelDetails() {
     );
   }
 
-  if (error || !hotel) {
+  if (error || !hotel || hotel.isAvailable === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50/50 text-gray-500 font-bold">
-        Hotel not found or is no longer available.
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50/50 text-gray-500 font-bold px-4 text-center gap-4">
+        <span>Hotel not found or is no longer available.</span>
+        <Link to="/" className="text-sm font-bold text-brand-primary underline underline-offset-4">
+          Browse other listings
+        </Link>
       </div>
     );
   }
 
   const activeRoomData = hotel.roomTypes?.find(r => r._id === selectedRoom);
+  const bookedRanges = parseBookedRanges(hotel, selectedRoom);
   const nights = calculateNights();
   const basePricePerNight = activeRoomData?.pricePerNight || hotel.startingPrice || 0;
   const totalPrice = basePricePerNight * nights;
@@ -428,29 +507,11 @@ export default function HotelDetails() {
 
       {/* 1. SCROLLABLE IMAGE GALLERY */}
       <div className="w-full bg-black overflow-hidden relative group">
-        <button onClick={() => navigate(-1)} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md">
+        <button onClick={goBack} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md">
           <ArrowLeft className="w-6 h-6" />
         </button>
 
-       <button onClick={() => scrollGallery('left')} className="absolute top-1/2 left-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl">
-          <ChevronLeft className="w-8 h-8" />
-        </button>
-        
-        <button onClick={() => scrollGallery('right')} className="absolute top-1/2 right-4 z-20 -translate-y-1/2 bg-white/20 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition opacity-100 md:opacity-0 md:group-hover:opacity-100 shadow-xl">
-          <ChevronRight className="w-8 h-8" />
-        </button>
-        
-        <div ref={galleryRef} className="flex overflow-x-hidden snap-x snap-mandatory hide-scrollbar h-[40vh] md:h-[60vh] scroll-smooth">
-          {hotel.images?.map((img, index) => (
-            <div 
-              key={index} 
-              onClick={() => setLightboxIndex(index)}
-              className="min-w-[85vw] md:min-w-[60vw] lg:min-w-[45vw] h-full snap-center relative p-1 cursor-pointer"
-            >
-              <img src={img} alt={`${hotel.title} - view ${index + 1}`} className="w-full h-full object-cover rounded-2xl hover:opacity-95 transition-opacity" />
-            </div>
-          ))}
-        </div>
+        <ImageGallery images={hotel.images || []} alt={hotel.title} onImageClick={setLightboxIndex} className="h-[40vh] md:h-[60vh]" />
       </div>
 
       {/* 2. MAIN CONTENT AREA */}
@@ -553,7 +614,7 @@ export default function HotelDetails() {
                       <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
                         {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                       </span>
-                      <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                      <button onClick={nextMonth} disabled={isMonthBeyondMax(calendarViewDate, maxBookableDate)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"><ChevronRight className="w-4 h-4"/></button>
                     </div>
                     <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
                       {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -561,18 +622,24 @@ export default function HotelDetails() {
                     <div className="grid grid-cols-7 gap-y-2">
                       {generateCalendarDays().map((dateObj, i) => {
                         if (!dateObj) return <div key={i} className="h-8"></div>;
-                        
-                        const dateStr = dateObj.toISOString().split('T')[0];
+
+                        const dateStr = toLocalDateStr(dateObj);
                         const isPast = dateObj < todayDateObj;
+                        const isBeyondMax = dateObj > maxBookableDate;
                         const isSelectedIn = dateStr === checkInDate;
                         const isSelectedOut = dateStr === checkOutDate;
                         const isBetween = checkInDate && checkOutDate && dateStr > checkInDate && dateStr < checkOutDate;
-                        
-                        const isDisabledForCheckOut = calendarMode === 'checkOut' && checkInDate && dateStr <= checkInDate;
-                        const disabled = isPast || isDisabledForCheckOut;
+
+                        const isBookedNight = isDateBooked(dateObj, bookedRanges);
+                        const isDisabledForCheckOut = calendarMode === 'checkOut' && checkInDate && (
+                          dateStr < checkInDate || rangeOverlapsBooking(parseLocalDateStr(checkInDate), dateObj, bookedRanges)
+                        );
+                        const isDisabledForCheckIn = calendarMode === 'checkIn' && isBookedNight;
+                        const disabled = isPast || isDisabledForCheckOut || isDisabledForCheckIn || isBeyondMax;
 
                         let bgClass = 'hover:bg-gray-100 text-gray-900';
                         if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
+                        if (isBookedNight && !isPast) bgClass = 'text-red-300 line-through cursor-not-allowed';
                         if (isBetween) bgClass = 'bg-brand-primary/10 text-gray-900';
                         if (isSelectedIn || isSelectedOut) bgClass = 'bg-brand-primary text-white shadow-md';
 
@@ -580,6 +647,7 @@ export default function HotelDetails() {
                           <button
                             key={i}
                             disabled={disabled}
+                            title={isBookedNight && !isPast ? 'Already booked' : undefined}
                             onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
                             className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
                           >
@@ -774,10 +842,38 @@ export default function HotelDetails() {
                 </div>
               </div>
 
+              {/* The "booked"/failure case is surfaced via the toast with the real,
+                  specific reason — a second, hardcoded box here would just repeat
+                  (or contradict) that message. */}
+              {availabilityStatus === 'available' && (
+                <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 mb-4 animate-in fade-in">
+                  <CheckCircle2 className="w-4 h-4 text-green-600" />
+                  <span className="text-sm font-bold">This suite is available!</span>
+                </div>
+              )}
+
               <div className="space-y-3 relative z-0">
-                <button 
+                {isLoggedIn && (
+                  <button
+                    type="button"
+                    onClick={handleCheckAvailability}
+                    disabled={isCheckingAvailability}
+                    className="w-full py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 rounded-xl font-bold text-sm transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
+                  >
+                    {isCheckingAvailability ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <>
+                        <CalendarSearch className="w-4 h-4 mr-2" />
+                        Check Availability
+                      </>
+                    )}
+                  </button>
+                )}
+                <button
                   onClick={handleBookClick}
-                  className="w-full bg-brand-primary text-white font-bold text-base py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20"
+                  disabled={availabilityStatus === 'booked'}
+                  className="w-full bg-brand-primary text-white font-bold text-base py-4 rounded-xl hover:opacity-90 transition-all active:scale-[0.98] shadow-lg shadow-brand-primary/20 disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {isLoggedIn ? "Reserve Now" : "Login to Reserve"}
                 </button>

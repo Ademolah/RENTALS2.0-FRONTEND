@@ -30,6 +30,7 @@ import MyReviews from './pages/MyReviews';
 import SavedListings from './pages/SavedListings';
 import Stays from './pages/Stays';
 import PaymentCallback from './pages/PaymentCallback';
+import BookingSuccess from './pages/BookingSuccess';
 import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
@@ -57,13 +58,31 @@ function ProtectedRoute({ children }) {
   return children;
 }
 
-let hasSeenCityModalThisSession = false;
+// The city onboarding modal only shows on a visitor's first few visits
+const MAX_CITY_MODAL_VISITS = 5;
+const CITY_KEY = 'rentals_city';
+const VISIT_COUNT_KEY = 'rentals_visit_count';
+const VISIT_COUNTED_KEY = 'rentals_visit_counted';
+const CITY_MODAL_SEEN_KEY = 'rentals_city_modal_seen';
+
+// A visit is one browser session, so refreshes and page changes don't add to the count
+const getVisitCount = () => {
+  let count = Number(localStorage.getItem(VISIT_COUNT_KEY)) || 0;
+  if (!sessionStorage.getItem(VISIT_COUNTED_KEY)) {
+    count += 1;
+    localStorage.setItem(VISIT_COUNT_KEY, String(count));
+    sessionStorage.setItem(VISIT_COUNTED_KEY, 'true');
+  }
+  return count;
+};
+
+const visitCount = getVisitCount();
 
 function App() {
   const [activeCategory, setActiveCategory] = useState('shortlet');
   const [searchFilters, setSearchFilters] = useState({});
-  const [selectedCity, setSelectedCity] = useState('Lagos');
-  const [showCityModal, setShowCityModal] = useState(!hasSeenCityModalThisSession);
+  const [selectedCity, setSelectedCity] = useState(() => localStorage.getItem(CITY_KEY) || 'Lagos');
+  const [showCityModal, setShowCityModal] = useState(() => visitCount <= MAX_CITY_MODAL_VISITS && !sessionStorage.getItem(CITY_MODAL_SEEN_KEY));
   const location = useLocation();
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
@@ -73,15 +92,29 @@ function App() {
 
   useEffect(() => { setSearchFilters({}); }, [activeCategory]);
 
+  // Paystack always appends ?reference=&trxref= to wherever its callback_url points. If
+  // that lands anywhere other than our payment-callback routes (e.g. the backend is still
+  // falling back to a static root-domain Callback URL instead of the per-booking one we
+  // send), send the browser to the real handler so the payment gets verified and the guest
+  // is routed back to the exact page they were booking from, instead of seeing onboarding.
+  const paystackParams = new URLSearchParams(location.search);
+  const hasPaystackRef = paystackParams.has('reference') || paystackParams.has('trxref');
+  const isPaymentRoute = ['/payment/callback', '/vip-success', '/booking-success'].includes(location.pathname);
+  if (hasPaystackRef && !isPaymentRoute) {
+    return <Navigate to={`/booking-success${location.search}`} replace />;
+  }
+
   const handleCategoryChange = (cat) => {
     setActiveCategory(cat);
     if (location.pathname !== '/') navigate('/');
   };
 
   const handleCitySelect = (selectedState) => {
-    hasSeenCityModalThisSession = true;
+    sessionStorage.setItem(CITY_MODAL_SEEN_KEY, 'true');
+    localStorage.setItem(CITY_KEY, selectedState);
     setSelectedCity(selectedState);
-    setSearchFilters({ ...searchFilters, location: selectedState });
+    // Drop any neighborhood searched in the previous city
+    setSearchFilters({ ...searchFilters, location: '' });
     setShowCityModal(false);
   };
 
@@ -116,7 +149,7 @@ function App() {
       <div className="flex-grow pb-20 md:pb-0">
         <ErrorBoundary>
           <Routes>
-            <Route path="/" element={<Home activeCategory={activeCategory} searchFilters={searchFilters} activeCityContext={selectedCity} />} />
+            <Route path="/" element={<Home activeCategory={activeCategory} searchFilters={searchFilters} activeCityContext={selectedCity} onCityChange={handleCitySelect} />} />
             <Route path="/property/:id" element={<PropertyDetail />} />
             <Route path="/cars/:id" element={<CarDetails />} />
             <Route path="/cars" element={<CarsList />} />
@@ -131,6 +164,7 @@ function App() {
             <Route path="/saved" element={<SavedListings />} />
             <Route path="/stays" element={<Stays />} />
             <Route path="/payment/callback" element={<PaymentCallback />} />
+            <Route path="/booking-success" element={<BookingSuccess />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/guest" element={<ProtectedRoute><GuestDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/landlord" element={<ProtectedRoute><LandlordDashboard /></ProtectedRoute>} />

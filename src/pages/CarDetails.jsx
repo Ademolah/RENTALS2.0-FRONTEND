@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useRef } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom'; 
 import { 
   MapPin, Users, Settings2, Gauge, ChevronLeft, ChevronRight, Clock, Info,
@@ -8,21 +8,23 @@ import {
 import { getCarById, createCarReservation, checkCarAvailability, getCars } from '../api/car'; 
 import { useAuth } from '../context/AuthContext';
 import FloatingPriceTag from '../components/FloatingPriceTag';
+import ImageGallery from '../components/ImageGallery';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
+import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr } from '../utils/dateLimits';
+import { savePaymentReturn } from '../utils/paymentReturn';
+import useGoBack from '../utils/useGoBack';
 
 export default function CarDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  
+  const goBack = useGoBack('/cars');
+
   const { user, setShowAuthModal } = useAuth();
   
   const [car, setCar] = useState(null);
   const [loading, setLoading] = useState(true);
   const [similarCars, setSimilarCars] = useState([]);
   const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
-
-  const mobileScrollRef = useRef(null);
-  const desktopScrollRef = useRef(null);
 
   const [pickupDate, setPickupDate] = useState('');
   const [pickupTime, setPickupTime] = useState('10:00 AM');
@@ -56,6 +58,7 @@ export default function CarDetails() {
   // --- CALENDAR LOGIC ---
   const todayDateObj = new Date();
   todayDateObj.setHours(0, 0, 0, 0);
+  const maxBookableDate = getMaxBookableDate(todayDateObj);
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -74,8 +77,7 @@ export default function CarDetails() {
   };
 
   const handleDateSelect = (dateObj) => {
-    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-    setPickupDate(offsetDate.toISOString().split('T')[0]);
+    setPickupDate(toLocalDateStr(dateObj));
     setShowCalendar(false);
   };
 
@@ -151,12 +153,6 @@ export default function CarDetails() {
   // Button Handlers for UI
   const nextImage = () => setLightboxIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setLightboxIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1));
-  const scrollGallery = (ref, direction) => {
-    if (ref.current) {
-      const scrollAmount = direction === 'left' ? -ref.current.offsetWidth : ref.current.offsetWidth;
-      ref.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
-    }
-  };
 
   const handleCheckAvailability = async () => {
     if (!pickupDate || !pickupTime) {
@@ -227,20 +223,23 @@ export default function CarDetails() {
       const dropoffDateTime = new Date(pickupDateTime);
       dropoffDateTime.setHours(pickupDateTime.getHours() + (durationSlots * 12)); 
 
+      const returnPath = window.location.pathname;
       const payload = {
         carId: car._id || car.id,
         pickupTime: pickupDateTime.toISOString(),
         dropoffTime: dropoffDateTime.toISOString(),
-        totalAmount: pricing.grandTotal
+        totalAmount: pricing.grandTotal,
+        callbackUrl: `${window.location.origin}/booking-success`
       };
 
       const response = await createCarReservation(payload);
-      
+
       setBookingLoading(false);
       setIsRedirecting(true);
+      savePaymentReturn(returnPath);
 
       setTimeout(() => {
-        window.location.href = response.data.checkoutUrl; 
+        window.location.href = response.data.checkoutUrl;
       }, 800);
 
     } catch (err) {
@@ -322,10 +321,13 @@ export default function CarDetails() {
     );
   }
 
-  if (!car) {
+  if (!car || car.isAvailable === false) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <h2 className="text-2xl font-bold text-gray-900">Vehicle not found</h2>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4 text-center px-4">
+        <h2 className="text-2xl font-bold text-gray-900">Vehicle not found or is no longer available</h2>
+        <Link to="/cars" className="text-sm font-bold text-brand-primary underline underline-offset-4">
+          Browse other vehicles
+        </Link>
       </div>
     );
   }
@@ -380,8 +382,8 @@ export default function CarDetails() {
         </div>
       )}
 
-      <button 
-        onClick={() => navigate(-1)}
+      <button
+        onClick={goBack}
         className="flex items-center text-sm font-bold text-gray-500 hover:text-gray-900 transition-colors mb-6 group w-fit"
       >
         <ChevronLeft className="w-5 h-5 mr-1 group-hover:-translate-x-1 transition-transform" />
@@ -402,91 +404,7 @@ export default function CarDetails() {
 
       {/* --- GALLERY SECTION --- */}
       <div className="relative mb-12">
-        {/* MOBILE GALLERY */}
-        <div className="md:hidden relative h-[300px] rounded-2xl overflow-hidden group">
-          <div ref={mobileScrollRef} className="absolute inset-0 flex overflow-x-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
-            {images.map((img, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => setLightboxIndex(idx)}
-                className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
-              >
-                <img src={img} className="absolute inset-0 w-full h-full object-cover" alt={`View ${idx + 1}`} />
-              </div>
-            ))}
-          </div>
-          {images.length > 1 && (
-            <>
-              <button onClick={() => scrollGallery(mobileScrollRef, 'left')} className="absolute left-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><ChevronLeft className="w-5 h-5"/></button>
-              <button onClick={() => scrollGallery(mobileScrollRef, 'right')} className="absolute right-2 top-1/2 -translate-y-1/2 bg-white/90 p-1.5 rounded-full shadow-md z-10"><ChevronRight className="w-5 h-5"/></button>
-            </>
-          )}
-        </div>
-
-        {/* DESKTOP GALLERY */}
-        <div className="hidden md:block h-[500px] rounded-2xl overflow-hidden">
-          {images.length === 1 && (
-            <div 
-              className="w-full h-full relative cursor-pointer"
-              onClick={() => setLightboxIndex(0)}
-            >
-              <img src={images[0]} className="absolute inset-0 w-full h-full object-cover rounded-2xl" alt="Main View" />
-            </div>
-          )}
-          {images.length === 2 && (
-            <div className="grid grid-cols-2 gap-2 h-full">
-              <div 
-                className="w-full h-full relative cursor-pointer"
-                onClick={() => setLightboxIndex(0)}
-              >
-                <img src={images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 1"/>
-              </div>
-              <div 
-                className="w-full h-full relative cursor-pointer"
-                onClick={() => setLightboxIndex(1)}
-              >
-                <img src={images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2"/>
-              </div>
-            </div>
-          )}
-          {images.length >= 3 && (
-            <div className="grid grid-cols-2 gap-2 h-full">
-              <div 
-                className="w-full h-full relative group cursor-pointer"
-                onClick={() => setLightboxIndex(0)}
-              >
-                <img src={images[0]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="Main View" />
-              </div>
-              <div className="grid grid-rows-2 gap-2 h-full">
-                <div 
-                  className="w-full h-full relative group cursor-pointer"
-                  onClick={() => setLightboxIndex(1)}
-                >
-                  <img src={images[1]} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt="View 2" />
-                </div>
-                <div className="w-full h-full relative group">
-                  <div ref={desktopScrollRef} className="absolute inset-0 flex overflow-x-hidden snap-x snap-mandatory [&::-webkit-scrollbar]:hidden">
-                    {images.slice(2).map((img, idx) => (
-                      <div 
-                        key={idx} 
-                        onClick={() => setLightboxIndex(idx + 2)}
-                        className="w-full h-full flex-shrink-0 snap-center relative cursor-pointer"
-                      >
-                        <img src={img} className="absolute inset-0 w-full h-full object-cover hover:opacity-95 transition-opacity" alt={`View ${idx + 3}`} />
-                      </div>
-                    ))}
-                  </div>
-                  {images.length > 3 && (
-                    <>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'left')} className="absolute left-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronLeft className="w-5 h-5" /></button>
-                      <button onClick={() => scrollGallery(desktopScrollRef, 'right')} className="absolute right-3 top-1/2 -translate-y-1/2 bg-white/95 hover:bg-white text-gray-900 p-2 rounded-full shadow-lg z-10 transition-transform active:scale-90 opacity-0 group-hover:opacity-100 duration-200"><ChevronRight className="w-5 h-5" /></button>
-                    </>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <ImageGallery images={images} alt={`${car.make} ${car.model}`} onImageClick={setLightboxIndex} className="h-[300px] md:h-[500px] rounded-2xl" />
       </div>
 
       {/* --- CONTENT & BOOKING GRID --- */}
@@ -607,7 +525,7 @@ export default function CarDetails() {
                         <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
                           {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                         </span>
-                        <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                        <button onClick={nextMonth} disabled={isMonthBeyondMax(calendarViewDate, maxBookableDate)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"><ChevronRight className="w-4 h-4"/></button>
                       </div>
                       <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
                         {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -615,19 +533,21 @@ export default function CarDetails() {
                       <div className="grid grid-cols-7 gap-y-2">
                         {generateCalendarDays().map((dateObj, i) => {
                           if (!dateObj) return <div key={i} className="h-8"></div>;
-                          
-                          const dateStr = dateObj.toISOString().split('T')[0];
+
+                          const dateStr = toLocalDateStr(dateObj);
                           const isPast = dateObj < todayDateObj;
+                          const isBeyondMax = dateObj > maxBookableDate;
+                          const isDisabled = isPast || isBeyondMax;
                           const isSelected = dateStr === pickupDate;
-                          
+
                           let bgClass = 'hover:bg-gray-100 text-gray-900';
-                          if (isPast) bgClass = 'text-gray-300 cursor-not-allowed';
+                          if (isDisabled) bgClass = 'text-gray-300 cursor-not-allowed';
                           if (isSelected) bgClass = 'bg-gray-900 text-white shadow-md';
 
                           return (
                             <button
                               key={i}
-                              disabled={isPast}
+                              disabled={isDisabled}
                               onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
                               className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
                             >
