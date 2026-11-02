@@ -802,6 +802,7 @@ export default function GuestDashboard() {
             )
           ) : (
             <>
+            <h1 className="text-2xl font-black text-blue-600 tracking-tight mb-4">My Trips</h1>
             {/* Filter trips by type */}
             <div className="flex flex-wrap gap-2">
               {TRIP_FILTERS.map(({ id, label }) => (
