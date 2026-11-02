@@ -9,17 +9,18 @@ export default function PaymentCallback() {
   const navigate = useNavigate();
   const reference = params.get('reference') || params.get('trxref');
 
-  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'failed'
+  // 'loading' | 'success' | 'failed' (backend explicitly says payment didn't go through —
+  // safe to let the guest try again) | 'unknown' (we couldn't confirm either way — Paystack
+  // already took the money, so we must NOT invite a second payment attempt here)
+  const [status, setStatus] = useState('loading');
   const [booking, setBooking] = useState(null);
-  const [message, setMessage] = useState('');
   // Read once on mount — reads the `return` query param if present, else the page saved
   // just before heading to Paystack, and clears it so a later payment doesn't reuse it.
   const [returnPath] = useState(() => consumePaymentReturn(params));
 
   useEffect(() => {
     if (!reference) {
-      setStatus('failed');
-      setMessage('No payment reference found.');
+      setStatus('unknown');
       return;
     }
 
@@ -30,13 +31,17 @@ export default function PaymentCallback() {
           setBooking(data?.booking || data?.reservation || null);
           setStatus('success');
         } else {
+          // The backend responded, and explicitly says the payment didn't succeed — this
+          // is the one case where "didn't go through, try again" is actually accurate.
           setStatus('failed');
-          setMessage(res.data?.message || 'Payment could not be verified.');
         }
       })
       .catch(err => {
-        setStatus('failed');
-        setMessage(err.response?.data?.message || 'Unable to verify payment. Please contact support.');
+        // The verification request itself failed (wrong route, network error, backend
+        // down, etc.) — we genuinely don't know whether the payment succeeded. Paystack
+        // already confirmed the charge, so never tell the guest to pay again here.
+        console.error('[PaymentCallback] Could not verify payment:', err);
+        setStatus('unknown');
       });
   }, [reference]);
 
@@ -103,14 +108,14 @@ export default function PaymentCallback() {
     </div>
   );
 
-  return (
+  if (status === 'failed') return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
       <div className="bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-10 max-w-md w-full text-center">
         <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
           <i className="fa-solid fa-circle-xmark text-3xl text-red-400" />
         </div>
         <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Payment Not Completed</h1>
-        <p className="text-gray-500 mb-6">{message || 'Your payment was not completed. No charge has been made.'}</p>
+        <p className="text-gray-500 mb-6">Your payment was not completed. No charge has been made.</p>
 
         <div className="space-y-3">
           <button
@@ -130,6 +135,49 @@ export default function PaymentCallback() {
           <a href="https://wa.me/2347063688222" target="_blank" rel="noreferrer" className="underline text-gray-500 hover:text-gray-900">
             Contact support on WhatsApp
           </a>
+        </p>
+      </div>
+    </div>
+  );
+
+  // We could not confirm the payment either way (verification request itself failed).
+  // Paystack already processed the charge, so this never offers to "try again" — that
+  // would risk a second charge for the same booking.
+  return (
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 px-4">
+      <div className="bg-white rounded-3xl shadow-[0_10px_40px_rgba(0,0,0,0.08)] p-10 max-w-md w-full text-center">
+        <div className="w-20 h-20 bg-amber-50 rounded-full flex items-center justify-center mx-auto mb-6">
+          <i className="fa-solid fa-shield-halved text-3xl text-amber-500" />
+        </div>
+        <h1 className="text-2xl font-extrabold text-gray-900 mb-2">Confirming Your Booking</h1>
+        <p className="text-gray-500 mb-6">
+          We couldn't confirm your booking status right now. If you completed payment on Paystack, it has very likely gone through — please check My Bookings, or contact support before making another payment.
+        </p>
+
+        {reference && (
+          <div className="bg-gray-50 rounded-2xl p-4 text-sm text-left space-y-2 mb-6 border border-gray-100">
+            <div className="flex justify-between">
+              <span className="text-gray-500">Reference</span>
+              <span className="font-semibold text-gray-900 font-mono">{reference}</span>
+            </div>
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <Link to="/dashboard/guest" className="block w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors">
+            Go to My Trips
+          </Link>
+          <Link to="/" className="flex items-center justify-center gap-2 w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors">
+            <i className="fa-solid fa-house text-sm" />
+            Back to Home
+          </Link>
+        </div>
+
+        <p className="text-xs text-gray-400 mt-6">
+          Need help?{' '}
+          <a href="https://wa.me/2347063688222" target="_blank" rel="noreferrer" className="underline text-gray-500 hover:text-gray-900">
+            Contact support on WhatsApp
+          </a> — share the reference above.
         </p>
       </div>
     </div>

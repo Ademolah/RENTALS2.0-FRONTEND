@@ -12,8 +12,10 @@ export default function BookingSuccess() {
   // Paystack appends ?reference=XXX or ?trxref=XXX to the callbackUrl
   const reference = searchParams.get('reference') || searchParams.get('trxref');
 
-  const [status, setStatus] = useState('loading'); // 'loading' | 'success' | 'failed'
-  const [message, setMessage] = useState('');
+  // 'loading' | 'success' | 'failed' (backend explicitly says payment didn't go through —
+  // safe to let the guest try again) | 'unknown' (we couldn't confirm either way — Paystack
+  // already took the money, so we must NOT invite a second payment attempt here)
+  const [status, setStatus] = useState('loading');
   // This route carries no `return` query param (the backend's callback_url is a static
   // /booking-success), so this always falls back to the page saved in sessionStorage
   // right before heading to Paystack — that's what lets a guest finish the booking
@@ -26,8 +28,7 @@ export default function BookingSuccess() {
 
   useEffect(() => {
     if (!reference) {
-      setStatus('failed');
-      setMessage('No payment reference found.');
+      setStatus('unknown');
       return;
     }
 
@@ -37,13 +38,17 @@ export default function BookingSuccess() {
         if (data?.status === 'success' || data?.paid === true || res.data?.status === 'success') {
           setStatus('success');
         } else {
+          // The backend responded, and explicitly says the payment didn't succeed — this
+          // is the one case where "didn't go through, try again" is actually accurate.
           setStatus('failed');
-          setMessage(res.data?.message || 'Payment could not be verified.');
         }
       })
       .catch(err => {
-        setStatus('failed');
-        setMessage(err.response?.data?.message || 'Unable to verify payment. Please contact support.');
+        // The verification request itself failed (wrong route, network error, backend
+        // down, etc.) — we genuinely don't know whether the payment succeeded. Paystack
+        // already confirmed the charge, so never tell the guest to pay again here.
+        console.error('[BookingSuccess] Could not verify payment:', err);
+        setStatus('unknown');
       });
   }, [reference]);
 
@@ -72,7 +77,7 @@ export default function BookingSuccess() {
           </div>
           <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Payment Not Completed</h1>
           <p className="text-gray-500 text-sm leading-relaxed mb-8">
-            {message || 'Your payment was not completed. No charge has been made.'}
+            Your payment was not completed. No charge has been made.
           </p>
 
           <div className="space-y-3">
@@ -93,6 +98,62 @@ export default function BookingSuccess() {
             <a href="https://wa.me/2347063688222" target="_blank" rel="noreferrer" className="underline text-gray-500 hover:text-gray-900">
               Contact support on WhatsApp
             </a>
+          </p>
+        </div>
+      </div>
+    </main>
+  );
+
+  // We could not confirm the payment either way (verification request itself failed).
+  // Paystack already processed the charge, so this never offers to "try again" — that
+  // would risk a second charge for the same booking.
+  if (status === 'unknown') return (
+    <main className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4 sm:p-6">
+      <div className="max-w-md w-full animate-in fade-in slide-in-from-bottom-8 duration-700">
+        <div className="bg-white p-8 sm:p-10 rounded-3xl shadow-[0_20px_60px_rgba(0,0,0,0.05)] border border-gray-100 text-center">
+          <div className="relative w-20 h-20 mx-auto mb-6 bg-amber-50 rounded-full flex items-center justify-center">
+            <ShieldCheck className="w-10 h-10 text-amber-500" />
+          </div>
+          <h1 className="text-2xl font-black text-gray-900 tracking-tight mb-3">Confirming Your Booking</h1>
+          <p className="text-gray-500 text-sm leading-relaxed mb-8">
+            We couldn't confirm your booking status right now. If you completed payment on Paystack, it has very likely gone through — please check My Bookings, or contact support before making another payment.
+          </p>
+
+          {reference && (
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 mb-8 text-left relative overflow-hidden">
+              <div className="absolute top-0 left-0 w-1 h-full bg-gray-900" />
+              <span className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5 ml-2">
+                Transaction Reference
+              </span>
+              <div className="flex items-center justify-between ml-2">
+                <span className="text-sm font-bold text-gray-900 font-mono tracking-tight">{reference}</span>
+                <button
+                  onClick={handleCopy}
+                  className="p-2 bg-white rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 text-gray-600 transition-colors"
+                  title="Copy Reference"
+                >
+                  {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            <Link to="/dashboard/guest" className="w-full flex items-center justify-center bg-gray-900 text-white font-bold text-sm py-4 rounded-xl hover:bg-black transition-colors">
+              <CalendarCheck className="w-4 h-4 mr-2" />
+              View My Bookings
+            </Link>
+            <Link to="/" className="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold text-sm py-4 rounded-xl hover:bg-gray-50 transition-colors">
+              <Home className="w-4 h-4 mr-2" />
+              Return to Home
+            </Link>
+          </div>
+
+          <p className="text-xs text-gray-400 mt-6">
+            Need help?{' '}
+            <a href="https://wa.me/2347063688222" target="_blank" rel="noreferrer" className="underline text-gray-500 hover:text-gray-900">
+              Contact support on WhatsApp
+            </a> — share the reference above.
           </p>
         </div>
       </div>
