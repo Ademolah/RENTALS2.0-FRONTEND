@@ -100,11 +100,6 @@ export default function PaymentCallback() {
         )}
 
         <div className="space-y-3">
-          {returnPath && (
-            <button onClick={() => navigate(returnPath, { replace: true })} className="block w-full py-3 bg-gray-900 text-white rounded-xl font-bold text-sm hover:bg-brand-primary transition-colors">
-              Continue Where You Left Off
-            </button>
-          )}
           {booking?.id && (
             <Link to={`/bookings/${booking.id}`} className="block w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold text-sm hover:bg-gray-50 transition-colors">
               View Booking Details

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
-import { CheckCircle2, CalendarCheck, Home, ArrowRight, ShieldCheck, Copy, Check, XCircle } from 'lucide-react';
+import { CheckCircle2, CalendarCheck, Home, ShieldCheck, Copy, Check, XCircle } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { consumePaymentReturn, inferPaymentOutcomeFromNotifications } from '../utils/paymentReturn';
 import { getNotifications } from '../api/notifications';
@@ -220,16 +220,6 @@ export default function BookingSuccess() {
 
           {/* Actions */}
           <div className="space-y-3">
-            {returnPath && (
-              <button
-                onClick={() => navigate(returnPath, { replace: true })}
-                className="w-full flex items-center justify-center bg-gray-900 text-white font-bold text-sm py-4 rounded-xl hover:bg-black transition-all shadow-md group"
-              >
-                Continue Where You Left Off
-                <ArrowRight className="w-4 h-4 ml-2 opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-300" />
-              </button>
-            )}
-
             <Link
               to="/dashboard/guest"
               className="w-full flex items-center justify-center bg-white border border-gray-200 text-gray-700 font-bold text-sm py-4 rounded-xl hover:bg-gray-50 transition-colors"
