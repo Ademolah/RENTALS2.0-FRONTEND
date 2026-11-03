@@ -3,15 +3,13 @@ import { Loader2, Building, ShieldCheck } from 'lucide-react';
 import { getVipEstablishments, getVipServices } from '../api/vip';
 import { VipSectionHeader } from './VipSectionHeader'; 
 import VipCard from './VipCard';
-import CitySelectorModal from './CitySelectorModal';
 
-export default function VipListingView({ defaultLocation }) {
+export default function VipListingView({ defaultLocation: selectedLocation }) {
   const [establishments, setEstablishments] = useState([]);
   const [services, setServices] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [activeTab, setActiveTab] = useState('venues'); // 'venues' | 'services'
-  const [selectedLocation, setSelectedLocation] = useState(defaultLocation || null);
 
   useEffect(() => {
     async function loadVipData() {
@@ -55,17 +53,6 @@ export default function VipListingView({ defaultLocation }) {
   // Determine which list to show based on the active tab
   const activeList = activeTab === 'venues' ? filteredEstablishments : filteredServices;
 
-  if (!selectedLocation) {
-    return (
-      <CitySelectorModal 
-        onSelect={setSelectedLocation} 
-        title="Select VIP Location"
-        subtitle="Choose your city to explore exclusive concierge venues and services."
-        buttonText="View VIP Directory"
-      />
-    );
-  }
-
   return (
     <div className="w-full animate-in fade-in duration-500">
       
@@ -107,12 +94,6 @@ export default function VipListingView({ defaultLocation }) {
       ) : activeList.length === 0 ? (
         <div className="text-center py-20 border-2 border-dashed border-gray-200 rounded-3xl bg-gray-50">
           <p className="text-gray-500 font-bold">No exclusive {activeTab} available in {selectedLocation} yet.</p>
-          <button 
-            onClick={() => setSelectedLocation(null)}
-            className="mt-4 px-6 py-2 bg-gray-900 text-white rounded-full text-sm font-bold hover:bg-black transition-colors"
-          >
-            Change Location
-          </button>
         </div>
       ) : (
         <>
@@ -120,12 +101,6 @@ export default function VipListingView({ defaultLocation }) {
             <h3 className="text-xl font-bold text-gray-900 tracking-tight capitalize">
               {activeTab} in {selectedLocation}
             </h3>
-            <button 
-              onClick={() => setSelectedLocation(null)}
-              className="text-sm font-bold text-amber-500 hover:text-amber-600 underline underline-offset-4"
-            >
-              Change City
-            </button>
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 md:gap-8">

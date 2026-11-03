@@ -3,10 +3,15 @@ import { Star, Loader2, ShieldCheck, Clock, Info, Plus, Minus, CalendarSearch, C
 import { initiateBooking, logUnifiedWhatsappIntent } from '../api/reservation';
 import { checkPropertyAvailability } from '../api/properties';
 import { useAuth } from '../context/AuthContext';
+import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr, toApiCheckoutDate } from '../utils/dateLimits';
+import { savePaymentReturn } from '../utils/paymentReturn';
+import { parseLocalDateStr, parseBookedRanges, parseApiBookedRanges, isDateBooked, rangeOverlapsBooking, buildConflictMessage, describeUnavailable } from '../utils/availability';
 
 export default function BookingWidget({ property }) {
   const { user, setShowAuthModal } = useAuth();
-  
+
+  const bookedRanges = useMemo(() => parseBookedRanges(property), [property]);
+
   const [checkIn, setCheckIn] = useState('');
   const [checkOut, setCheckOut] = useState('');
   const [guests, setGuests] = useState(1);
@@ -33,9 +38,9 @@ export default function BookingWidget({ property }) {
     const start = new Date(checkIn);
     const end = new Date(checkOut);
     const diffTime = end.getTime() - start.getTime();
-    const nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (nights <= 0) return null;
+    if (diffTime < 0) return null;
+    // Same-day checkout is a valid day-use stay — bill it as a minimum of 1 night.
+    const nights = Math.max(1, Math.ceil(diffTime / (1000 * 60 * 60 * 24)));
 
     const baseTotal = nights * property.price;
     const platformFee = Math.round(baseTotal * 0.05); 
@@ -47,6 +52,7 @@ export default function BookingWidget({ property }) {
   // --- CALENDAR LOGIC ---
   const todayDateObj = new Date();
   todayDateObj.setHours(0, 0, 0, 0);
+  const maxBookableDate = getMaxBookableDate(todayDateObj);
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
   const getFirstDayOfMonth = (year, month) => new Date(year, month, 1).getDay();
@@ -65,12 +71,11 @@ export default function BookingWidget({ property }) {
   };
 
   const handleDateSelect = (dateObj) => {
-    const offsetDate = new Date(dateObj.getTime() - (dateObj.getTimezoneOffset() * 60000));
-    const dateStr = offsetDate.toISOString().split('T')[0];
+    const dateStr = toLocalDateStr(dateObj);
 
     if (calendarMode === 'checkIn') {
       setCheckIn(dateStr);
-      if (checkOut && dateStr >= checkOut) {
+      if (checkOut && dateStr > checkOut) {
         setCheckOut('');
       }
       setCalendarMode('checkOut'); // Auto-switch to checkout mode
@@ -94,22 +99,43 @@ export default function BookingWidget({ property }) {
       setError('Please select check-in and check-out dates first.');
       return false;
     }
-    
+
     setIsCheckingAvailability(true);
     setError('');
-    
+
+    // Local pre-check against the property's own booked ranges, so the guest gets an
+    // immediate, specific "pick from X" answer instead of a generic rejection.
+    const checkInObj = parseLocalDateStr(checkIn);
+    const checkOutObj = parseLocalDateStr(checkOut);
+
+    if (rangeOverlapsBooking(checkInObj, checkOutObj, bookedRanges)) {
+      setAvailabilityStatus('booked');
+      setError(buildConflictMessage(checkInObj, bookedRanges, maxBookableDate) || 'These dates are already booked. Please choose different dates.');
+      setIsCheckingAvailability(false);
+      return false;
+    }
+
     try {
-      const response = await checkPropertyAvailability(property.id, { 
-        startDate: checkIn, 
-        endDate: checkOut 
+      const response = await checkPropertyAvailability(property.id, {
+        startDate: checkIn,
+        endDate: toApiCheckoutDate(checkIn, checkOut)
       });
-      
+
       if (response.available) {
         setAvailabilityStatus('available');
         return true;
       } else {
         setAvailabilityStatus('booked');
-        if (response.message) setError(response.message);
+        // Prefer the live, authoritative ranges the endpoint just returned for this
+        // exact stay; fall back to the listing's own bookedDates if it didn't send any.
+        const liveRanges = parseApiBookedRanges(response.bookedRanges);
+        setError(describeUnavailable({
+          isListingPaused: property?.isAvailable === false,
+          backendMessage: response.message,
+          requestedDate: checkInObj,
+          bookedRanges: liveRanges.length ? liveRanges : bookedRanges,
+          maxBookableDate
+        }));
         return false;
       }
     } catch (err) {
@@ -132,8 +158,9 @@ export default function BookingWidget({ property }) {
       return;
     }
 
+    // The accurate, specific reason is already in `error` from the last availability
+    // check — don't stomp it with a generic string here.
     if (availabilityStatus === 'booked') {
-      setError('These dates are already booked. Please choose different dates.');
       return;
     }
 
@@ -150,10 +177,11 @@ export default function BookingWidget({ property }) {
     }
 
     try {
+      const returnPath = window.location.pathname;
       const response = await initiateBooking({
         propertyId: property.id,
         checkInDate: checkIn,
-        checkOutDate: checkOut,
+        checkOutDate: toApiCheckoutDate(checkIn, checkOut),
         guestsCount: guests,
         totalAmount: pricingDetails.grandTotal,
         callbackUrl: `${window.location.origin}/booking-success`
@@ -162,6 +190,7 @@ export default function BookingWidget({ property }) {
       const checkoutUrl = response.checkoutUrl || response.data?.checkoutUrl || response.authorization_url;
 
       if (checkoutUrl) {
+        savePaymentReturn(returnPath);
         window.location.href = checkoutUrl;
       } else {
         setError('Reservation secured, but payment gateway failed to load.');
@@ -254,7 +283,8 @@ export default function BookingWidget({ property }) {
       </div>
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start animate-in fade-in">
+        <div className="mb-4 p-3 bg-red-50 text-red-600 rounded-xl text-xs font-medium border border-red-100 flex items-start gap-2 animate-in fade-in">
+          <XCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
@@ -325,7 +355,7 @@ export default function BookingWidget({ property }) {
                 <span className="font-extrabold text-sm tracking-widest uppercase text-gray-900">
                   {calendarViewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
                 </span>
-                <button onClick={nextMonth} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors"><ChevronRight className="w-4 h-4"/></button>
+                <button onClick={nextMonth} disabled={isMonthBeyondMax(calendarViewDate, maxBookableDate)} className="p-1.5 hover:bg-gray-100 rounded-full text-gray-600 transition-colors disabled:opacity-30 disabled:hover:bg-transparent"><ChevronRight className="w-4 h-4"/></button>
               </div>
               <div className="grid grid-cols-7 gap-1 mb-2 text-center text-[9px] font-extrabold text-gray-400 tracking-widest uppercase">
                 {['Su','Mo','Tu','We','Th','Fr','Sa'].map(d => <div key={d}>{d}</div>)}
@@ -333,18 +363,24 @@ export default function BookingWidget({ property }) {
               <div className="grid grid-cols-7 gap-y-2">
                 {generateCalendarDays().map((dateObj, i) => {
                   if (!dateObj) return <div key={i} className="h-8"></div>;
-                  
-                  const dateStr = dateObj.toISOString().split('T')[0];
+
+                  const dateStr = toLocalDateStr(dateObj);
                   const isPast = dateObj < todayDateObj;
+                  const isBeyondMax = dateObj > maxBookableDate;
                   const isSelectedIn = dateStr === checkIn;
                   const isSelectedOut = dateStr === checkOut;
                   const isBetween = checkIn && checkOut && dateStr > checkIn && dateStr < checkOut;
-                  
-                  const isDisabledForCheckOut = calendarMode === 'checkOut' && checkIn && dateStr <= checkIn;
-                  const disabled = isPast || isDisabledForCheckOut;
+
+                  const isBookedNight = isDateBooked(dateObj, bookedRanges);
+                  const isDisabledForCheckOut = calendarMode === 'checkOut' && checkIn && (
+                    dateStr < checkIn || rangeOverlapsBooking(parseLocalDateStr(checkIn), dateObj, bookedRanges)
+                  );
+                  const isDisabledForCheckIn = calendarMode === 'checkIn' && isBookedNight;
+                  const disabled = isPast || isDisabledForCheckOut || isDisabledForCheckIn || isBeyondMax;
 
                   let bgClass = 'hover:bg-gray-100 text-gray-900';
                   if (disabled) bgClass = 'text-gray-300 cursor-not-allowed';
+                  if (isBookedNight && !isPast) bgClass = 'text-red-300 line-through cursor-not-allowed';
                   if (isBetween) bgClass = 'bg-gray-100 text-gray-900';
                   if (isSelectedIn || isSelectedOut) bgClass = 'bg-gray-900 text-white shadow-md';
 
@@ -352,6 +388,7 @@ export default function BookingWidget({ property }) {
                     <button
                       key={i}
                       disabled={disabled}
+                      title={isBookedNight && !isPast ? 'Already booked' : undefined}
                       onClick={(e) => { e.preventDefault(); handleDateSelect(dateObj); }}
                       className={`h-8 w-8 mx-auto rounded-full text-xs font-bold transition-all flex items-center justify-center ${bgClass}`}
                     >
@@ -376,17 +413,13 @@ export default function BookingWidget({ property }) {
           )}
         </div>
 
-        {/* Availability Status Indicator */}
+        {/* Availability Status Indicator — the "booked"/failure case is covered by the
+            error banner above, which carries the real, specific reason; a second,
+            hardcoded box here would just repeat (or contradict) that message. */}
         {availabilityStatus === 'available' && (
           <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 animate-in fade-in">
             <CheckCircle2 className="w-4 h-4 text-green-600" />
             <span className="text-sm font-bold">Dates are available!</span>
-          </div>
-        )}
-        {availabilityStatus === 'booked' && (
-          <div className="flex items-center space-x-2 text-red-700 bg-red-50 p-3 rounded-xl border border-red-200 animate-in fade-in">
-            <XCircle className="w-4 h-4 text-red-600" />
-            <span className="text-sm font-bold">These dates are already booked.</span>
           </div>
         )}
 
@@ -448,7 +481,7 @@ export default function BookingWidget({ property }) {
           <ShieldCheck className="w-4 h-4 text-brand-primary shrink-0 mt-0.5" />
           <div>
             <h4 className="text-[11px] font-bold text-gray-900 uppercase tracking-wide">100% Secured Payment</h4>
-            <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals and only released to the host upon successful check-in.</p>
+            <p className="text-[11px] text-gray-500 mt-0.5 leading-relaxed">Funds are securely held in escrow by Rentals Africa and only released to the host upon successful check-in.</p>
           </div>
         </div>
         <div className="flex gap-3">

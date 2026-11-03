@@ -134,21 +134,10 @@ const PremiumHotelCard = ({ hotel }) => {
   );
 };
 
-export default function HotelListingView() {
-  const [activeState, setActiveState] = useState('Lagos');
-  const [msgIndex, setMsgIndex] = useState(0);
+export default function HotelListingView({ activeCityContext }) {
   const [hotels, setHotels] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-
-  const messages = ["Find your next stay", "Experience true luxury", "Unwind in premium suites"];
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setMsgIndex((prev) => (prev + 1) % messages.length);
-    }, 4000);
-    return () => clearInterval(timer);
-  }, [messages.length]);
 
   useEffect(() => {
     const fetchHotels = async () => {
@@ -168,47 +157,10 @@ export default function HotelListingView() {
     fetchHotels();
   }, []);
 
-  const filteredHotels = hotels.filter(hotel => hotel.address?.state === activeState);
+  const filteredHotels = hotels.filter(hotel => hotel.address?.state === activeCityContext && hotel.isAvailable !== false);
 
   return (
     <div className="w-full animate-in fade-in duration-700">
-      <div className="relative w-full rounded-[2rem] md:rounded-[2.5rem] overflow-hidden mb-12 shadow-2xl h-36 sm:h-48 md:h-64 flex items-center justify-center">
-        <div className="absolute inset-0 bg-[#0A0A0A]">
-          <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]"></div>
-        </div>
-        
-        <div className="relative w-full px-4 flex flex-col items-center justify-center text-center overflow-hidden">
-          <div className="relative h-12 sm:h-16 md:h-24 w-full flex items-center justify-center">
-            {messages.map((msg, i) => {
-              let positionClass = "opacity-0 translate-x-12"; 
-              if (i === msgIndex) positionClass = "opacity-100 translate-x-0"; 
-              else if (i === (msgIndex - 1 + messages.length) % messages.length) positionClass = "opacity-0 -translate-x-12"; 
-              
-              return (
-                <h1 key={msg} className={`absolute w-full text-3xl sm:text-5xl md:text-7xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-[#F25F5C] via-[#FF9B71] to-[#F25F5C] bg-[length:200%_auto] animate-[gradient_4s_linear_infinite] transition-all duration-1000 ease-[cubic-bezier(0.25,1,0.5,1)] ${positionClass}`}>
-                  {msg}
-                </h1>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-
-      <div className="flex flex-col items-center mb-10">
-        <div className="inline-flex bg-gray-100/80 p-1.5 rounded-full border border-gray-200 backdrop-blur-sm">
-          {['Lagos', 'Abuja'].map((stateName) => (
-            <button
-              key={stateName}
-              onClick={() => setActiveState(stateName)}
-              className={`relative px-8 py-3 rounded-full text-sm font-bold uppercase tracking-widest transition-all duration-300 ${activeState === stateName ? 'text-white' : 'text-gray-500 hover:text-gray-900 hover:bg-gray-200/50'}`}
-            >
-              {activeState === stateName && <div className="absolute inset-0 bg-gray-900 rounded-full shadow-md" />}
-              <span className="relative z-10">{stateName}</span>
-            </button>
-          ))}
-        </div>
-      </div>
-
       {loading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
@@ -226,7 +178,7 @@ export default function HotelListingView() {
                 <Star className="w-8 h-8 text-gray-300" />
               </div>
               <h3 className="text-xl font-bold text-gray-900">No hotels available</h3>
-              <p className="text-gray-500 mt-2">We are currently expanding our exclusive portfolio in {activeState}.</p>
+              <p className="text-gray-500 mt-2">We are currently expanding our exclusive portfolio in {activeCityContext}.</p>
             </div>
           )}
         </div>

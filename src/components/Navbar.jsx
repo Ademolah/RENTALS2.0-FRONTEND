@@ -1,22 +1,43 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
-import { 
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
-  CarFront, Crown ,  ChevronRight, User as UserIcon, 
-  Sparkles, LogIn
+  CarFront, Crown, ChevronRight, User as UserIcon,
+  Sparkles, LogIn, Bell, Map, Heart
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
-// Ensure this path points to your actual AuthModal location
+import { apiClient } from '../api/client';
 import AuthModal from './AuthModal'
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
-  // 1. DELETE LOCAL MODAL STATE
-  // const [isAuthOpen, setIsAuthOpen] = useState(false); 
-  
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  
-  // 2. IMPORT GLOBAL MODAL STATE FROM CONTEXT
+  const [unreadCount, setUnreadCount] = useState(0);
   const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
+  const navigate = useNavigate();
+  const menuRef = useRef(null);
+
+  // Close the dropdown when anything outside it is clicked or tapped
+  useEffect(() => {
+    if (!isMenuOpen) return;
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsMenuOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', handleClickOutside);
+    return () => document.removeEventListener('pointerdown', handleClickOutside);
+  }, [isMenuOpen]);
+
+  useEffect(() => {
+    if (!user) { setUnreadCount(0); return; }
+    apiClient.get('/notifications')
+      .then(res => {
+        const list = res.data?.data?.notifications || res.data?.notifications || res.data || [];
+        const arr = Array.isArray(list) ? list : [];
+        setUnreadCount(arr.filter(n => !n.isRead).length);
+      })
+      .catch(() => setUnreadCount(0));
+  }, [user]);
 
   const categories = [
     { id: 'shortlet', label: 'Shortlets', icon: Key },
@@ -43,9 +64,9 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             
             <div className="flex-shrink-0">
             <Link to="/" className="flex items-center group">
-              <img 
-                src="/Rentals-Navbar.png" 
-                alt="Rentals Platform" 
+              <img
+                src="/logo-coral.png"
+                alt="Rentals Africa"
                 className="h-6 w-auto sm:h-7 md:h-8 object-contain transition-transform duration-300 group-hover:scale-[1.02] select-none"
                 draggable="false"
               />
@@ -77,16 +98,29 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
             </div>
 
             <div className="flex items-center space-x-2 md:space-x-4">
-              {/* 3. UPDATE CTA BUTTON TO USE GLOBAL STATE */}
-              <button 
+              {user && (
+                <button
+                  onClick={() => navigate('/dashboard/guest?tab=NOTIFICATIONS')}
+                  className="relative p-2.5 rounded-full hover:bg-gray-100 transition-colors text-gray-500 hover:text-gray-900"
+                  aria-label="Notifications"
+                >
+                  <Bell className="w-5 h-5" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1 right-1 min-w-[16px] h-4 px-0.5 bg-brand-primary text-white text-[9px] font-extrabold rounded-full flex items-center justify-center leading-none">
+                      {unreadCount > 99 ? '99+' : unreadCount}
+                    </span>
+                  )}
+                </button>
+              )}
+              <button
                 onClick={() => user ? redirectUserByRole('LANDLORD') : setShowAuthModal(true)}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
               >
                 {getCtaText()}
               </button>
 
-              <div className="relative z-[99999]">
-                <button 
+              <div className="relative z-[99999]" ref={menuRef}>
+                <button
                   onClick={() => setIsMenuOpen(!isMenuOpen)}
                   className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white"
                 >
@@ -133,7 +167,38 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                           </button>
 
                           <button
-                            onClick={() => { setIsMenuOpen(false); redirectUserByRole(user.role); }}
+                            onClick={() => { setIsMenuOpen(false); navigate('/dashboard/guest?tab=ALL'); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                <Map className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">My Trips</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                          </button>
+
+                          <button
+                            onClick={() => { setIsMenuOpen(false); navigate('/dashboard/guest?tab=FAVORITES'); }}
+                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                          >
+                            <div className="flex items-center space-x-3">
+                              <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                <Heart className="w-4 h-4" />
+                              </div>
+                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Saved Stays</span>
+                            </div>
+                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setIsMenuOpen(false);
+                              const role = user.role?.toUpperCase();
+                              const path = role === 'LANDLORD' ? '/dashboard/landlord' : role === 'ADMIN' ? '/dashboard/admin' : '/dashboard/guest';
+                              navigate(`${path}?tab=SETTINGS`);
+                            }}
                             className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                           >
                             <div className="flex items-center space-x-3">

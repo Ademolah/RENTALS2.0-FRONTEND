@@ -20,7 +20,7 @@ export default function Footer() {
             <ul className="space-y-3 text-sm text-gray-600">
               <li>
                 <Link to="/about" className="hover:underline">
-                  About Rentals
+                  About Rentals Africa
                 </Link>
               </li>
               <li><a href="#" className="hover:underline">Careers</a></li>
@@ -84,7 +84,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 gap-4">
           <div className="flex flex-wrap items-center justify-center md:justify-start text-sm text-gray-600 gap-2">
-            <span>© 2026 Rentals, Inc.</span>
+            <span>© 2026 Rentals Africa, Inc.</span>
             <span className="hidden md:inline">·</span>
             <Link to="/terms" className="hover:underline">Terms</Link>
             <span className="hidden md:inline">·</span>

@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { 
-  Home, CarFront, Hotel, Crown, ShieldCheck, 
-  MapPin, Calendar, Clock, Loader2, CheckCircle, 
-  ChevronRight, Wallet, LayoutGrid, AlertCircle, Heart, Star,
-  Settings, User, Phone, Trash2, X
+import React, { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import {
+  ShieldCheck,
+  MapPin, Calendar, Clock, Loader2, CheckCircle,
+  AlertCircle, Heart, Star,
+  User, Phone, Trash2, X, Bell
 } from 'lucide-react';
 
 import { getMyPropertyBookings, cancelBookingApi } from '../api/reservation';
@@ -12,6 +12,8 @@ import { confirmPropertyCheckIn } from '../api/properties';
 import { getMyCarBookings, confirmCarHandover } from '../api/car';
 import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
 import { executePayout } from '../api/payouts';
+import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../api/notifications';
+import { apiClient } from '../api/client';
 
 import { getMyFavoritesApi, toggleFavoriteApi, getMyProfileApi, updateMyProfileApi, deleteMyAccountApi } from '../api/user';
 import HostUpgradeModal from '../components/HostUpgradeModal';
@@ -361,14 +363,50 @@ const FavoriteCard = ({ property, onRemove }) => {
 };
 
 
+function timeAgo(dateStr) {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  return `${Math.floor(hrs / 24)}d ago`;
+}
+
+const TRIP_FILTERS = [
+  { id: 'ALL', label: 'All' },
+  { id: 'SHORTLET', label: 'Shortlets' },
+  { id: 'CAR', label: 'Cars' },
+  { id: 'HOTEL', label: 'Hotels' },
+  { id: 'VIP', label: 'VIP' },
+];
+
 // --- MAIN DASHBOARD COMPONENT ---
 export default function GuestDashboard() {
-  const { logout } = useAuth();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
-  const [activeTab, setActiveTab] = useState('ALL');
+  const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'ALL');
   const [bookings, setBookings] = useState([]);
+
+  useEffect(() => {
+    setActiveTab(searchParams.get('tab') || 'ALL');
+  }, [searchParams]);
   const [favorites, setFavorites] = useState([]);
+
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [notifsLoading, setNotifsLoading] = useState(false);
+  const [notifFilter, setNotifFilter] = useState('all');
+  const [detailNotif, setDetailNotif] = useState(null); // notification shown in the details modal
+  const [deleteConfirmId, setDeleteConfirmId] = useState(null); // notification id pending delete confirmation
+  const [contextMenuNotif, setContextMenuNotif] = useState(null); // notification shown in the long-press action sheet
+  const pressTimerRef = useRef(null);
+  const longPressFiredRef = useRef(false);
+  const [clearConfirm, setClearConfirm] = useState(false);
+  const [clearing, setClearing] = useState(false);
+  const isHost = String(user?.role || '').toUpperCase() === 'LANDLORD';
   
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
   const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
@@ -378,17 +416,6 @@ export default function GuestDashboard() {
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
-
-  // 💡 NEW: Renamed VIP Tab to encompass Assets
-  const TABS = [
-    { id: 'ALL', label: 'All Trips', icon: LayoutGrid },
-    { id: 'SHORTLET', label: 'Shortlets', icon: Home },
-    { id: 'CAR', label: 'Car Rentals', icon: CarFront },
-    { id: 'HOTEL', label: 'Hotels', icon: Hotel },
-    { id: 'VIP', label: 'VIP Assets', icon: Crown }, 
-    { id: 'FAVORITES', label: 'Saved Stays', icon: Heart },
-    { id: 'SETTINGS', label: 'Account Settings', icon: Settings },
-  ];
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -519,6 +546,83 @@ export default function GuestDashboard() {
     }
   };
 
+  useEffect(() => {
+    if (activeTab !== 'NOTIFICATIONS') return;
+    setNotifsLoading(true);
+    const extract = (res) => {
+      if (Array.isArray(res)) return res;
+      if (Array.isArray(res?.data)) return res.data;
+      if (Array.isArray(res?.data?.notifications)) return res.data.notifications;
+      if (Array.isArray(res?.notifications)) return res.notifications;
+      return [];
+    };
+    const load = async () => {
+      try {
+        if (isHost) {
+          const [guestRes, hostRes] = await Promise.allSettled([
+            getNotifications(),
+            apiClient.get('/notifications?role=host').then(r => r.data).catch(() => []),
+          ]);
+          const guestList = (guestRes.status === 'fulfilled' ? extract(guestRes.value) : []).map(n => ({ ...n, _audience: n._audience || n.audience || 'guest' }));
+          const hostList = (hostRes.status === 'fulfilled' ? extract(hostRes.value) : []).map(n => ({ ...n, _audience: 'host' }));
+          const byId = new Map();
+          [...guestList, ...hostList].forEach(n => byId.set(n._id, n));
+          setNotifications([...byId.values()].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)));
+        } else {
+          const res = await getNotifications();
+          setNotifications(extract(res).map(n => ({ ...n, _audience: 'guest' })));
+        }
+      } catch { setNotifications([]); }
+      finally { setNotifsLoading(false); }
+    };
+    load();
+  }, [activeTab]);
+
+  const handleMarkRead = async (id) => {
+    try { await markNotificationRead(id); setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n)); } catch {}
+  };
+  const handleMarkAllRead = async () => {
+    try { await markAllNotificationsRead(); setNotifications(prev => prev.map(n => ({ ...n, isRead: true }))); } catch {}
+  };
+  const handleDeleteNotif = async (id) => {
+    try { await deleteNotification(id); setNotifications(prev => prev.filter(n => n._id !== id)); } catch {}
+  };
+  const handleClearAll = async () => {
+    setClearing(true);
+    for (const n of [...notifications]) { try { await deleteNotification(n._id); } catch {} }
+    setNotifications([]); setClearing(false); setClearConfirm(false);
+  };
+
+  const LONG_PRESS_MS = 500;
+  const startPress = (n) => {
+    longPressFiredRef.current = false;
+    pressTimerRef.current = setTimeout(() => {
+      longPressFiredRef.current = true;
+      setContextMenuNotif(n);
+    }, LONG_PRESS_MS);
+  };
+  const cancelPress = () => {
+    if (pressTimerRef.current) { clearTimeout(pressTimerRef.current); pressTimerRef.current = null; }
+  };
+  const handleRowActivate = (n) => {
+    // A long-press already opened the action sheet — swallow the click/mouseup that follows it
+    if (longPressFiredRef.current) { longPressFiredRef.current = false; return; }
+    if (!n.isRead) handleMarkRead(n._id);
+    setDetailNotif(n);
+  };
+  const confirmDeleteNotif = async () => {
+    if (!deleteConfirmId) return;
+    await handleDeleteNotif(deleteConfirmId);
+    setDeleteConfirmId(null);
+    setDetailNotif(null);
+  };
+
+  const safeNotifications = Array.isArray(notifications) ? notifications : [];
+  const filteredNotifications = safeNotifications.filter(n => {
+    if (!isHost || notifFilter === 'all') return true;
+    return (n._audience || n.audience || 'guest') === notifFilter;
+  });
+
   // 💡 NEW: Ensure VIP tab renders both Venues and Services
   const filteredBookings = bookings.filter(b => {
     if (activeTab === 'ALL') return true;
@@ -528,72 +632,118 @@ export default function GuestDashboard() {
 
   return (
     <div className="min-h-screen bg-[#F8F9FA] pb-24">
-      {/* Header */}
-      <div className="bg-white border-b border-gray-200 px-6 py-12 md:px-12 md:py-16">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-end justify-between gap-6">
-          <div>
-            <h1 className="text-4xl md:text-5xl font-extrabold text-gray-900 tracking-tight">Your Itinerary</h1>
-            <p className="text-gray-500 font-medium mt-3 text-lg">Manage your luxury bookings and reservations.</p>
-          </div>
-          <div className="bg-gray-50 px-6 py-4 rounded-2xl border border-gray-100 flex items-center space-x-4">
-            <Wallet className="w-8 h-8 text-brand-primary" />
-            <div>
-              <div className="text-xs font-bold uppercase tracking-widest text-gray-400">Total Escrow Value</div>
-              <div className="text-xl font-bold text-gray-900">
-                ₦{bookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0).toLocaleString()}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
 
-      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8 flex flex-col lg:flex-row gap-10">
-        
-        {/* Sidebar Tabs */}
-        <div className="lg:w-64 shrink-0 overflow-x-auto lg:overflow-visible no-scrollbar pb-2 lg:pb-0">
-          <div className="flex lg:flex-col gap-2 min-w-max lg:min-w-0 sticky top-28">
-            {TABS.map((tab) => {
-              const Icon = tab.icon;
-              const isActive = activeTab === tab.id;
-              const isVipTab = tab.id === 'VIP';
-              const isSettingsTab = tab.id === 'SETTINGS';
-
-              return (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left
-                    ${isActive ? isVipTab ? 'bg-amber-500 text-black shadow-lg shadow-amber-500/20' : 'bg-gray-900 text-white shadow-lg' : 'text-gray-500 hover:bg-white hover:text-gray-900 hover:shadow-sm'}
-                    ${isSettingsTab && !isActive ? 'mt-4 border border-gray-200 bg-white' : ''}
-                  `}
-                >
-                  <Icon className={`w-5 h-5 ${isActive && !isVipTab ? 'text-brand-primary' : ''}`} />
-                  <span className="whitespace-nowrap flex-1">{tab.label}</span>
-                  {isActive && <ChevronRight className="w-4 h-4 hidden lg:block opacity-50" />}
-                </button>
-              );
-            })}
-
-            <div className="hidden lg:block my-4 border-t border-gray-200"></div>
-            <button
-              onClick={() => setIsUpgradeModalOpen(true)}
-              className="flex items-center space-x-4 px-5 py-4 rounded-2xl font-bold text-sm transition-all text-left bg-gradient-to-br from-brand-primary/10 to-transparent hover:bg-brand-primary/20 text-brand-dark border border-brand-primary/20"
-            >
-              <div className="bg-brand-primary/20 p-1.5 rounded-lg">
-                <Crown className="w-4 h-4 text-brand-primary" />
-              </div>
-              <span className="whitespace-nowrap flex-1">Become a Host</span>
-              <ChevronRight className="w-4 h-4 text-brand-primary/50" />
-            </button>
-          </div>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-4 md:px-12 py-8">
         {/* Main Content Area */}
-        <div className="flex-1 space-y-6">
+        <div className="space-y-6">
           {loading ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400">
               <Loader2 className="w-10 h-10 animate-spin text-brand-primary mb-4" />
               <p className="font-medium text-lg">Loading your dashboard...</p>
+            </div>
+          ) : activeTab === 'NOTIFICATIONS' ? (
+            <div className="max-w-3xl lg:mx-auto animate-in fade-in duration-300">
+              <div className="flex items-center justify-between mb-4 gap-3 flex-wrap">
+                <h2 className="text-2xl font-bold tracking-tight text-gray-900">Notifications</h2>
+                <div className="flex items-center gap-3">
+                  {safeNotifications.some(n => !n.isRead) && (
+                    <button onClick={handleMarkAllRead} className="flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-gray-900 transition-colors">
+                      Mark all read
+                    </button>
+                  )}
+                  {safeNotifications.length > 0 && !clearConfirm && (
+                    <button onClick={() => setClearConfirm(true)} className="flex items-center gap-1.5 text-sm font-semibold text-red-400 hover:text-red-600 transition-colors">
+                      Clear all
+                    </button>
+                  )}
+                  {clearConfirm && (
+                    <div className="flex items-center gap-2 text-sm">
+                      <span className="text-gray-500 font-medium">Delete all?</span>
+                      <button onClick={handleClearAll} disabled={clearing} className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white rounded-lg font-semibold transition-colors disabled:opacity-60">
+                        {clearing ? <Loader2 className="w-3 h-3 animate-spin inline" /> : 'Yes'}
+                      </button>
+                      <button onClick={() => setClearConfirm(false)} className="px-3 py-1 border border-gray-300 rounded-lg font-semibold text-gray-600 hover:bg-gray-50 transition-colors">No</button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {isHost && (
+                <div className="flex gap-2 mb-6">
+                  {[{ key: 'all', label: 'All' }, { key: 'host', label: 'As Host' }, { key: 'guest', label: 'As Guest' }].map(({ key, label }) => (
+                    <button key={key} onClick={() => setNotifFilter(key)} className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${notifFilter === key ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                      {label}
+                      {key !== 'all' && <span className="ml-1.5 text-xs opacity-70">({safeNotifications.filter(n => (n._audience || n.audience || 'guest') === key).length})</span>}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {notifsLoading ? (
+                <div className="flex items-center justify-center py-16 text-gray-400">
+                  <Loader2 className="w-6 h-6 animate-spin mr-3" />
+                  <span className="font-medium">Loading notifications...</span>
+                </div>
+              ) : filteredNotifications.length === 0 ? (
+                <div className="text-center py-16 border border-dashed border-gray-200 rounded-2xl">
+                  <Bell className="w-8 h-8 text-gray-300 mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-gray-700">All caught up</h3>
+                  <p className="text-gray-400 text-sm mt-1">No notifications here.</p>
+                </div>
+              ) : (
+                <div className="rounded-2xl overflow-hidden divide-y divide-gray-100 border border-gray-200">
+                  {filteredNotifications.map((n) => {
+                    const isUnread = !n.isRead;
+                    const audience = n._audience || n.audience || 'guest';
+                    return (
+                      <div
+                        key={n._id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => handleRowActivate(n)}
+                        onKeyDown={(e) => { if (e.key === 'Enter') handleRowActivate(n); }}
+                        onMouseDown={() => startPress(n)}
+                        onMouseUp={cancelPress}
+                        onMouseLeave={cancelPress}
+                        onTouchStart={() => startPress(n)}
+                        onTouchEnd={(e) => { if (longPressFiredRef.current) e.preventDefault(); cancelPress(); }}
+                        onContextMenu={(e) => { e.preventDefault(); setContextMenuNotif(n); }}
+                        className={`flex gap-0 transition-colors cursor-pointer select-none ${isUnread ? 'bg-blue-50/50 hover:bg-blue-50' : 'bg-white hover:bg-gray-50/60'}`}
+                      >
+                        <div className={`w-1 shrink-0 self-stretch ${isUnread ? 'bg-blue-500' : 'bg-transparent'}`} />
+                        <div className="flex gap-4 p-5 flex-1 min-w-0">
+                          <div className="mt-1 shrink-0">
+                            {isUnread ? <div className="w-2.5 h-2.5 rounded-full bg-blue-500 ring-2 ring-blue-100" /> : <div className="w-2.5 h-2.5 rounded-full bg-gray-200" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start gap-2 flex-wrap">
+                              <p className={`leading-snug ${isUnread ? 'font-bold text-gray-900 text-[15px]' : 'font-medium text-gray-500 text-sm'}`}>{n.title || n.heading}</p>
+                              {isUnread && <span className="shrink-0 px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full tracking-wide uppercase">New</span>}
+                              {isHost && (
+                                <span className={`shrink-0 px-2 py-0.5 text-[10px] font-bold rounded-full tracking-wide uppercase ${audience === 'host' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                                  {audience === 'host' ? 'Host' : 'Guest'}
+                                </span>
+                              )}
+                            </div>
+                            <p className={`text-sm mt-1 leading-relaxed line-clamp-2 ${isUnread ? 'text-gray-700' : 'text-gray-400'}`}>{n.message || n.body}</p>
+                            <p className={`text-xs font-medium mt-2 ${isUnread ? 'text-blue-500' : 'text-gray-300'}`}>{n.createdAt ? timeAgo(n.createdAt) : ''}</p>
+                          </div>
+                          <div className="flex items-start gap-1 shrink-0">
+                            {isUnread && (
+                              <button onClick={(e) => { e.stopPropagation(); handleMarkRead(n._id); }} title="Mark as read" className="p-1.5 rounded-lg hover:bg-blue-100 text-blue-400 hover:text-blue-600 transition-colors">
+                                <CheckCircle className="w-4 h-4" />
+                              </button>
+                            )}
+                            <button onClick={(e) => { e.stopPropagation(); setDeleteConfirmId(n._id); }} title="Delete" className="p-1.5 rounded-lg hover:bg-red-50 text-gray-300 hover:text-red-400 transition-colors">
+                              <X className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           ) : activeTab === 'SETTINGS' ? (
             <div className="max-w-2xl animate-in fade-in duration-300">
@@ -651,7 +801,17 @@ export default function GuestDashboard() {
               </div>
             )
           ) : (
-            filteredBookings.length === 0 ? (
+            <>
+            <h1 className="text-2xl font-black text-[#0A2540] tracking-tight mb-4">My Trips</h1>
+            {/* Filter trips by type */}
+            <div className="flex flex-wrap gap-2">
+              {TRIP_FILTERS.map(({ id, label }) => (
+                <button key={id} onClick={() => setSearchParams({ tab: id })} className={`px-4 py-1.5 rounded-full text-sm font-semibold border transition-colors ${activeTab === id ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-400'}`}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            {filteredBookings.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
                 <div className="w-20 h-20 bg-gray-50 rounded-full flex items-center justify-center mx-auto mb-6"><Calendar className="w-8 h-8 text-gray-300" /></div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">No bookings found</h3>
@@ -666,7 +826,8 @@ export default function GuestDashboard() {
                   onCancelSuccess={handleCancelSuccess}
                 />
               ))
-            )
+            )}
+            </>
           )}
         </div>
       </div>
@@ -684,6 +845,103 @@ export default function GuestDashboard() {
       <HostUpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
 
       {/* DELETE ACCOUNT CONFIRMATION MODAL */}
+      {/* NOTIFICATION DETAILS MODAL */}
+      {detailNotif && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setDetailNotif(null)}></div>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 shadow-2xl">
+            <button onClick={() => setDetailNotif(null)} className="absolute top-5 right-5 text-gray-400 hover:text-gray-900 transition-colors">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-5">
+              <Bell className="w-6 h-6" />
+            </div>
+            {isHost && (
+              <span className={`inline-block mb-2 px-2 py-0.5 text-[10px] font-bold rounded-full tracking-wide uppercase ${(detailNotif._audience || detailNotif.audience) === 'host' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-500'}`}>
+                {(detailNotif._audience || detailNotif.audience) === 'host' ? 'Host' : 'Guest'}
+              </span>
+            )}
+            <h3 className="text-xl font-black text-gray-900 mb-2 pr-6">{detailNotif.title || detailNotif.heading}</h3>
+            <p className="text-gray-600 font-medium text-sm leading-relaxed mb-4 whitespace-pre-line">
+              {detailNotif.message || detailNotif.body}
+            </p>
+            <p className="text-xs font-medium text-gray-400 mb-6">
+              {detailNotif.createdAt ? new Date(detailNotif.createdAt).toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' }) : ''}
+            </p>
+            <div className="flex gap-3">
+              {(() => {
+                const bookingId = detailNotif.bookingId || detailNotif.reservationId || detailNotif.relatedId;
+                const bookingLink = bookingId ? `/bookings/${bookingId}` : (detailNotif.link || detailNotif.url || null);
+                return bookingLink ? (
+                  <Link to={bookingLink} onClick={() => setDetailNotif(null)} className="flex-1 py-3.5 text-center font-bold text-sm text-white bg-gray-900 hover:bg-black rounded-xl transition-colors">
+                    View Booking
+                  </Link>
+                ) : null;
+              })()}
+              <button
+                onClick={() => { setDeleteConfirmId(detailNotif._id); }}
+                className="py-3.5 px-5 font-bold text-sm text-red-600 bg-red-50 hover:bg-red-100 rounded-xl transition-colors flex items-center justify-center"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICATION LONG-PRESS ACTION SHEET */}
+      {contextMenuNotif && (
+        <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setContextMenuNotif(null)}></div>
+          <div className="bg-white rounded-t-3xl sm:rounded-3xl p-2 max-w-sm w-full relative z-10 animate-in slide-in-from-bottom-10 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-200 shadow-2xl">
+            <button
+              onClick={() => { setDetailNotif(contextMenuNotif); setContextMenuNotif(null); }}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-gray-50 transition-colors text-left"
+            >
+              <div className="bg-gray-100 p-2 rounded-lg text-gray-600"><Bell className="w-4 h-4" /></div>
+              <span className="text-sm font-bold text-gray-900">View Details</span>
+            </button>
+            <button
+              onClick={() => { setDeleteConfirmId(contextMenuNotif._id); setContextMenuNotif(null); }}
+              className="w-full flex items-center gap-3 p-4 rounded-2xl hover:bg-red-50 transition-colors text-left"
+            >
+              <div className="bg-red-50 p-2 rounded-lg text-red-500"><Trash2 className="w-4 h-4" /></div>
+              <span className="text-sm font-bold text-red-600">Delete</span>
+            </button>
+            <button
+              onClick={() => setContextMenuNotif(null)}
+              className="w-full p-4 text-center text-sm font-bold text-gray-400 hover:text-gray-700 transition-colors border-t border-gray-100 mt-1"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* NOTIFICATION DELETE CONFIRMATION MODAL */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)}></div>
+          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-sm w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-2xl">
+            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
+              <Trash2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-black text-gray-900 mb-2">Delete this notification?</h3>
+            <p className="text-gray-500 font-medium text-sm leading-relaxed mb-6">
+              This can't be undone.
+            </p>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteConfirmId(null)} className="flex-1 py-3.5 font-bold text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
+                Cancel
+              </button>
+              <button onClick={confirmDeleteNotif} className="flex-1 py-3.5 font-bold text-sm text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-md shadow-red-600/20">
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {isDeleteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}></div>

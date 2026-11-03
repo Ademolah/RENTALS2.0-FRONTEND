@@ -1,15 +1,17 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { 
-  Crown, CheckCircle2, ArrowRight, 
-  ShieldCheck, Mail, Loader2 
+import {
+  Crown, CheckCircle2, ArrowRight,
+  ShieldCheck, Mail, Loader2
 } from 'lucide-react';
+import { consumePaymentReturn } from '../utils/paymentReturn';
 
 export default function VipSuccess() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const reference = searchParams.get('reference') || 'VIP-SECURED';
-  
+  const [returnPath] = useState(() => consumePaymentReturn(searchParams));
+
   const [verifying, setVerifying] = useState(true);
 
   // Simulate a brief verification pause for dramatic, premium effect
@@ -93,9 +95,20 @@ export default function VipSuccess() {
           </div>
 
           <div className="space-y-3">
-            <button 
+            {returnPath && (
+              <button
+                onClick={() => navigate(returnPath, { replace: true })}
+                className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
+              >
+                <span>Continue Where You Left Off</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            )}
+            <button
               onClick={() => navigate('/', { replace: true })}
-              className="w-full bg-amber-500 hover:bg-amber-400 text-black py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2 active:scale-[0.98]"
+              className={`w-full py-4 rounded-xl font-black uppercase tracking-widest text-xs transition-all flex items-center justify-center space-x-2 active:scale-[0.98] ${
+                returnPath ? 'bg-white/5 hover:bg-white/10 text-white border border-white/10' : 'bg-amber-500 hover:bg-amber-400 text-black'
+              }`}
             >
               <span>Return Home</span>
               <ArrowRight className="w-4 h-4" />
