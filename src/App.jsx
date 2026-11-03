@@ -24,9 +24,6 @@ import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
 import ResetPassword from './pages/ResetPassword';
 import VipServiceDetails from './components/VipServiceDetails';
-<<<<<<< HEAD
-import BookingSuccess from './components/BookingSuccess';
-=======
 import BookingDetail from './pages/BookingDetail';
 import BookingPass from './pages/BookingPass';
 import MyReviews from './pages/MyReviews';
@@ -37,7 +34,6 @@ import BookingSuccess from './pages/BookingSuccess';
 import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ErrorBoundary';
 import { useAuth } from './context/AuthContext';
->>>>>>> ae5f41fb3518f99530842e14bda18c41d4323197
 
 function ScrollToTop() {
   const { pathname } = useLocation();
