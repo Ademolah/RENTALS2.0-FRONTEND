@@ -86,7 +86,7 @@ Please assist me with the escrow payment.`;
           checkOutDate: toApiCheckoutDate(checkIn, checkOut),
           guestsCount: roomData.capacity.adults || 1,
           totalAmount: totalPrice,
-          bookingType: 'HOTEL',
+          bookingType: 'HOTEL' ,
           callbackUrl: `${window.location.origin}/booking-success`
         })
       });

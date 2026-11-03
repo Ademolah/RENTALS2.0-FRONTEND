@@ -203,9 +203,29 @@ export default function AdminDashboard() {
   };
 
   const handleListingApproval = async (type, id, status) => {
-    setActionLoading(true);
     try {
-      await updateAssetApprovalStatus(type, id, status);
+      let reason = undefined;
+
+      // 💡 THE FIX: Intercept rejections and mandate a reason
+      if (status === 'REJECTED') {
+        reason = window.prompt("Please provide a reason for rejecting this listing (this will be sent to the host):");
+        
+        // If the admin clicks "Cancel" on the prompt, abort the entire process
+        if (reason === null) {
+          return; 
+        }
+        
+        // If they leave it completely blank, provide a professional fallback
+        if (reason.trim() === '') {
+          reason = "Listing does not meet platform quality standards.";
+        }
+      }
+
+      setActionLoading(true); // Start loading only after the prompt is handled
+
+      // 💡 Pass the reason into your API call
+      await updateAssetApprovalStatus(type, id, status, reason);
+      
       setAssets(prev => ({
         ...prev,
         properties: prev.properties.map(p => p._id === id ? { ...p, status } : p),
