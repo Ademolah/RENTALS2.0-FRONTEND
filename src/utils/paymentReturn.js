@@ -23,3 +23,30 @@ export function consumePaymentReturn(searchParams) {
   // own payment callback page to an external site.
   return (path && path.startsWith('/') && !path.startsWith('//')) ? path : null;
 }
+
+// Fallback payment-outcome signal for when the dedicated verify endpoint isn't working:
+// the backend's webhook pushes a notification ("Payment Successful!" / a decline message)
+// the moment it processes the Paystack transaction — often faster and more reliable than
+// a frontend verify call. A notification created within the last few minutes is treated
+// as describing *this* payment, since a guest's booking-success page only loads seconds
+// after completing checkout.
+const RECENT_NOTIFICATION_WINDOW_MS = 5 * 60 * 1000;
+
+export function inferPaymentOutcomeFromNotifications(notifications) {
+  if (!Array.isArray(notifications)) return null;
+  const now = Date.now();
+
+  for (const n of notifications) {
+    const text = `${n.title || ''} ${n.message || n.body || n.description || ''}`.toLowerCase();
+    const createdAt = new Date(n.createdAt || n.date || n.timestamp || 0).getTime();
+    if (!createdAt || now - createdAt > RECENT_NOTIFICATION_WINDOW_MS) continue;
+
+    if (/payment\s*(was\s*)?(successful|confirmed|received)/.test(text) || /booking\s*confirmed/.test(text)) {
+      return 'success';
+    }
+    if (/payment\s*(failed|declined|unsuccessful|not\s*completed)/.test(text)) {
+      return 'failed';
+    }
+  }
+  return null;
+}

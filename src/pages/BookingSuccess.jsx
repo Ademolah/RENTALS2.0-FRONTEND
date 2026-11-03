@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { CheckCircle2, CalendarCheck, Home, ArrowRight, ShieldCheck, Copy, Check, XCircle } from 'lucide-react';
 import { apiClient } from '../api/client';
-import { consumePaymentReturn } from '../utils/paymentReturn';
+import { consumePaymentReturn, inferPaymentOutcomeFromNotifications } from '../utils/paymentReturn';
+import { getNotifications } from '../api/notifications';
 
 export default function BookingSuccess() {
   const [searchParams] = useSearchParams();
@@ -43,12 +44,21 @@ export default function BookingSuccess() {
           setStatus('failed');
         }
       })
-      .catch(err => {
+      .catch(async (err) => {
         // The verification request itself failed (wrong route, network error, backend
-        // down, etc.) — we genuinely don't know whether the payment succeeded. Paystack
-        // already confirmed the charge, so never tell the guest to pay again here.
-        console.error('[BookingSuccess] Could not verify payment:', err);
-        setStatus('unknown');
+        // down, etc.) — fall back to the backend's own notification feed, which the
+        // webhook populates the moment it processes the transaction. We genuinely must
+        // not tell the guest to pay again unless we have a real signal the payment failed.
+        console.error('[BookingSuccess] Could not verify payment, checking notifications:', err);
+        try {
+          const res = await getNotifications();
+          const list = res?.data?.notifications || res?.notifications || res?.data || [];
+          const outcome = inferPaymentOutcomeFromNotifications(list);
+          setStatus(outcome || 'unknown');
+        } catch (notifErr) {
+          console.error('[BookingSuccess] Notification fallback also failed:', notifErr);
+          setStatus('unknown');
+        }
       });
   }, [reference]);
 
