@@ -107,11 +107,8 @@ export default function BookingWidget({ property }) {
     // immediate, specific "pick from X" answer instead of a generic rejection.
     const checkInObj = parseLocalDateStr(checkIn);
     const checkOutObj = parseLocalDateStr(checkOut);
-    const effectiveEndObj = checkInObj.getTime() === checkOutObj.getTime()
-      ? new Date(checkInObj.getTime() + 24 * 60 * 60 * 1000)
-      : checkOutObj;
 
-    if (rangeOverlapsBooking(checkInObj, effectiveEndObj, bookedRanges)) {
+    if (rangeOverlapsBooking(checkInObj, checkOutObj, bookedRanges)) {
       setAvailabilityStatus('booked');
       setError(buildConflictMessage(checkInObj, bookedRanges, maxBookableDate) || 'These dates are already booked. Please choose different dates.');
       setIsCheckingAvailability(false);

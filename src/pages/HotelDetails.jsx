@@ -195,11 +195,8 @@ export default function HotelDetails() {
     const roomBookedRanges = parseBookedRanges(hotel, selectedRoom);
     const checkInObj = parseLocalDateStr(checkInDate);
     const checkOutObj = parseLocalDateStr(checkOutDate);
-    const effectiveEndObj = checkInObj.getTime() === checkOutObj.getTime()
-      ? new Date(checkInObj.getTime() + 24 * 60 * 60 * 1000)
-      : checkOutObj;
 
-    if (rangeOverlapsBooking(checkInObj, effectiveEndObj, roomBookedRanges)) {
+    if (rangeOverlapsBooking(checkInObj, checkOutObj, roomBookedRanges)) {
       setAvailabilityStatus('booked');
       showToast(buildConflictMessage(checkInObj, roomBookedRanges, maxBookableDate) || 'These dates are already booked. Please choose different dates.');
       setIsCheckingAvailability(false);

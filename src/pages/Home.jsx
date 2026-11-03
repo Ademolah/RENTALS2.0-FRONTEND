@@ -8,6 +8,7 @@ import { getCars } from '../api/car';
 import { Loader2, Search } from 'lucide-react';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import CitySwitcher from '../components/CitySwitcher';
+import { parseBookedRanges, rangeOverlapsBooking } from '../utils/availability';
 
 export default function Home({
   searchFilters = {},
@@ -89,19 +90,14 @@ export default function Home({
         const requestedEnd = searchFilters.checkOut || searchFilters.dropoffDate;
 
         if (requestedStart && requestedEnd && Array.isArray(results)) {
-          const reqStartMs = new Date(requestedStart).getTime();
-          const reqEndMs = new Date(requestedEnd).getTime();
+          const reqStart = new Date(requestedStart);
+          const reqEnd = new Date(requestedEnd);
 
           results = results.filter(item => {
-            if (!item.bookedDates || !Array.isArray(item.bookedDates) || item.bookedDates.length === 0) {
-              return true;
-            }
+            const bookedRanges = parseBookedRanges(item);
+            if (bookedRanges.length === 0) return true;
 
-            const hasOverlap = item.bookedDates.some(booking => {
-              const existingStart = new Date(booking.startDate).getTime();
-              const existingEnd = new Date(booking.endDate).getTime();
-              return reqStartMs < existingEnd && reqEndMs > existingStart;
-            });
+            const hasOverlap = rangeOverlapsBooking(reqStart, reqEnd, bookedRanges);
 
             return !hasOverlap;
           });

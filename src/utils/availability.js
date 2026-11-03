@@ -1,18 +1,34 @@
 // Client-side helpers for communicating date conflicts clearly to guests, using the
 // `bookedDates` array ([{ startDate, endDate, roomTypeId? }]) that listings carry (the
 // same field Home.jsx uses to filter out fully-booked listings), plus the `bookedRanges`
-// array the availability-check endpoint now returns on a conflict. `endDate` is treated
-// as the checkout day — it is NOT occupied, so a new stay may start there.
+// array the availability-check endpoint now returns on a conflict.
+//
+// The backend's dates carry an actual check-in/check-out TIME (e.g. 14:00 / 10:00), not
+// just a calendar day. Comparing full timestamps against a grid cell's local midnight is
+// wrong in either direction depending on timezone, so every comparison here is done at
+// calendar-day granularity only (time stripped) — and the whole span from check-in to
+// check-out is treated as occupied, INCLUSIVE of the checkout day itself: nobody else can
+// start a stay on a day that's already someone's check-in, mid-stay night, or checkout day.
 
 export function parseLocalDateStr(str) {
   return str ? new Date(`${str}T00:00:00`) : null;
 }
 
+// Strips the time component, returning local midnight for that calendar day.
+function toCalendarDay(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+}
+
 function toRanges(raw) {
   if (!Array.isArray(raw)) return [];
   return raw
-    .map((b) => ({ start: new Date(b.startDate), end: new Date(b.endDate) }))
-    .filter((r) => !isNaN(r.start) && !isNaN(r.end));
+    .map((b) => {
+      const start = new Date(b.startDate);
+      const end = new Date(b.endDate);
+      return { start, end };
+    })
+    .filter((r) => !isNaN(r.start) && !isNaN(r.end))
+    .map((r) => ({ start: toCalendarDay(r.start), end: toCalendarDay(r.end) }));
 }
 
 // `roomTypeId`, when passed, keeps only entries tagged for that room (hotels tag each
@@ -30,25 +46,32 @@ export function parseApiBookedRanges(raw) {
   return toRanges(raw);
 }
 
-// True if `date` falls on an occupied night (start inclusive, end exclusive).
+// True if `date` falls anywhere within a booked stay, check-in day through checkout day,
+// both inclusive.
 export function isDateBooked(date, bookedRanges) {
-  return bookedRanges.some((r) => date >= r.start && date < r.end);
+  const day = toCalendarDay(date);
+  return bookedRanges.some((r) => day >= r.start && day <= r.end);
 }
 
-// True if the half-open stay [startDate, endDate) overlaps any booked range.
+// True if the candidate stay [startDate, endDate] (both inclusive) touches any booked
+// range (also both inclusive) on any calendar day.
 export function rangeOverlapsBooking(startDate, endDate, bookedRanges) {
   if (!startDate || !endDate) return false;
-  return bookedRanges.some((r) => r.start < endDate && r.end > startDate);
+  const start = toCalendarDay(startDate);
+  const end = toCalendarDay(endDate);
+  return bookedRanges.some((r) => r.start <= end && r.end >= start);
 }
 
-// Walks forward from `fromDate` past any booked range it lands in, returning the
-// first free date (capped at maxDate). Used to tell a guest exactly where to look next.
+// Walks forward from `fromDate` past any booked range it lands in, returning the first
+// free calendar day after it (capped at maxDate). Used to tell a guest exactly where to
+// look next — since the checkout day itself is occupied, the next free day is the one
+// right after it.
 export function findNextAvailableDate(fromDate, bookedRanges, maxDate) {
-  let candidate = new Date(fromDate);
+  let candidate = toCalendarDay(fromDate);
   for (let i = 0; i < 730; i++) {
-    const blocking = bookedRanges.find((r) => r.start <= candidate && candidate < r.end);
+    const blocking = bookedRanges.find((r) => r.start <= candidate && candidate <= r.end);
     if (!blocking) return maxDate && candidate > maxDate ? null : candidate;
-    candidate = new Date(blocking.end);
+    candidate = new Date(blocking.end.getFullYear(), blocking.end.getMonth(), blocking.end.getDate() + 1);
   }
   return null;
 }
@@ -63,7 +86,7 @@ export function formatShortDate(date) {
 // callers should fall back to a plain, still-accurate message in that case.
 export function buildConflictMessage(requestedDate, bookedRanges, maxBookableDate) {
   const nextAvailable = findNextAvailableDate(requestedDate, bookedRanges, maxBookableDate);
-  if (!nextAvailable || nextAvailable.getTime() <= requestedDate.getTime()) {
+  if (!nextAvailable || nextAvailable.getTime() <= toCalendarDay(requestedDate).getTime()) {
     return null;
   }
   return `${formatShortDate(requestedDate)} is already booked. The next available date is ${formatShortDate(nextAvailable)} — please choose from there.`;
