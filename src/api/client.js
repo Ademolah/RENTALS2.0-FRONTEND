@@ -26,16 +26,18 @@ apiClient.interceptors.request.use(
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // 1. Check if the error is coming from the login API itself
-    const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+    // Every /auth/* endpoint (login, register, forgot-password, reset-password,
+    // verify-email, google) is about establishing or recovering an identity, not
+    // about an existing session. A 401 from any of them is that specific operation
+    // failing (bad password, expired reset token, wrong OTP, ...) — never a sign
+    // that a logged-in session expired. Treating it as one wiped the stored token
+    // and hard-redirected to "/" before the calling form could show its own error,
+    // which is exactly what broke the reset-password screen for an expired/reused link.
+    const isAuthEndpoint = error.config?.url?.includes('/auth/');
 
-    if (error.response?.status === 401) {
+    if (error.response?.status === 401 && !isAuthEndpoint) {
       localStorage.removeItem('rentals_token');
-      
-      // 2. Only redirect if the 401 is a session expiration, NOT a bad login attempt
-      if (!isLoginEndpoint) {
-        window.location.href = '/'; // Safely route to the home page instead of a non-existent /login
-      }
+      window.location.href = '/'; // Safely route to the home page instead of a non-existent /login
     }
     return Promise.reject(error);
   }
