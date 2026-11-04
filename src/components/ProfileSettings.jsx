@@ -89,10 +89,14 @@ export default function ProfileSettings() {
     const localPreview = URL.createObjectURL(file);
     setAvatarPreview(localPreview);
     setIsUploadingAvatar(true);
+    const startedAt = performance.now();
     try {
       const res = await updateMyProfilePictureApi(file);
+      const elapsedMs = Math.round(performance.now() - startedAt);
       const freshUser = res?.data?.user || res?.user;
-      if (!syncUser(freshUser)) await refreshUser();
+      console.log(`[ProfileSettings] Picture upload succeeded in ${elapsedMs}ms. Response:`, res, 'Extracted user:', freshUser);
+      const synced = syncUser(freshUser) || await refreshUser();
+      console.log('[ProfileSettings] After sync, user.profilePicture is now:', synced?.profilePicture);
       setAvatarSuccess('Profile picture updated.');
       // Now that user.profilePicture is confirmed in sync, drop the local blob preview
       // so this and the Navbar avatar both render from the same real source.
