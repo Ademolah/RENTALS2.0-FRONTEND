@@ -81,8 +81,8 @@ export default function ProfileSettings() {
       setAvatarError('Please choose an image file.');
       return;
     }
-    if (file.size > 8 * 1024 * 1024) {
-      setAvatarError('Image must be smaller than 8MB.');
+    if (file.size > 5 * 1024 * 1024) {
+      setAvatarError('Image must be smaller than 5MB.');
       return;
     }
 
@@ -220,7 +220,7 @@ export default function ProfileSettings() {
                 </button>
               )}
             </div>
-            <p className="text-[11px] text-gray-400 font-medium">JPG or PNG, up to 8MB.</p>
+            <p className="text-[11px] text-gray-400 font-medium">JPG or PNG, up to 5MB.</p>
             <input ref={fileInputRef} type="file" accept="image/*" onChange={handleAvatarSelect} className="hidden" />
           </div>
         </div>
