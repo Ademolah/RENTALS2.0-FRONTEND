@@ -12,7 +12,7 @@ import AuthModal from './AuthModal'
 export default function Navbar({ activeCategory, onCategoryChange }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const { user, logout, redirectUserByRole, showAuthModal, setShowAuthModal } = useAuth();
+  const { user, logout, redirectUserByRole, refreshUser, showAuthModal, setShowAuthModal } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef(null);
 
@@ -154,7 +154,11 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                         
                         <div className="mt-2 space-y-1">
                           <button
-                            onClick={() => { setIsMenuOpen(false); redirectUserByRole(user.role); }}
+                            onClick={async () => {
+                              setIsMenuOpen(false);
+                              const freshUser = await refreshUser();
+                              redirectUserByRole((freshUser || user).role);
+                            }}
                             className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                           >
                             <div className="flex items-center space-x-3">

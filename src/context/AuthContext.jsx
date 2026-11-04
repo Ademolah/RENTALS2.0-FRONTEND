@@ -1,22 +1,41 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { loginUser as loginApi, registerUser as registerApi } from '../api/auth';
+import { getMyProfileApi } from '../api/user';
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+
   // NEW: Global state for the Auth Modal
   const [showAuthModal, setShowAuthModal] = useState(false);
-  
+
   const navigate = useNavigate();
+
+  // The cached user (and their role) is only ever written at login/register time.
+  // If a host application gets approved mid-session, or in a prior session that was
+  // never logged out of, the cached role goes stale — this re-fetches the real one
+  // from the backend and updates both state and localStorage to match.
+  const refreshUser = async () => {
+    try {
+      const res = await getMyProfileApi();
+      const freshUser = res?.data?.user || res?.user;
+      if (freshUser) {
+        localStorage.setItem('rentals_user', JSON.stringify(freshUser));
+        setUser(freshUser);
+      }
+      return freshUser || null;
+    } catch {
+      return null;
+    }
+  };
 
   useEffect(() => {
     const storedToken = localStorage.getItem('rentals_token');
     const storedUser = localStorage.getItem('rentals_user');
-    
+
     if (storedToken && storedUser) {
       try {
         setUser(JSON.parse(storedUser));
@@ -24,6 +43,9 @@ export function AuthProvider({ children }) {
         localStorage.removeItem('rentals_token');
         localStorage.removeItem('rentals_user');
       }
+      // Fire-and-forget: reconcile with the backend's current role in the background
+      // so a stale cached role (e.g. a host approval since last login) self-corrects.
+      refreshUser();
     }
     setLoading(false);
   }, []);
@@ -101,8 +123,9 @@ export function AuthProvider({ children }) {
       loading, 
       login, 
       register, 
-      logout, 
+      logout,
       redirectUserByRole,
+      refreshUser,
       showAuthModal,      // EXPOSED TO APP
       setShowAuthModal    // EXPOSED TO APP
     }}>
