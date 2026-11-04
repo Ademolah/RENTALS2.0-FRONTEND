@@ -16,7 +16,6 @@ import { getNotifications, markNotificationRead, markAllNotificationsRead, delet
 import { apiClient } from '../api/client';
 
 import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
-import HostUpgradeModal from '../components/HostUpgradeModal';
 import ProfileSettings from '../components/ProfileSettings';
 import { useAuth } from '../context/AuthContext';
 
@@ -410,7 +409,6 @@ export default function GuestDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
-  const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -756,9 +754,6 @@ export default function GuestDashboard() {
         </div>
       )}
 
-      <HostUpgradeModal isOpen={isUpgradeModalOpen} onClose={() => setIsUpgradeModalOpen(false)} />
-
-      {/* DELETE ACCOUNT CONFIRMATION MODAL */}
       {/* NOTIFICATION DETAILS MODAL */}
       {detailNotif && (
         <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">

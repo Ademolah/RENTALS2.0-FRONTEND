@@ -3,15 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   Key, Building2, Menu, UserCircle, LogOut, LayoutDashboard,
   CarFront, Crown, ChevronRight, User as UserIcon,
-  Sparkles, LogIn, Bell, Map, Heart
+  Sparkles, LogIn, Bell, Map, Heart, Briefcase
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import AuthModal from './AuthModal'
+import HostUpgradeModal from './HostUpgradeModal';
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [isHostUpgradeModalOpen, setIsHostUpgradeModalOpen] = useState(false);
   const { user, logout, redirectUserByRole, refreshUser, showAuthModal, setShowAuthModal } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef(null);
@@ -113,7 +115,14 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                 </button>
               )}
               <button
-                onClick={() => user ? redirectUserByRole('LANDLORD') : setShowAuthModal(true)}
+                onClick={() => {
+                  if (!user) { setShowAuthModal(true); return; }
+                  // A plain guest has no verified host application yet — send them through
+                  // the real NIN/address verification flow instead of straight into the
+                  // Landlord Dashboard, which used to happen regardless of actual role.
+                  if (user.role?.toUpperCase() === 'USER') { setIsHostUpgradeModalOpen(true); return; }
+                  redirectUserByRole('LANDLORD');
+                }}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
               >
                 {getCtaText()}
@@ -195,6 +204,21 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                             </div>
                             <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
                           </button>
+
+                          {user.role?.toUpperCase() === 'USER' && (
+                            <button
+                              onClick={() => { setIsMenuOpen(false); setIsHostUpgradeModalOpen(true); }}
+                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                  <Briefcase className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Become a Host</span>
+                              </div>
+                              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                            </button>
+                          )}
 
                           <button
                             onClick={() => {
@@ -292,6 +316,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
 
       {/* 5. PASS THE GLOBAL CONTEXT TO THE MODAL COMPONENT */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
+      <HostUpgradeModal isOpen={isHostUpgradeModalOpen} onClose={() => setIsHostUpgradeModalOpen(false)} />
     </>
   );
 }
