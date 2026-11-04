@@ -23,5 +23,16 @@ export const HostService = {
   processApplication: async (id, data) => {
     const response = await apiClient.patch(`/hosts/requests/${id}`, data);
     return response.data;
+  },
+
+  /**
+   * @desc The host's real earnings for the current year, across all their listings.
+   * Amounts are already the host's net 95% after the platform fee — show them as-is,
+   * don't deduct anything further on the frontend. Same endpoint the mobile app uses,
+   * so the numbers always match between web and mobile.
+   */
+  getAnalytics: async () => {
+    const response = await apiClient.get('/hosts/analytics');
+    return response.data;
   }
 };

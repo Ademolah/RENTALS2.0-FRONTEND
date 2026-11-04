@@ -9,6 +9,7 @@ import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/prop
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
 import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel';
 import { getLandlordVipEstablishments, confirmVipArrival } from '../api/vip';
+import { HostService } from '../api/host';
 
 import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
@@ -33,6 +34,7 @@ export default function LandlordDashboard() {
   const [bookings, setBookings] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [processingId, setProcessingId] = useState(null);
+  const [analytics, setAnalytics] = useState(null);
 
   // Modal States
   const [isBankModalOpen, setIsBankModalOpen] = useState(false);
@@ -48,6 +50,9 @@ export default function LandlordDashboard() {
 
   useEffect(() => {
     fetchPortfolioData();
+    HostService.getAnalytics()
+      .then(res => setAnalytics(res?.data || null))
+      .catch(() => setAnalytics(null));
   }, []);
 
   const fetchPortfolioData = async () => {
@@ -279,8 +284,11 @@ export default function LandlordDashboard() {
 
   const ledgerEntries = bookings.filter(b => !b.isRawAsset);
 
-  const totalClearedEarnings = ledgerEntries.reduce((sum, b) => b.escrowStatus === 'RELEASED' ? sum + b.payoutAmount : sum, 0);
-  const pendingEscrow = ledgerEntries.reduce((sum, b) => b.escrowStatus !== 'RELEASED' ? sum + b.payoutAmount : sum, 0);
+  // Sourced from GET /hosts/analytics — the same endpoint the mobile app uses, with the
+  // 5% platform fee already deducted server-side. A local sum of raw booking totalAmount
+  // (pre-fee, all-time) used to live here and never matched what the host saw on mobile.
+  const totalClearedEarnings = analytics?.summary?.completedPayouts ?? 0;
+  const pendingEscrow = analytics?.summary?.pendingPayouts ?? 0;
 
   const handleManageAsset = (booking) => {
     if (booking.type === 'CAR') setEditingCarId(booking.assetId);
