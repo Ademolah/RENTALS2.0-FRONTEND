@@ -8,12 +8,10 @@ import {
 import { useAuth } from '../context/AuthContext';
 import { apiClient } from '../api/client';
 import AuthModal from './AuthModal'
-import HostUpgradeModal from './HostUpgradeModal';
 
 export default function Navbar({ activeCategory, onCategoryChange }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [isHostUpgradeModalOpen, setIsHostUpgradeModalOpen] = useState(false);
   const { user, logout, redirectUserByRole, refreshUser, showAuthModal, setShowAuthModal } = useAuth();
   const navigate = useNavigate();
   const menuRef = useRef(null);
@@ -120,7 +118,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   // A plain guest has no verified host application yet — send them through
                   // the real NIN/address verification flow instead of straight into the
                   // Landlord Dashboard, which used to happen regardless of actual role.
-                  if (user.role?.toUpperCase() === 'USER') { setIsHostUpgradeModalOpen(true); return; }
+                  if (user.role?.toUpperCase() === 'USER') { navigate('/become-host'); return; }
                   redirectUserByRole('LANDLORD');
                 }}
                 className="hidden md:block text-sm font-semibold text-brand-dark hover:bg-gray-50 px-4 py-2.5 rounded-full transition-colors"
@@ -207,7 +205,7 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
 
                           {user.role?.toUpperCase() === 'USER' && (
                             <button
-                              onClick={() => { setIsMenuOpen(false); setIsHostUpgradeModalOpen(true); }}
+                              onClick={() => { setIsMenuOpen(false); navigate('/become-host'); }}
                               className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
                             >
                               <div className="flex items-center space-x-3">
@@ -316,7 +314,6 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
 
       {/* 5. PASS THE GLOBAL CONTEXT TO THE MODAL COMPONENT */}
       <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} />
-      <HostUpgradeModal isOpen={isHostUpgradeModalOpen} onClose={() => setIsHostUpgradeModalOpen(false)} />
     </>
   );
 }

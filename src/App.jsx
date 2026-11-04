@@ -18,6 +18,7 @@ import CarsList from './pages/CarsList';
 import VipDetails from './pages/VipDetails';
 import VipSuccess from './pages/VipSuccess';
 import ListYourProperty from './pages/ListYourProperty';
+import BecomeHost from './pages/BecomeHost';
 import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
@@ -87,7 +88,7 @@ function App() {
   const navigate = useNavigate();
   const isHomePage = location.pathname === '/';
 
-  const DETAIL_PREFIXES = ['/property/', '/cars/', '/hotels/', '/hotel/', '/vip/', '/bookings/', '/payment', '/reset-password', '/list-property', '/about', '/terms', '/privacy', '/sitemap', '/vip-success', '/dashboard', '/my-reviews', '/stays', '/cars'];
+  const DETAIL_PREFIXES = ['/property/', '/cars/', '/hotels/', '/hotel/', '/vip/', '/bookings/', '/payment', '/reset-password', '/list-property', '/become-host', '/about', '/terms', '/privacy', '/sitemap', '/vip-success', '/dashboard', '/my-reviews', '/stays', '/cars'];
   const showSearch = isHomePage || !DETAIL_PREFIXES.some(p => location.pathname.startsWith(p));
 
   useEffect(() => { setSearchFilters({}); }, [activeCategory]);
@@ -170,6 +171,7 @@ function App() {
             <Route path="/dashboard/landlord" element={<ProtectedRoute><LandlordDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
             <Route path="/list-property" element={<ListYourProperty />} />
+            <Route path="/become-host" element={<ProtectedRoute><BecomeHost /></ProtectedRoute>} />
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
