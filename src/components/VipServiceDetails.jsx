@@ -154,7 +154,9 @@ export default function VipServiceDetails() {
   const grandTotal = subtotal + platformFee;
   
   const formattedType = service.establishmentType?.replace('_', ' ') || 'VIP SERVICE';
-  const providerName = service.ownerId ? `${service.ownerId.firstName || ''} ${service.ownerId.lastName || ''}`.trim() : 'Verified Security Provider';
+  // Guests book through Rentals Africa, not the individual host — never reveal the
+  // host's real identity here, same as shortlet/hotel listings say "hosted by Rentals Africa".
+  const providerName = 'Rentals Africa';
   
   const today = new Date();
   today.setHours(0, 0, 0, 0);

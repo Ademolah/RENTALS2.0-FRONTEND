@@ -471,10 +471,9 @@ export default function LandlordDashboard() {
                       
                       <div className="space-y-5 bg-gray-50 rounded-xl p-5 border border-gray-100">
                         <div className="flex justify-between items-center border-b border-gray-200 pb-3">
-                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Client</div>
+                          <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Booked Via</div>
                           <div className="text-right">
-                            <div className="text-sm font-bold text-gray-900">{booking.guest.firstName} {booking.guest.lastName}</div>
-                            <div className="text-xs text-gray-500 font-medium">{booking.guest.phone}</div>
+                            <div className="text-sm font-bold text-gray-900">Rentals Africa</div>
                           </div>
                         </div>
                         <div className="flex justify-between items-center">
