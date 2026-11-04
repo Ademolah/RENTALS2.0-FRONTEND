@@ -132,8 +132,14 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                   className="flex items-center space-x-3 border border-gray-200 p-2 pl-4 rounded-full hover:shadow-md transition-shadow bg-white"
                 >
                   <Menu className="w-5 h-5 text-gray-500" />
-                  <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-sm">
-                    {user ? user.firstName?.[0]?.toUpperCase() : <UserCircle className="w-8 h-8 text-gray-400" />}
+                  <div className="w-8 h-8 rounded-full bg-brand-primary text-white flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
+                    {user?.profilePicture ? (
+                      <img src={user.profilePicture} alt="" className="w-full h-full object-cover" />
+                    ) : user ? (
+                      user.firstName?.[0]?.toUpperCase()
+                    ) : (
+                      <UserCircle className="w-8 h-8 text-gray-400" />
+                    )}
                   </div>
                 </button>
 
