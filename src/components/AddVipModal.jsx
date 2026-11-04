@@ -613,7 +613,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                   <div className="flex justify-between items-end mb-8">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">
-                        {listingCategory === 'VENUE' ? 'Required Escrow Deposit' : 'Daily Rate (NGN)'}
+                        {listingCategory === 'VENUE' ? 'Required Deposit' : 'Daily Rate (NGN)'}
                       </label>
                       <p className="text-sm text-gray-500">
                         {listingCategory === 'VENUE' 
@@ -635,7 +635,7 @@ export default function AddVipModal({ isOpen, onClose, onEstablishmentAdded }) {
                   />
                   
                   <div className="flex justify-between items-center text-sm pt-6 mt-6 border-t border-gray-200">
-                    <span className="text-gray-500 font-medium">Platform Escrow Fee</span>
+                    <span className="text-gray-500 font-medium">Platform Service Fee</span>
                     <span className="font-semibold text-gray-700">5% Charged to Guest at Checkout</span>
                   </div>
                 </div>

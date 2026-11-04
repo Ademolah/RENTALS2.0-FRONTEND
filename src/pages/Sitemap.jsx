@@ -38,7 +38,7 @@ export default function Sitemap() {
       items: [
         "Terms of Service",
         "Privacy Policy",
-        "Escrow Protection Policy",
+        "Payment Protection Policy",
         "Guest Verification Standards",
       ]
     }

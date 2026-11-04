@@ -92,7 +92,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
         showLocalToast("Confirmed! Waiting for host to confirm.", "success");
       }
     } catch (error) {
-      console.error("Escrow confirmation failed:", error);
+      console.error("Payout confirmation failed:", error);
       showLocalToast(error?.response?.data?.message || "Confirmation failed. Please try again.", "error");
     } finally {
       setIsConfirming(false);
@@ -198,7 +198,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
               <div>
                 <div className="text-sm font-bold">Waiting for {isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'}</div>
                 <div className="text-xs font-medium text-gray-500 mt-0.5">
-                  You've confirmed. Escrow will release once the provider acknowledges.
+                  You've confirmed. Funds will release once the provider acknowledges.
                 </div>
               </div>
             </div>
@@ -212,7 +212,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
                 <ShieldCheck className={`w-5 h-5 mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-600' : 'text-blue-600' : 'text-gray-900'}`} />
                 <div>
                   <div className={`text-sm font-bold ${hasHostConfirmed ? isVipAsset ? 'text-amber-900' : 'text-blue-900' : 'text-gray-900'}`}>
-                    {hasHostConfirmed ? `${isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'} Confirmed ${isVipService ? 'Delivery' : isVip ? 'Arrival' : 'Handover'}` : 'Deposit Escrowed'}
+                    {hasHostConfirmed ? `${isCar ? 'Owner' : isVipAsset ? 'Concierge' : 'Host'} Confirmed ${isVipService ? 'Delivery' : isVip ? 'Arrival' : 'Handover'}` : 'Deposit Secured'}
                   </div>
                   <div className={`text-xs font-medium mt-0.5 ${hasHostConfirmed ? isVipAsset ? 'text-amber-700' : 'text-blue-700' : 'text-gray-500'}`}>
                     {hasHostConfirmed 
@@ -274,7 +274,7 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
               <h3 className="text-2xl font-black text-gray-900 mb-2">Cancel Reservation?</h3>
               <p className="text-gray-500 font-medium text-sm leading-relaxed mb-6">
                 Are you sure you want to cancel your reservation for <span className="font-bold text-gray-900">{title}</span>? 
-                This action cannot be undone. If you cancel, your escrowed funds will be flagged for administrative review and refund processing.
+                This action cannot be undone. If you cancel, your held funds will be flagged for administrative review and refund processing.
               </p>
               <div className="flex gap-3">
                 <button 

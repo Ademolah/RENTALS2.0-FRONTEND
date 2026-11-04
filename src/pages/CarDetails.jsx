@@ -701,7 +701,7 @@ export default function CarDetails() {
 
             <div className="flex items-center justify-center space-x-1.5 text-gray-500 mt-4">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span className="text-[10px] font-bold uppercase tracking-wider">Platform Escrow Protection</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider">Platform Payment Protection</span>
             </div>
 
             {/* COMPACT Live Receipt Breakdown */}
@@ -722,7 +722,7 @@ export default function CarDetails() {
                 )}
                 
                 <div className="flex justify-between text-gray-600 text-xs">
-                  <span className="underline decoration-gray-300 underline-offset-4">Platform Escrow Fee</span>
+                  <span className="underline decoration-gray-300 underline-offset-4">Platform Service Fee</span>
                   <span className="font-bold text-gray-900">₦{pricing.platformFee.toLocaleString()}</span>
                 </div>
                 

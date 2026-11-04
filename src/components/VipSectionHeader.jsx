@@ -15,7 +15,7 @@ export function VipSectionHeader() {
         </h1>
         
         <p className="text-gray-400 text-sm md:text-base font-medium leading-relaxed max-w-lg mb-8">
-          Secure tables at the most exclusive lounges, clubs, and fine dining establishments. Platform escrow guarantees your reservation and protects your deposit.
+          Secure tables at the most exclusive lounges, clubs, and fine dining establishments. Rentals Africa guarantees your reservation and protects your deposit.
         </p>
         
         <div className="flex items-center space-x-2 text-xs font-bold bg-white/10 w-fit px-4 py-2 rounded-full backdrop-blur-sm border border-white/5">

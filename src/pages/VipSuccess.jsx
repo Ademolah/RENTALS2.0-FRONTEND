@@ -63,7 +63,7 @@ export default function VipSuccess() {
             
             <h1 className="text-3xl font-black text-white tracking-tight mb-3">Reservation Secured</h1>
             <p className="text-gray-400 text-sm font-medium leading-relaxed">
-              Your VIP experience is locked in. Your deposit has been securely placed in our platform escrow.
+              Your VIP experience is locked in. Your deposit has been securely placed and protected.
             </p>
           </div>
 
@@ -86,7 +86,7 @@ export default function VipSuccess() {
             <div className="flex items-start space-x-3 text-left p-4">
               <ShieldCheck className="w-5 h-5 text-gray-400 shrink-0 mt-0.5" />
               <div>
-                <h4 className="text-sm font-bold text-gray-200">Escrow Protected</h4>
+                <h4 className="text-sm font-bold text-gray-200">Payment Protected</h4>
                 <p className="text-xs font-medium text-gray-500 mt-1 leading-relaxed">
                   Funds remain secured until you tap "Confirm Arrival" on your dashboard at the venue.
                 </p>

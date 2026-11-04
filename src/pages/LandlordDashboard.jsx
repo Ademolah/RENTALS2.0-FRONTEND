@@ -387,7 +387,7 @@ export default function LandlordDashboard() {
               <TrendingUp className="w-6 h-6 text-amber-600" />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending in Escrow</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">Pending Payout</p>
               <h3 className="text-2xl font-black text-gray-900 tracking-tight">₦{pendingEscrow.toLocaleString()}</h3>
             </div>
           </div>

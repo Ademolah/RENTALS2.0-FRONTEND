@@ -245,7 +245,7 @@ export default function AdminDashboard() {
     { id: 'applications', label: 'Host Applications', icon: Users },
     { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
     { id: 'assets', label: 'Asset Oversight', icon: Building },
-    { id: 'escrow', label: 'Escrow Ledger', icon: Wallet },
+    { id: 'escrow', label: 'Payout Ledger', icon: Wallet },
     { id: 'settings', label: 'Platform Settings', icon: Settings },
   ];
 
@@ -417,7 +417,7 @@ export default function AdminDashboard() {
                       </div>
                       <div className="text-right">
                         <div className="text-sm font-extrabold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
-                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Escrow Held</div>
+                        <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Funds Held</div>
                       </div>
                     </div>
                   </div>
@@ -723,7 +723,7 @@ export default function AdminDashboard() {
            </div>
          )}
 
-        {/* --- TAB 5: ESCROW LEDGER --- */}
+        {/* --- TAB 5: PAYOUT LEDGER --- */}
         {activeTab === 'escrow' && (
            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
              <div className="min-w-[800px]">
@@ -734,14 +734,14 @@ export default function AdminDashboard() {
                      <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Guest</th>
                      <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Asset</th>
                      <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Amount (NGN)</th>
-                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Escrow Status</th>
+                     <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Payout Status</th>
                    </tr>
                  </thead>
                  <tbody>
                    {loading ? (
                      <tr><td colSpan="5" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
                    ) : ledger.length === 0 ? (
-                     <tr><td colSpan="5" className="p-8 text-center text-gray-500">No escrow records found.</td></tr>
+                     <tr><td colSpan="5" className="p-8 text-center text-gray-500">No payout records found.</td></tr>
                    ) : (
                      ledger.map((record) => {
                        const isCar = !!record.carId;
@@ -750,7 +750,7 @@ export default function AdminDashboard() {
                        const amount = (record.totalAmount || 0).toLocaleString();
                        const eStatus = record.escrowStatus || record.payoutStatus || 'PROCESSING';
                        
-                       // Dynamic Icon and Status Color Logic for Escrow Ledger
+                       // Dynamic Icon and Status Color Logic for Payout Ledger
                        let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
                        let StatusIcon = Clock; 
 

@@ -58,7 +58,7 @@ export default function BookModal({
 *Check-out:* ${checkOut || 'TBD'}
 *Total Price:* ₦${totalPrice.toLocaleString()}
 
-Please assist me with the escrow payment.`;
+Please assist me with the secure payment.`;
 
     const encodedText = encodeURIComponent(text);
     window.open(`https://wa.me/2347063688222?text=${encodedText}`, '_blank');
@@ -175,7 +175,7 @@ Please assist me with the escrow payment.`;
           <div className="flex items-start bg-green-50 border border-green-200 p-4 rounded-xl mb-6">
             <ShieldCheck className="w-6 h-6 text-green-700 mr-3 shrink-0" />
             <div>
-              <h5 className="font-bold text-green-900 text-sm mb-1">Escrow Protection Active</h5>
+              <h5 className="font-bold text-green-900 text-sm mb-1">Payment Protection Active</h5>
               <p className="text-xs text-green-800 leading-relaxed">
                 Your payment is held securely by Rentals Africa. The hotel is only paid after you successfully check in. 100% money-back guarantee.
               </p>

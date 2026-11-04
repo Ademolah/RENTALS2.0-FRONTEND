@@ -125,7 +125,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
             </div>
             <div>
               <h2 className="text-lg font-bold text-gray-900">Payout Account</h2>
-              <p className="text-xs font-medium text-gray-500">Secure escrow settlement setup</p>
+              <p className="text-xs font-medium text-gray-500">Secure payout settlement setup</p>
             </div>
           </div>
           <button 
@@ -144,7 +144,7 @@ export default function BankSetupModal({ isOpen, onClose, onSuccess }) {
                 <CheckCircle2 className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">Account Verified</h3>
-              <p className="text-sm text-gray-500">Your payouts are now secured via Paystack Escrow.</p>
+              <p className="text-sm text-gray-500">Your payouts are now securely set up via Paystack.</p>
             </div>
           ) : (
             <form onSubmit={handleSave} className="space-y-5">

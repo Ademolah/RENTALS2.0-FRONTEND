@@ -371,7 +371,7 @@ export default function VipServiceDetails() {
                 </div>
               </div>
 
-              {/* Escrow Math */}
+              {/* Payment Math */}
               <div className="space-y-3 border-t border-white/10 pt-6 mb-8 text-sm font-medium">
                 <div className="flex justify-between text-gray-400">
                   <span>₦{dailyRate.toLocaleString()} x {durationDays} day{durationDays > 1 ? 's' : ''}</span>
@@ -382,7 +382,7 @@ export default function VipServiceDetails() {
                   <span className="text-white">₦{platformFee.toLocaleString()}</span>
                 </div>
                 <div className="flex justify-between items-center pt-3 border-t border-white/5">
-                  <span className="text-white font-bold">Total Escrow</span>
+                  <span className="text-white font-bold">Total Due</span>
                   <span className="text-xl font-black text-amber-500">₦{grandTotal.toLocaleString()}</span>
                 </div>
               </div>
@@ -410,7 +410,7 @@ export default function VipServiceDetails() {
 
               <div className="mt-6 flex items-start gap-3 text-xs text-gray-500 leading-relaxed font-medium">
                 <ShieldCheck className="w-8 h-8 text-amber-500 shrink-0 -mt-1" />
-                <p>Payment is securely held in platform escrow and is only released to the provider upon confirmed delivery of service.</p>
+                <p>Payment is securely held by Rentals Africa and is only released to the provider upon confirmed delivery of service.</p>
               </div>
 
             </div>

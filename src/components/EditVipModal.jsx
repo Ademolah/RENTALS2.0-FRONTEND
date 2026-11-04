@@ -351,7 +351,7 @@ export default function EditVipModal({ isOpen, onClose, establishmentId, onSucce
                 <div className="p-6 rounded-2xl border border-gray-200 bg-gray-50/50">
                   <div className="flex justify-between items-end mb-6">
                     <div>
-                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Required Escrow Deposit</label>
+                      <label className="block text-xs font-bold uppercase text-gray-500 mb-1">Required Deposit</label>
                     </div>
                     <span className="text-3xl font-bold text-gray-900">₦{Number(depositAmount).toLocaleString()}</span>
                   </div>
