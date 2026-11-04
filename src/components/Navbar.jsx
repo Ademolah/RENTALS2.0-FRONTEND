@@ -160,22 +160,24 @@ export default function Navbar({ activeCategory, onCategoryChange }) {
                         </div>
                         
                         <div className="mt-2 space-y-1">
-                          <button
-                            onClick={async () => {
-                              setIsMenuOpen(false);
-                              const freshUser = await refreshUser();
-                              redirectUserByRole((freshUser || user).role);
-                            }}
-                            className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
-                          >
-                            <div className="flex items-center space-x-3">
-                              <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
-                                <LayoutDashboard className="w-4 h-4" />
+                          {(user.role?.toUpperCase() === 'LANDLORD' || user.role?.toUpperCase() === 'ADMIN') && (
+                            <button
+                              onClick={async () => {
+                                setIsMenuOpen(false);
+                                const freshUser = await refreshUser();
+                                redirectUserByRole((freshUser || user).role);
+                              }}
+                              className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-all group"
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="bg-gray-100 p-2 rounded-lg group-hover:bg-brand-primary/10 group-hover:text-brand-primary transition-colors text-gray-500">
+                                  <LayoutDashboard className="w-4 h-4" />
+                                </div>
+                                <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Control Panel</span>
                               </div>
-                              <span className="text-sm font-bold text-gray-700 group-hover:text-gray-900">Control Panel</span>
-                            </div>
-                            <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
-                          </button>
+                              <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-brand-primary group-hover:translate-x-1 transition-all" />
+                            </button>
+                          )}
 
                           <button
                             onClick={() => { setIsMenuOpen(false); navigate('/dashboard/guest?tab=ALL'); }}

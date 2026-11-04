@@ -52,10 +52,13 @@ function DashboardRedirect() {
   return <Navigate to="/dashboard/guest" replace />;
 }
 
-function ProtectedRoute({ children }) {
+function ProtectedRoute({ children, roles }) {
   const { user, loading } = useAuth();
   if (loading) return null;
   if (!user) return <Navigate to="/" replace />;
+  // Guests/non-hosts must never reach a role-gated page directly by URL either —
+  // hiding the Navbar link alone isn't enough, so send them to their own dashboard.
+  if (roles && !roles.includes(user.role?.toUpperCase())) return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -168,8 +171,8 @@ function App() {
             <Route path="/booking-success" element={<BookingSuccess />} />
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/guest" element={<ProtectedRoute><GuestDashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/landlord" element={<ProtectedRoute><LandlordDashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/landlord" element={<ProtectedRoute roles={['LANDLORD', 'ADMIN']}><LandlordDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/list-property" element={<ListYourProperty />} />
             <Route path="/become-host" element={<ProtectedRoute><BecomeHost /></ProtectedRoute>} />
             <Route path="/about" element={<About />} />
