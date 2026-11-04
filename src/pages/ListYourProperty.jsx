@@ -1,23 +1,25 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { 
-  Building2, 
-  Car, 
-  ShieldCheck, 
-  Banknote, 
-  Users, 
-  Sparkles, 
-  ChevronDown, 
-  ChevronUp, 
+import {
+  Building2,
+  Car,
+  ShieldCheck,
+  Banknote,
+  Users,
+  Sparkles,
+  ChevronDown,
+  ChevronUp,
   ArrowRight,
   CheckCircle2,
   Clock,
   Briefcase
 } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 export default function ListProperty() {
   const navigate = useNavigate();
-  
+  const { user, setShowAuthModal } = useAuth();
+
   // Earnings Calculator State
   const [assetType, setAssetType] = useState('shortlet'); // 'shortlet' | 'car'
   const [estimatedNights, setEstimatedNights] = useState(15);
@@ -35,7 +37,11 @@ export default function ListProperty() {
   };
 
   const handleStartListing = () => {
-    // Route seamlessly to Landlord / Host Dashboard
+    if (!user) { setShowAuthModal(true); return; }
+    // A plain guest has no verified host application yet — send them through the real
+    // NIN/address verification flow instead of straight into the Landlord Dashboard,
+    // which used to happen here regardless of actual role.
+    if (user.role?.toUpperCase() === 'USER') { navigate('/become-host'); return; }
     navigate('/dashboard/landlord');
   };
 
