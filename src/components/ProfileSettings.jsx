@@ -22,7 +22,7 @@ function FieldMessage({ error, success }) {
 }
 
 export default function ProfileSettings() {
-  const { user, logout, refreshUser } = useAuth();
+  const { user, logout, refreshUser, syncUser } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
 
@@ -59,8 +59,9 @@ export default function ProfileSettings() {
     setProfileSuccess('');
     setIsUpdatingProfile(true);
     try {
-      await updateMyProfileApi(profileForm);
-      await refreshUser();
+      const res = await updateMyProfileApi(profileForm);
+      const freshUser = res?.data?.user || res?.user;
+      if (!syncUser(freshUser)) await refreshUser();
       setProfileSuccess('Profile updated successfully.');
     } catch {
       setProfileError('Could not update your profile right now. Please try again.');
@@ -89,12 +90,18 @@ export default function ProfileSettings() {
     setAvatarPreview(localPreview);
     setIsUploadingAvatar(true);
     try {
-      await updateMyProfilePictureApi(file);
-      await refreshUser();
+      const res = await updateMyProfilePictureApi(file);
+      const freshUser = res?.data?.user || res?.user;
+      if (!syncUser(freshUser)) await refreshUser();
       setAvatarSuccess('Profile picture updated.');
+      // Now that user.profilePicture is confirmed in sync, drop the local blob preview
+      // so this and the Navbar avatar both render from the same real source.
+      URL.revokeObjectURL(localPreview);
+      setAvatarPreview(null);
     } catch (err) {
       console.error('[ProfileSettings] Picture upload failed:', err?.response?.status, err?.response?.data, err?.message);
       setAvatarError('Could not upload your picture right now. Please try again.');
+      URL.revokeObjectURL(localPreview);
       setAvatarPreview(null);
     } finally {
       setIsUploadingAvatar(false);
@@ -107,8 +114,9 @@ export default function ProfileSettings() {
     setAvatarSuccess('');
     setIsUploadingAvatar(true);
     try {
-      await removeMyProfilePictureApi();
-      await refreshUser();
+      const res = await removeMyProfilePictureApi();
+      const freshUser = res?.data?.user || res?.user;
+      if (!syncUser(freshUser)) await refreshUser();
       setAvatarPreview(null);
       setAvatarSuccess('Profile picture removed.');
     } catch {

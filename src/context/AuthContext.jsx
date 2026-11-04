@@ -14,6 +14,15 @@ export function AuthProvider({ children }) {
 
   const navigate = useNavigate();
 
+  // Pushes an already-known-fresh user (e.g. straight from a PATCH /users/me response)
+  // into state and localStorage immediately, without waiting on a second round trip.
+  const syncUser = (freshUser) => {
+    if (!freshUser) return null;
+    localStorage.setItem('rentals_user', JSON.stringify(freshUser));
+    setUser(freshUser);
+    return freshUser;
+  };
+
   // The cached user (and their role) is only ever written at login/register time.
   // If a host application gets approved mid-session, or in a prior session that was
   // never logged out of, the cached role goes stale — this re-fetches the real one
@@ -22,11 +31,7 @@ export function AuthProvider({ children }) {
     try {
       const res = await getMyProfileApi();
       const freshUser = res?.data?.user || res?.user;
-      if (freshUser) {
-        localStorage.setItem('rentals_user', JSON.stringify(freshUser));
-        setUser(freshUser);
-      }
-      return freshUser || null;
+      return syncUser(freshUser);
     } catch {
       return null;
     }
@@ -126,6 +131,7 @@ export function AuthProvider({ children }) {
       logout,
       redirectUserByRole,
       refreshUser,
+      syncUser,
       showAuthModal,      // EXPOSED TO APP
       setShowAuthModal    // EXPOSED TO APP
     }}>
