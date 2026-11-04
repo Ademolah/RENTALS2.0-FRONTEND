@@ -95,7 +95,10 @@ export default function ProfileSettings() {
       setAvatarSuccess('Profile picture updated.');
     } catch (err) {
       console.error('[ProfileSettings] Picture upload failed:', err?.response?.status, err?.response?.data, err?.message);
-      setAvatarError('Could not upload your picture right now. Please try again.');
+      // TEMPORARY: surfacing the raw server error on-screen to diagnose the live 500 without
+      // needing DevTools. Revert to a plain friendly message once the real cause is fixed.
+      const detail = err?.response ? `[${err.response.status}] ${JSON.stringify(err.response.data)}` : (err?.message || 'Unknown error');
+      setAvatarError(`Could not upload your picture right now. (${detail})`);
       setAvatarPreview(null);
     } finally {
       setIsUploadingAvatar(false);
