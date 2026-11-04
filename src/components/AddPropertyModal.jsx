@@ -55,6 +55,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   
   // Media State
   const [amenities, setAmenities] = useState([]);
+  const [customInput, setCustomInput] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [previewUrls, setPreviewUrls] = useState([]);
   const [selectedVideo, setSelectedVideo] = useState(null);
@@ -142,6 +143,28 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
         : [...prev, amenity]
     );
   };
+
+
+  const handleAddCustom = (e) => {
+    if (e.type === 'keydown' && e.key !== 'Enter') return;
+    e.preventDefault(); 
+
+    if (!customInput.trim()) return;
+
+    const newItems = customInput
+      .split(',')
+      .map(item => item.trim())
+      .filter(item => item.length > 0 && !amenities.includes(item));
+
+    if (newItems.length > 0) {
+      setAmenities(prev => [...prev, ...newItems]);
+    }
+    
+    setCustomInput('');
+  };
+
+  const customSelectedAmenities = amenities.filter(a => !AVAILABLE_AMENITIES.includes(a));
+  const allDisplayAmenities = [...AVAILABLE_AMENITIES, ...customSelectedAmenities];
 
   const netEarnings = Math.round(pricePerNight * 0.95);
 
@@ -409,12 +432,13 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                   <h3 className="text-xl font-bold text-gray-900 tracking-tight">Premium Amenities</h3>
                 </div>
                 
-                <div className="flex flex-wrap gap-3">
-                  {AVAILABLE_AMENITIES.map(amenity => {
+                <div className="flex flex-wrap gap-3 mb-6">
+                  {allDisplayAmenities.map(amenity => {
                     const isSelected = amenities.includes(amenity);
                     return (
                       <button
-                        key={amenity} type="button"
+                        key={amenity} 
+                        type="button"
                         onClick={() => toggleAmenity(amenity)}
                         className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all duration-200 border ${
                           isSelected 
@@ -426,6 +450,29 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                       </button>
                     )
                   })}
+                </div>
+
+                <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Add Other Amenities
+                  </label>
+                  <div className="flex gap-3">
+                    <input 
+                      type="text" 
+                      value={customInput}
+                      onChange={(e) => setCustomInput(e.target.value)}
+                      onKeyDown={handleAddCustom}
+                      placeholder="e.g. Helipad, Wine Cellar, Private Chef (comma separated)"
+                      className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900 focus:border-transparent outline-none bg-white text-sm"
+                    />
+                    <button 
+                      type="button"
+                      onClick={handleAddCustom}
+                      className="px-6 py-2.5 bg-gray-900 text-white text-sm font-semibold rounded-lg hover:bg-gray-800 transition-colors whitespace-nowrap"
+                    >
+                      Add
+                    </button>
+                  </div>
                 </div>
               </section>
 
