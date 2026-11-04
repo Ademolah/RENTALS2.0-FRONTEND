@@ -100,15 +100,6 @@ export default function ListProperty() {
                   <span>Start Hosting Now</span>
                   <ArrowRight className="w-5 h-5" />
                 </button>
-
-                <div className="flex items-center space-x-3 text-xs font-semibold text-gray-500 py-2">
-                  <div className="flex -space-x-2">
-                    <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=100&q=80" alt="Host" />
-                    <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=100&q=80" alt="Host" />
-                    <img className="w-8 h-8 rounded-full border-2 border-white object-cover" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=100&q=80" alt="Host" />
-                  </div>
-                  <span>Over 2,400+ Active Hosts</span>
-                </div>
               </div>
             </div>
 
