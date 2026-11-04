@@ -93,7 +93,8 @@ export default function ProfileSettings() {
       await updateMyProfilePictureApi(file);
       await refreshUser();
       setAvatarSuccess('Profile picture updated.');
-    } catch {
+    } catch (err) {
+      console.error('[ProfileSettings] Picture upload failed:', err?.response?.status, err?.response?.data, err?.message);
       setAvatarError('Could not upload your picture right now. Please try again.');
       setAvatarPreview(null);
     } finally {
@@ -145,6 +146,7 @@ export default function ProfileSettings() {
       setPasswordSuccess('Password updated successfully.');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
     } catch (err) {
+      console.error('[ProfileSettings] Password change failed:', err?.response?.status, err?.response?.data, err?.message);
       const status = err.response?.status;
       if (status === 400 || status === 401) {
         setPasswordError('Your current password is incorrect.');
