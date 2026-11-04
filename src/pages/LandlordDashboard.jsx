@@ -2,34 +2,28 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Building, Car, Hotel, Crown, Plus, ShieldCheck,
-  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp,
-  User, Phone, AlertCircle, Trash2
+  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp
 } from 'lucide-react';
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
 import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
-import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel'; 
+import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel';
 import { getLandlordVipEstablishments, confirmVipArrival } from '../api/vip';
-import { getMyProfileApi, updateMyProfileApi } from '../api/user';
-import { useAuth } from '../context/AuthContext';
 
 import BankSetupModal from '../components/BankSetupModal';
 import AddPropertyModal from '../components/AddPropertyModal';
 import AddCarModal from '../components/AddCarModal';
 import CreateHotelModal from '../components/CreateHotelModal';
 import AddVipModal from '../components/AddVipModal';
-import EditVipModal from '../components/EditVipModal'; 
+import EditVipModal from '../components/EditVipModal';
 import EditCarModal from '../components/EditCarModal';
 import EditPropertyModal from '../components/EditPropertyModal';
 import EditHotelModal from '../components/EditHotelModal';
+import ProfileSettings from '../components/ProfileSettings';
 
 export default function LandlordDashboard() {
-  const { logout } = useAuth();
   const [searchParams] = useSearchParams();
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'ACTION_FEED');
-  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -54,21 +48,7 @@ export default function LandlordDashboard() {
 
   useEffect(() => {
     fetchPortfolioData();
-    getMyProfileApi().then(res => {
-      const u = res?.data?.user;
-      if (u) setProfileForm({ firstName: u.firstName || '', lastName: u.lastName || '', phoneNumber: u.phoneNumber || '' });
-    }).catch(() => {});
   }, []);
-
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setIsUpdatingProfile(true);
-    try {
-      await updateMyProfileApi(profileForm);
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
 
   const fetchPortfolioData = async () => {
     setIsLoading(true);
@@ -572,46 +552,7 @@ export default function LandlordDashboard() {
             <p className="text-gray-500 mt-3 max-w-md mx-auto leading-relaxed">Your portfolio is currently empty. List a new property, vehicle, or VIP service to begin accepting premium reservations.</p>
           </div>
         ) : activeTab === 'SETTINGS' ? (
-          <div className="max-w-2xl animate-in fade-in duration-300">
-            <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-6">
-              <h2 className="text-2xl font-black text-gray-900 mb-6">Profile Settings</h2>
-              <form onSubmit={handleProfileUpdate} className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">First Name</label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="text" value={profileForm.firstName} onChange={(e) => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Last Name</label>
-                    <div className="relative">
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="text" value={profileForm.lastName} onChange={(e) => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                    </div>
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Phone Number</label>
-                  <div className="relative">
-                    <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                    <input type="tel" value={profileForm.phoneNumber} onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                  </div>
-                </div>
-                <button type="submit" disabled={isUpdatingProfile} className="mt-4 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70">
-                  {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Save Changes'}
-                </button>
-              </form>
-            </div>
-            <div className="bg-red-50/50 rounded-3xl border border-red-100 p-8 shadow-sm">
-              <h2 className="text-lg font-black text-red-900 mb-2 flex items-center"><AlertCircle className="w-5 h-5 mr-2"/> Danger Zone</h2>
-              <p className="text-sm font-medium text-red-700/80 mb-6">Permanently delete your account and all associated data. This action is irreversible.</p>
-              <button onClick={() => logout()} className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-red-600/20 flex items-center">
-                <Trash2 className="w-4 h-4 mr-2" /> Delete My Account
-              </button>
-            </div>
-          </div>
+          <ProfileSettings />
         ) : null}
       </div>
 

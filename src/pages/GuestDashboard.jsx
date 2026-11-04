@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import {
   ShieldCheck,
   MapPin, Calendar, Clock, Loader2, CheckCircle,
   AlertCircle, Heart, Star,
-  User, Phone, Trash2, X, Bell
+  Trash2, X, Bell
 } from 'lucide-react';
 
 import { getMyPropertyBookings, cancelBookingApi } from '../api/reservation';
@@ -15,8 +15,9 @@ import { executePayout } from '../api/payouts';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../api/notifications';
 import { apiClient } from '../api/client';
 
-import { getMyFavoritesApi, toggleFavoriteApi, getMyProfileApi, updateMyProfileApi, deleteMyAccountApi } from '../api/user';
+import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
 import HostUpgradeModal from '../components/HostUpgradeModal';
+import ProfileSettings from '../components/ProfileSettings';
 import { useAuth } from '../context/AuthContext';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
@@ -383,8 +384,7 @@ const TRIP_FILTERS = [
 
 // --- MAIN DASHBOARD COMPONENT ---
 export default function GuestDashboard() {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
+  const { user } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const [activeTab, setActiveTab] = useState(() => searchParams.get('tab') || 'ALL');
@@ -408,11 +408,6 @@ export default function GuestDashboard() {
   const [clearing, setClearing] = useState(false);
   const isHost = String(user?.role || '').toUpperCase() === 'LANDLORD';
   
-  const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '', phoneNumber: '' });
-  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
-
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false);
@@ -421,12 +416,11 @@ export default function GuestDashboard() {
     const fetchDashboardData = async () => {
       setLoading(true);
       try {
-        const [propertyRes, carRes, hotelRes, favRes, profileRes] = await Promise.allSettled([
+        const [propertyRes, carRes, hotelRes, favRes] = await Promise.allSettled([
           getMyPropertyBookings(),
           getMyCarBookings(),
           getMyHotelBookings(),
-          getMyFavoritesApi(),
-          getMyProfileApi()
+          getMyFavoritesApi()
         ]);
 
         let unifiedBookings = [];
@@ -462,14 +456,6 @@ export default function GuestDashboard() {
         if (favRes.status === 'fulfilled') {
           const favs = favRes.value.data?.favorites || favRes.value.favorites || [];
           setFavorites(favs);
-        }
-
-        if (profileRes.status === 'fulfilled' && profileRes.value.data?.user) {
-          setProfileForm({
-            firstName: profileRes.value.data.user.firstName || '',
-            lastName: profileRes.value.data.user.lastName || '',
-            phoneNumber: profileRes.value.data.user.phoneNumber || ''
-          });
         }
 
         const uniqueBookings = Array.from(new Map(unifiedBookings.map(item => [item._id, item])).values());
@@ -513,37 +499,6 @@ export default function GuestDashboard() {
     setFavorites(prev => prev.filter(p => (p._id || p.id) !== propertyId));
     setToastMessage("Property removed from Saved Stays.");
     setTimeout(() => setToastMessage(''), 2500);
-  };
-
-  const handleProfileUpdate = async (e) => {
-    e.preventDefault();
-    setIsUpdatingProfile(true);
-    try {
-      await updateMyProfileApi(profileForm);
-      setToastMessage("Profile updated successfully.");
-      setTimeout(() => setToastMessage(''), 3000);
-    } catch (error) {
-      console.error(error);
-      setToastMessage("Failed to update profile.");
-      setTimeout(() => setToastMessage(''), 3000);
-    } finally {
-      setIsUpdatingProfile(false);
-    }
-  };
-
-  const handleDeleteAccount = async () => {
-    setIsDeletingAccount(true);
-    try {
-      await deleteMyAccountApi();
-      logout(); 
-      navigate('/'); 
-    } catch (error) {
-      console.error(error);
-      setToastMessage("Failed to delete account. Please ensure all active bookings are closed.");
-      setTimeout(() => setToastMessage(''), 4000);
-      setIsDeletingAccount(false);
-      setIsDeleteModalOpen(false);
-    }
   };
 
   useEffect(() => {
@@ -746,48 +701,7 @@ export default function GuestDashboard() {
               )}
             </div>
           ) : activeTab === 'SETTINGS' ? (
-            <div className="max-w-2xl animate-in fade-in duration-300">
-              <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm mb-6">
-                <h2 className="text-2xl font-black text-gray-900 mb-6">Profile Settings</h2>
-                <form onSubmit={handleProfileUpdate} className="space-y-5">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">First Name</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input type="text" value={profileForm.firstName} onChange={(e) => setProfileForm({...profileForm, firstName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Last Name</label>
-                      <div className="relative">
-                        <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <input type="text" value={profileForm.lastName} onChange={(e) => setProfileForm({...profileForm, lastName: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                      </div>
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Phone Number</label>
-                    <div className="relative">
-                      <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                      <input type="tel" value={profileForm.phoneNumber} onChange={(e) => setProfileForm({...profileForm, phoneNumber: e.target.value})} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-                    </div>
-                  </div>
-                  <button type="submit" disabled={isUpdatingProfile} className="mt-4 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70">
-                    {isUpdatingProfile ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Save Changes'}
-                  </button>
-                </form>
-              </div>
-
-              {/* Danger Zone */}
-              <div className="bg-red-50/50 rounded-3xl border border-red-100 p-8 shadow-sm">
-                <h2 className="text-lg font-black text-red-900 mb-2 flex items-center"><AlertCircle className="w-5 h-5 mr-2"/> Danger Zone</h2>
-                <p className="text-sm font-medium text-red-700/80 mb-6">Permanently delete your account and all associated data. This action is irreversible.</p>
-                <button onClick={() => setIsDeleteModalOpen(true)} className="px-6 py-3.5 bg-red-600 hover:bg-red-700 text-white rounded-xl font-bold text-sm transition-all shadow-md shadow-red-600/20 flex items-center">
-                  <Trash2 className="w-4 h-4 mr-2" /> Delete My Account
-                </button>
-              </div>
-            </div>
+            <ProfileSettings />
           ) : activeTab === 'FAVORITES' ? (
             favorites.length === 0 ? (
               <div className="bg-white rounded-3xl border border-gray-100 p-16 text-center shadow-sm">
@@ -942,28 +856,6 @@ export default function GuestDashboard() {
         </div>
       )}
 
-      {isDeleteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={() => setIsDeleteModalOpen(false)}></div>
-          <div className="bg-white rounded-3xl p-6 md:p-8 max-w-md w-full relative z-10 animate-in zoom-in-95 duration-200 shadow-2xl">
-            <div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-6">
-              <AlertCircle className="w-6 h-6" />
-            </div>
-            <h3 className="text-2xl font-black text-gray-900 mb-2">Delete Account?</h3>
-            <p className="text-gray-500 font-medium text-sm leading-relaxed mb-6">
-              This action is permanent and cannot be undone. All your personal data, saved favorites, and history will be wiped. 
-            </p>
-            <div className="flex gap-3">
-              <button onClick={() => setIsDeleteModalOpen(false)} className="flex-1 py-4 font-bold text-sm text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors">
-                Cancel
-              </button>
-              <button onClick={handleDeleteAccount} disabled={isDeletingAccount} className="flex-1 py-4 font-bold text-sm text-white bg-red-600 hover:bg-red-700 rounded-xl transition-all shadow-md shadow-red-600/20 flex items-center justify-center">
-                {isDeletingAccount ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Yes, Delete It'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
     </div>
   );

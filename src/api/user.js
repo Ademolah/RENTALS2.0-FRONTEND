@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { apiClient } from './client';
 
 export const toggleFavoriteApi = async (propertyId) => {
@@ -25,5 +26,29 @@ export const updateMyProfileApi = async (profileData) => {
 
 export const deleteMyAccountApi = async () => {
   const response = await apiClient.delete('/users/me');
+  return response.data;
+};
+
+// Uses a raw axios call (not apiClient) so the default JSON Content-Type header
+// doesn't interfere with the multipart boundary axios sets for FormData —
+// same pattern as createProperty/updateProperty in api/properties.js.
+export const updateMyProfilePictureApi = async (file) => {
+  const token = localStorage.getItem('rentals_token');
+  const formData = new FormData();
+  formData.append('profilePicture', file);
+
+  const response = await axios.patch(`${apiClient.defaults.baseURL}/users/me`, formData, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  return response.data;
+};
+
+export const removeMyProfilePictureApi = async () => {
+  const response = await apiClient.patch('/users/me', { profilePicture: '' });
+  return response.data;
+};
+
+export const changeMyPasswordApi = async ({ currentPassword, newPassword }) => {
+  const response = await apiClient.patch('/users/me/password', { currentPassword, newPassword });
   return response.data;
 };
