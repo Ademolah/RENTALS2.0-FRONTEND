@@ -1,14 +1,15 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  User, Phone, Mail, Lock, Eye, EyeOff, Camera, Trash2,
-  AlertCircle, Loader2, CheckCircle, X
+  User, Phone, Mail, Lock, Camera, Trash2,
+  AlertCircle, Loader2, CheckCircle, CheckCircle2, X
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
   getMyProfileApi, updateMyProfileApi, deleteMyAccountApi,
-  updateMyProfilePictureApi, removeMyProfilePictureApi, changeMyPasswordApi
+  updateMyProfilePictureApi, removeMyProfilePictureApi
 } from '../api/user';
+import { forgotPasswordApi } from '../api/auth';
 
 function FieldMessage({ error, success }) {
   if (!error && !success) return null;
@@ -35,11 +36,9 @@ export default function ProfileSettings() {
   const [avatarError, setAvatarError] = useState('');
   const [avatarSuccess, setAvatarSuccess] = useState('');
 
-  const [passwordForm, setPasswordForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' });
-  const [showPasswords, setShowPasswords] = useState(false);
-  const [isChangingPassword, setIsChangingPassword] = useState(false);
-  const [passwordError, setPasswordError] = useState('');
-  const [passwordSuccess, setPasswordSuccess] = useState('');
+  const [isSendingReset, setIsSendingReset] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+  const [resetError, setResetError] = useState('');
 
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
@@ -119,42 +118,16 @@ export default function ProfileSettings() {
     }
   };
 
-  const handlePasswordChange = async (e) => {
-    e.preventDefault();
-    setPasswordError('');
-    setPasswordSuccess('');
-
-    if (!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) {
-      setPasswordError('Please fill in all password fields.');
-      return;
-    }
-    if (passwordForm.newPassword.length < 8) {
-      setPasswordError('New password must be at least 8 characters.');
-      return;
-    }
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      setPasswordError('New passwords do not match.');
-      return;
-    }
-
-    setIsChangingPassword(true);
+  const handleSendResetLink = async () => {
+    setResetError('');
+    setIsSendingReset(true);
     try {
-      await changeMyPasswordApi({
-        currentPassword: passwordForm.currentPassword,
-        newPassword: passwordForm.newPassword
-      });
-      setPasswordSuccess('Password updated successfully.');
-      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    } catch (err) {
-      console.error('[ProfileSettings] Password change failed:', err?.response?.status, err?.response?.data, err?.message);
-      const status = err.response?.status;
-      if (status === 400 || status === 401) {
-        setPasswordError('Your current password is incorrect.');
-      } else {
-        setPasswordError('Could not update your password right now. Please try again later.');
-      }
+      await forgotPasswordApi(user.email);
+      setResetSent(true);
+    } catch {
+      setResetError('Could not send the reset link right now. Please try again.');
     } finally {
-      setIsChangingPassword(false);
+      setIsSendingReset(false);
     }
   };
 
@@ -173,7 +146,6 @@ export default function ProfileSettings() {
 
   const avatarSrc = avatarPreview || user?.profilePicture;
   const initials = `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
-  const passwordInputType = showPasswords ? 'text' : 'password';
 
   return (
     <div className="max-w-2xl animate-in fade-in duration-300 space-y-6">
@@ -266,48 +238,33 @@ export default function ProfileSettings() {
         </form>
       </div>
 
-      {/* Change Password */}
+      {/* Password */}
       <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
-        <div className="flex items-center justify-between mb-6">
-          <h2 className="text-2xl font-black text-gray-900">Change Password</h2>
-          <button
-            type="button"
-            onClick={() => setShowPasswords(s => !s)}
-            className="text-xs font-bold text-gray-400 hover:text-gray-700 flex items-center transition-colors"
-          >
-            {showPasswords ? <EyeOff className="w-3.5 h-3.5 mr-1.5" /> : <Eye className="w-3.5 h-3.5 mr-1.5" />}
-            {showPasswords ? 'Hide' : 'Show'}
-          </button>
-        </div>
-        <form onSubmit={handlePasswordChange} className="space-y-5">
-          <div>
-            <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Current Password</label>
-            <div className="relative">
-              <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type={passwordInputType} value={passwordForm.currentPassword} onChange={(e) => setPasswordForm({ ...passwordForm, currentPassword: e.target.value })} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-            </div>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">Password</h2>
+        {resetSent ? (
+          <div className="flex items-start gap-3 bg-green-50 border border-green-100 text-green-800 rounded-xl p-4 mt-4">
+            <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" />
+            <p className="text-sm font-medium leading-relaxed">
+              Check your inbox at <span className="font-bold">{user?.email}</span> for a secure link to reset your password.
+            </p>
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type={passwordInputType} value={passwordForm.newPassword} onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Confirm New Password</label>
-              <div className="relative">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input type={passwordInputType} value={passwordForm.confirmPassword} onChange={(e) => setPasswordForm({ ...passwordForm, confirmPassword: e.target.value })} className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium" />
-              </div>
-            </div>
-          </div>
-          <button type="submit" disabled={isChangingPassword} className="mt-4 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70">
-            {isChangingPassword ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Update Password'}
-          </button>
-          <FieldMessage error={passwordError} success={passwordSuccess} />
-        </form>
+        ) : (
+          <>
+            <p className="text-sm text-gray-500 font-medium mb-5">
+              To change your password, we'll email you a secure reset link.
+            </p>
+            <button
+              type="button"
+              onClick={handleSendResetLink}
+              disabled={isSendingReset}
+              className="flex items-center justify-center px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md disabled:opacity-70"
+            >
+              {isSendingReset ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Lock className="w-4 h-4 mr-2" />}
+              Send Reset Link
+            </button>
+            <FieldMessage error={resetError} />
+          </>
+        )}
       </div>
 
       {/* Danger Zone */}

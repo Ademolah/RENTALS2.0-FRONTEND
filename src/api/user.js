@@ -47,8 +47,3 @@ export const removeMyProfilePictureApi = async () => {
   const response = await apiClient.patch('/users/me', { profilePicture: '' });
   return response.data;
 };
-
-export const changeMyPasswordApi = async ({ currentPassword, newPassword }) => {
-  const response = await apiClient.patch('/users/me/password', { currentPassword, newPassword });
-  return response.data;
-};
