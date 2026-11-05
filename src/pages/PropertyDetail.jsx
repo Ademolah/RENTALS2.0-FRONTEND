@@ -396,10 +396,10 @@ export default function PropertyDetail() {
                     </div>
                     <div>
                       <h4 className="text-sm font-bold text-amber-900 tracking-tight">
-                        Refundable Caution Fee: ₦{property.cautionFee.toLocaleString()}
+                        Caution Fee: ₦{property.cautionFee.toLocaleString()}
                       </h4>
                       <p className="text-sm text-amber-700/90 mt-1 leading-relaxed">
-                        This security fee is paid alongside the total fee is held to cover potential damages and is fully refunded to your original payment method following a successful checkout inspection.
+                        This caution fee is paid alongside the total fee is held to cover potential damages and is fully refunded to your original payment method following a successful checkout inspection.
                       </p>
                     </div>
                   </div>
