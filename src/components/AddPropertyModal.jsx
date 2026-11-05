@@ -42,7 +42,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   // Schema-Aligned Form State
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [category, setCategory] = useState('APARTMENT');
+  const [category, setCategory] = useState('SHORTLET');
   const [pricePerNight, setPricePerNight] = useState(150000);
   const [maxGuests, setMaxGuests] = useState(2);
   const [bedrooms, setBedrooms] = useState(1);
@@ -54,6 +54,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const [stateName, setStateName] = useState('');
   
   // Media State
+  const [cautionFee, setCautionFee] = useState(50000);
   const [amenities, setAmenities] = useState([]);
   const [customInput, setCustomInput] = useState('');
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -208,6 +209,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
       formData.append('maxGuests', maxGuests);
       formData.append('bedrooms', bedrooms);
       formData.append('bathrooms', bathrooms);
+      formData.append('cautionFee', cautionFee);
       
       formData.append('address', JSON.stringify({
         street,
@@ -326,15 +328,12 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">Category</label>
-                      <select 
-                        value={category} onChange={(e) => setCategory(e.target.value)}
-                        className="w-full px-5 py-4 rounded-xl border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none text-sm transition-all bg-gray-50/30 focus:bg-white cursor-pointer"
-                      >
-                        <option value="APARTMENT">Luxury Apartment</option>
-                        <option value="SHORTLET">Premium Shortlet</option>
-                        <option value="VACATION">Vacation Villa</option>
-                        <option value="HOTEL">Boutique Hotel Suite</option>
-                      </select>
+                      <input 
+                        type="text" 
+                        value="Premium Shortlet" 
+                        disabled
+                        className="w-full px-5 py-4 rounded-xl border border-gray-200 bg-gray-100 text-gray-500 outline-none text-sm cursor-not-allowed font-medium"
+                      />
                     </div>
 
                     <div>
@@ -586,7 +585,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
               <section className="pb-10">
                 <h3 className="text-xl font-bold text-gray-900 tracking-tight mb-6">Pricing Configuration</h3>
                 
-                <div className="p-8 rounded-2xl border border-gray-200 bg-gray-50/50">
+                <div className="p-8 rounded-2xl border border-gray-200 bg-gray-50/50 mb-8">
                   <div className="flex justify-between items-end mb-8">
                     <div>
                       <label className="block text-xs font-bold uppercase tracking-wider text-gray-500 mb-1">Base Nightly Rate</label>
@@ -610,7 +609,28 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
                     <span className="font-semibold text-gray-700 text-lg">Net Payout: <span className="text-emerald-600 font-bold ml-1">₦{netEarnings.toLocaleString()}</span></span>
                   </div>
                 </div>
-              </section>
+
+                {/* 💡 THE CAUTION FEE RENDER BLOCK (Always visible now) */}
+                <div className="p-8 rounded-2xl border border-amber-200 bg-amber-50/30">
+                  <label className="block text-xs font-bold uppercase tracking-wider text-amber-900 mb-1">
+                    Refundable Caution Fee
+                  </label>
+                  <p className="text-sm text-amber-700/90 mb-6 leading-relaxed">
+                    This security deposit is held to cover potential damages and is fully refunded to the guest after a clean checkout.
+                  </p>
+                  
+                  <div className="relative max-w-sm">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 font-bold">₦</span>
+                    <input 
+                      type="number" 
+                      min="0" step="5000"
+                      value={cautionFee}
+                      onChange={(e) => setCautionFee(Number(e.target.value))}
+                      className="w-full pl-10 pr-5 py-4 rounded-xl border border-amber-200 focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none text-sm transition-all bg-white font-medium"
+                    />
+                  </div>
+                </div>
+              </section>     
 
             </form>
           </div>

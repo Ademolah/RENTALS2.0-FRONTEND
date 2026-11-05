@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { 
   Share, Heart, ArrowLeft, Loader2, 
   ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, PlayCircle, Video 
+  X, Star, MessageSquare, AlertCircle, Video 
 } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -79,6 +79,7 @@ export default function PropertyDetail() {
           bedrooms: dbProp.bedrooms,
           bathrooms: dbProp.bathrooms,
           category: dbProp.category,
+          cautionFee: dbProp.cautionFee || 0,
           amenities: dbProp.amenities || [],
           video: dbProp.video || null, // 💡 NEW: Extract Video URL
           images: dbProp.images?.length > 0 
@@ -387,6 +388,22 @@ export default function PropertyDetail() {
                 )}
               </div>
             )}
+
+            {property.category === 'SHORTLET' && property.cautionFee > 0 && (
+                  <div className="mt-8 p-5 bg-amber-50/50 border border-amber-100 rounded-2xl flex items-start space-x-4">
+                    <div className="bg-amber-100 p-2 rounded-full shrink-0">
+                      <AlertCircle className="w-5 h-5 text-amber-700" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm font-bold text-amber-900 tracking-tight">
+                        Refundable Caution Fee: ₦{property.cautionFee.toLocaleString()}
+                      </h4>
+                      <p className="text-sm text-amber-700/90 mt-1 leading-relaxed">
+                        This security fee is paid alongside the total fee is held to cover potential damages and is fully refunded to your original payment method following a successful checkout inspection.
+                      </p>
+                    </div>
+                  </div>
+              )}
 
             {/* 💡 NEW: Cinematic Video Tour Section */}
             {property.video && (
