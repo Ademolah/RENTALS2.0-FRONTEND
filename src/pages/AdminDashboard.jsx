@@ -847,7 +847,7 @@ export default function AdminDashboard() {
               <div>
                 <h2 className="text-lg md:text-xl font-extrabold text-gray-900">Review Listing Quality</h2>
                 <p className="text-[10px] md:text-xs text-gray-500 font-medium mt-1">
-                  {selectedListing.make ? `${selectedListing.make} ${selectedListing.model}` : selectedListing.title} • {selectedListing.make ? 'CAR' : selectedListing.category}
+                  {selectedListing.make ? `${selectedListing.make} ${selectedListing.carModel || selectedListing.model}` : selectedListing.title} • {selectedListing.make ? 'CAR' : selectedListing.category}
                 </p>
               </div>
               <button onClick={() => setSelectedListing(null)} className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors">
@@ -856,15 +856,94 @@ export default function AdminDashboard() {
             </div>
 
             <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6">
-              <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                 <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Description</h3>
-                 <p className="text-sm text-gray-700 whitespace-pre-wrap">{selectedListing.description}</p>
-                 <div className="mt-4 flex space-x-4">
-                   <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
-                     Price: ₦{selectedListing.pricePerNight || selectedListing.pricePer12Hours || 0}
-                   </span>
+              
+              {/* 💡 SURGICALLY REPLACED: Expanded Details Block */}
+              <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 space-y-5">
+                 
+                 {/* 1. Description Section (Only properties have a description) */}
+                 {selectedListing.description && (
+                   <div>
+                     <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Description</h3>
+                     <p className="text-sm text-gray-700 whitespace-pre-wrap leading-relaxed">{selectedListing.description}</p>
+                   </div>
+                 )}
+
+                 {/* 2. Core Details & Pricing */}
+                 <div>
+                   <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Primary Details</h3>
+                   <div className="flex flex-wrap gap-2">
+                     {/* Price */}
+                     <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                       Price: ₦{(selectedListing.pricePerNight || selectedListing.pricePer12Hours || 0).toLocaleString()}
+                     </span>
+                     
+                     {/* Caution Fee (If present on Shortlet) */}
+                     {selectedListing.cautionFee > 0 && (
+                       <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg shadow-sm">
+                         Caution Fee: ₦{selectedListing.cautionFee.toLocaleString()}
+                       </span>
+                     )}
+
+                     {/* Location (Handles both property address and car location schemas) */}
+                     {(selectedListing.address || selectedListing.location) && (
+                       <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                         Location: {selectedListing.address?.city || selectedListing.location?.city}, {selectedListing.address?.state || selectedListing.location?.state}
+                       </span>
+                     )}
+
+                     {/* Car Specific Specs */}
+                     {selectedListing.make && (
+                       <>
+                         <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                           Year: {selectedListing.year}
+                         </span>
+                         <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                           Transmission: {selectedListing.transmission}
+                         </span>
+                       </>
+                     )}
+
+                     {/* Property Specific Specs */}
+                     {!selectedListing.make && (
+                       <>
+                         {selectedListing.bedrooms && (
+                           <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                             {selectedListing.bedrooms} Bed{selectedListing.bedrooms > 1 ? 's' : ''}
+                           </span>
+                         )}
+                         {selectedListing.bathrooms && (
+                           <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                             {selectedListing.bathrooms} Bath{selectedListing.bathrooms > 1 ? 's' : ''}
+                           </span>
+                         )}
+                         {selectedListing.maxGuests && (
+                           <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
+                             Max Guests: {selectedListing.maxGuests}
+                           </span>
+                         )}
+                       </>
+                     )}
+                   </div>
                  </div>
+
+                 {/* 3. Amenities or Car Features */}
+                 {(selectedListing.amenities?.length > 0 || selectedListing.features?.length > 0) && (
+                   <div>
+                     <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
+                       {selectedListing.make ? 'Included Features' : 'Amenities'}
+                     </h3>
+                     <div className="flex flex-wrap gap-2">
+                       {(selectedListing.amenities || selectedListing.features).map((item, idx) => (
+                         <span key={idx} className="text-[11px] font-medium text-gray-700 bg-gray-100 border border-gray-200 px-2.5 py-1 rounded-md">
+                           {item}
+                         </span>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+
               </div>
+              {/* 💡 END SURGICALLY REPLACED BLOCK */}
 
               {/* Media Gallery Grid */}
               <div>
