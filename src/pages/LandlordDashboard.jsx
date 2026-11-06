@@ -5,8 +5,8 @@ import {
   CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp
 } from 'lucide-react';
 
-import { getLandlordPropertyBookings, confirmPropertyCheckIn } from '../api/properties';
-import { getLandlordCarBookings, confirmCarHandover } from '../api/car';
+import { getLandlordPropertyBookings, confirmPropertyCheckIn, getLandlordProperties } from '../api/properties';
+import { getLandlordCarBookings, confirmCarHandover, getLandlordCars } from '../api/car';
 import { getLandlordHotelBookings, confirmHotelCheckIn, getLandlordHotels } from '../api/hotel';
 import { getLandlordVipEstablishments, confirmVipArrival } from '../api/vip';
 import { HostService } from '../api/host';
@@ -59,13 +59,15 @@ export default function LandlordDashboard() {
     setIsLoading(true);
     try {
       const [
-        propResponse, carResponse, hotelResponse, rawHotelsResponse, rawVIPsResponse
+        propResponse, carResponse, hotelResponse, rawHotelsResponse, rawVIPsResponse, rawPropsResponse, rawCarsResponse
       ] = await Promise.all([
         getLandlordPropertyBookings().catch(() => ({ data: { bookings: [] } })), 
         getLandlordCarBookings().catch(() => ({ data: { bookings: [] } })),
         getLandlordHotelBookings().catch(() => ({ data: { bookings: [] } })),
         getLandlordHotels().catch(() => ({ data: { hotels: [] } })),
-        getLandlordVipEstablishments().catch(() => ({ data: { establishments: [] } }))
+        getLandlordVipEstablishments().catch(() => ({ data: { establishments: [] } })),
+        getLandlordProperties().catch(() => ({ data: { properties: [] } })), // 💡 NEW
+        getLandlordCars().catch(() => ({ data: { cars: [] } }))
       ]);
 
       const propData = propResponse?.data?.bookings || [];
@@ -74,6 +76,12 @@ export default function LandlordDashboard() {
       
       const extractedHotels = rawHotelsResponse?.data?.data?.hotels || rawHotelsResponse?.data?.hotels;
       const rawHotels = Array.isArray(extractedHotels) ? extractedHotels : [];
+
+      const extractedProps = rawPropsResponse?.data?.data?.properties || rawPropsResponse?.data?.properties;
+      const rawProperties = Array.isArray(extractedProps) ? extractedProps : [];
+
+      const extractedCars = rawCarsResponse?.data?.data?.cars || rawCarsResponse?.data?.cars;
+      const rawCars = Array.isArray(extractedCars) ? extractedCars : [];
 
       const extractedVIPs = rawVIPsResponse?.data?.data?.establishments || rawVIPsResponse?.data?.establishments;
       const rawVIPs = Array.isArray(extractedVIPs) ? extractedVIPs : [];
@@ -192,7 +200,29 @@ export default function LandlordDashboard() {
         createdAt: new Date(v.createdAt || Date.now())
       }));
 
-      const allCombined = [...normalizedProps, ...normalizedHotels, ...normalizedCars, ...normalizedRawHotels, ...normalizedRawVIPs];
+      // 💡 NEW: Normalize Raw Shortlets
+      const normalizedRawProps = rawProperties.map(p => ({
+        _id: p._id, assetId: p._id, type: 'SHORTLET', isRawAsset: true, payoutAmount: 0, dates: 'No active bookings',
+        guest: { firstName: 'No', lastName: 'Guest Yet', phone: 'N/A' }, 
+        asset: { title: p.title || 'Property', location: normalizeLocation(p.address), image: p.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80' },
+        createdAt: new Date(p.createdAt || Date.now())
+      }));
+
+      // 💡 NEW: Normalize Raw Cars
+      const normalizedRawCars = rawCars.map(c => ({
+        _id: c._id, assetId: c._id, type: 'CAR', isRawAsset: true, payoutAmount: 0, dates: 'No active bookings',
+        guest: { firstName: 'No', lastName: 'Client Yet', phone: 'N/A' }, 
+        asset: { 
+          title: `${c.make || 'Vehicle'} ${c.carModel || ''} ${c.year || ''}`.trim(), 
+          location: typeof c.location === 'object' && c.location !== null
+            ? [c.location.address, c.location.city, c.location.state].filter(Boolean).join(', ')
+            : typeof c.location === 'string' ? c.location : 'Platform Pickup',
+          image: c.images?.[0] || 'https://images.unsplash.com/photo-1503376760302-83f0453a4574?auto=format&fit=crop&w=800&q=80'
+        },
+        createdAt: new Date(c.createdAt || Date.now())
+      }));
+
+      const allCombined = [...normalizedProps, ...normalizedHotels, ...normalizedCars, ...normalizedRawHotels, ...normalizedRawVIPs, ...normalizedRawProps, ...normalizedRawCars];
       
       const uniqueBookings = Array.from(new Map(allCombined.map(item => [item._id, item])).values());
       const sorted = uniqueBookings.sort((a, b) => b.createdAt - a.createdAt);

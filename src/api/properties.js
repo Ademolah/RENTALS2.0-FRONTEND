@@ -66,3 +66,8 @@ export const logPropertyWhatsappIntent = async (intentData) => {
     headers: { Authorization: `Bearer ${token}` }
   });
 };
+
+export const getLandlordProperties = async () => {
+  const response = await apiClient.get('/properties/landlord/portfolio');
+  return response.data;
+};

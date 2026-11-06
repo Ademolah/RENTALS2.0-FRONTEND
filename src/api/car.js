@@ -55,3 +55,8 @@ export const logCarWhatsappIntent = async (intentData) => {
   const response = await apiClient.post(`/cars/whatsapp-intent`, intentData);
   return response.data;
 };
+
+export const getLandlordCars = async () => {
+  const response = await apiClient.get('/cars/landlord/fleet');
+  return response.data;
+};
