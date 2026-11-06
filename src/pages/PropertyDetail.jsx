@@ -364,6 +364,8 @@ export default function PropertyDetail() {
           </div>
 
           <div className="border-b border-gray-200 pb-10">
+            
+            {/* 💡 SURGICALLY INSERTED HOST HEADER (SAFE RENDER) */}
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
@@ -386,6 +388,17 @@ export default function PropertyDetail() {
               </div>
               
               
+            </div>
+            
+            {/* Property Specs */}
+            <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6 mt-6">
+              <span>{property.maxGuests || 2} guests</span>
+              {property.bedrooms && (
+                <><span>|</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
+              )}
+              {property.bathrooms && (
+                <><span>|</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
+              )}
             </div>
 
             {property.description && (
