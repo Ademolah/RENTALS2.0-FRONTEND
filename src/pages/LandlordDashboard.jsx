@@ -120,17 +120,10 @@ export default function LandlordDashboard() {
             phone: b.userId?.phoneNumber || 'N/A' 
           },
           asset: { 
-          title: b.carId ? `${b.carId.make} ${b.carId.carModel} ${b.carId.year}` : 'Vehicle', 
-          
-          // 💡 BULLETPROOF FIX: Handles object, plain string, or fallback
-          location: typeof b.carId?.location === 'object' && b.carId?.location !== null
-            ? [b.carId.location.address, b.carId.location.city, b.carId.location.state].filter(Boolean).join(', ')
-            : typeof b.carId?.location === 'string'
-              ? b.carId.location
-              : 'Platform Pickup',
-              
-          image: b.carId?.images?.[0] || 'https://images.unsplash.com/photo-1503376760302-83f0453a4574?auto=format&fit=crop&w=800&q=80'
-        },
+            title: b.propertyId?.title || 'Property',
+            location: normalizeLocation(b.propertyId?.address),
+            image: b.propertyId?.images?.[0] || 'https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=800&q=80'
+          },
           createdAt: new Date(b.createdAt)
         };
       });
@@ -437,7 +430,7 @@ export default function LandlordDashboard() {
                 <div key={booking._id} className="bg-white border border-gray-100 hover:border-gray-300 hover:shadow-xl transition-all p-6 relative group flex flex-col lg:flex-row gap-8 rounded-2xl overflow-hidden">
                   
                   <div className={`absolute top-4 left-4 backdrop-blur-sm text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-lg z-10 shadow-sm ${(isVip || isVipService) ? 'bg-amber-400 text-gray-900' : 'bg-gray-900/90 text-white'}`}>
-                    {isCar ? 'Vehicle' : isHotel ? 'Hotel Room' : isVipService ? 'VIP Service' : isVip ? 'VIP Reservation' : 'Property'}
+                    {isCar ? 'Vehicle' : isHotel ? 'Hotel Room' : isVipService ? 'VIP Service' : isVip ? 'VIP Reservation' : booking.type === 'SHORTLET' ? 'Shortlet' : 'Property'}
                   </div>
 
                   <div className="w-full lg:w-72 h-56 lg:h-auto relative overflow-hidden bg-gray-100 shrink-0 rounded-xl">
