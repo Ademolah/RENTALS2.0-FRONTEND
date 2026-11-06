@@ -74,7 +74,6 @@ export default function PropertyDetail() {
           id: dbProp._id,
           propertyId: dbProp.propertyId,
           title: dbProp.title,
-          hostedBy: dbProp.hostedBy || 'Rentals Africa',
           location: `${dbProp.address?.street}, ${dbProp.address?.city}`,
           address: dbProp.address,
           price: dbProp.pricePerNight,
@@ -85,7 +84,7 @@ export default function PropertyDetail() {
           category: dbProp.category,
           cautionFee: dbProp.cautionFee || 0,
           amenities: dbProp.amenities || [],
-          video: dbProp.video || null, // 💡 NEW: Extract Video URL
+          video: dbProp.video || null,
           images: dbProp.images?.length > 0 
             ? dbProp.images 
             : ["https://images.unsplash.com/photo-1522708323590-d24dbb6b0267?auto=format&fit=crop&w=1200&q=80"],
@@ -93,7 +92,9 @@ export default function PropertyDetail() {
           isAvailable: dbProp.isAvailable,
           bookedDates: dbProp.bookedDates || [],
           rating: dbProp.rating || 0,
-          numReviews: dbProp.numReviews || 0
+          numReviews: dbProp.numReviews || 0,
+          hostedBy: dbProp.hostedBy || 'Rentals Africa',          // 💡 Ensure this is passed
+          createdAt: dbProp.createdAt                             // 💡 Pass raw creation date
         });
 
         // 2. Fetch Reviews
@@ -366,20 +367,25 @@ export default function PropertyDetail() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Entire property hosted by {property.hostedBy}
+                  Entire property hosted by {property.hostedBy || 'Rentals'}
                 </h2>
                 <div className="flex items-center mt-1 space-x-2 text-sm text-gray-500 font-medium">
                   <Award className="w-4 h-4 text-brand-primary" />
-                  <span className="font-bold text-gray-900">{property.hostBadge}</span>
+                  <span className="font-bold text-gray-900">
+                    {(() => {
+                      const joinDate = property.createdAt ? new Date(property.createdAt) : new Date();
+                      const years = (new Date() - joinDate) / (1000 * 60 * 60 * 24 * 365);
+                      return years >= 1 ? 'Premium Host' : 'Superb Host';
+                    })()}
+                  </span>
                   <span>·</span>
-                  <span>Hosting since {property.hostJoinDate.getFullYear()}</span>
+                  <span>
+                    Hosting since {property.createdAt ? new Date(property.createdAt).getFullYear() : new Date().getFullYear()}
+                  </span>
                 </div>
               </div>
               
-              {/* Optional: Host Avatar (Uses initial if no image provided) */}
-              <div className="w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center text-xl font-bold uppercase shadow-sm">
-                {property.hostedBy.charAt(0)}
-              </div>
+              
             </div>
 
             {property.description && (
