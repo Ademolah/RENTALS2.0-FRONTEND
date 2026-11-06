@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { 
   Share, Heart, ArrowLeft, Loader2, 
   ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, AlertCircle, Video , Award
+  X, Star, MessageSquare, AlertCircle, Video , Award, Users, Bed, Bath
 } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -391,14 +391,27 @@ export default function PropertyDetail() {
             </div>
             
             {/* Property Specs */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6 mt-6">
-              <span>{property.maxGuests || 2} guests</span>
+            <div className="flex flex-wrap gap-x-6 gap-y-3 text-gray-700 font-medium mb-6 mt-6">
+              
+              <div className="flex items-center space-x-2">
+                <Users className="w-5 h-5 text-gray-400" />
+                <span>{property.maxGuests || 2} guests</span>
+              </div>
+              
               {property.bedrooms && (
-                <><span>|</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
+                <div className="flex items-center space-x-2">
+                  <Bed className="w-5 h-5 text-gray-400" />
+                  <span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span>
+                </div>
               )}
+              
               {property.bathrooms && (
-                <><span>|</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
+                <div className="flex items-center space-x-2">
+                  <Bath className="w-5 h-5 text-gray-400" />
+                  <span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span>
+                </div>
               )}
+              
             </div>
 
             {property.description && (
