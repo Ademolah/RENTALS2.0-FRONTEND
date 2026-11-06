@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { 
   Share, Heart, ArrowLeft, Loader2, 
   ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, AlertCircle, Video 
+  X, Star, MessageSquare, AlertCircle, Video , Award
 } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -66,11 +66,15 @@ export default function PropertyDetail() {
         // 1. Fetch Property
         const propResponse = await getPropertyById(id);
         const dbProp = propResponse?.data?.property || propResponse?.property || propResponse;
+        const hostJoinDate = dbProp.ownerId?.createdAt ? new Date(dbProp.ownerId.createdAt) : new Date();
+        const yearsOnPlatform = (new Date() - hostJoinDate) / (1000 * 60 * 60 * 24 * 365);
+        const hostBadge = yearsOnPlatform >= 1 ? 'Premium Host' : 'Superb Host';
         
         setProperty({
           id: dbProp._id,
           propertyId: dbProp.propertyId,
           title: dbProp.title,
+          hostedBy: dbProp.hostedBy || 'Rentals Africa',
           location: `${dbProp.address?.street}, ${dbProp.address?.city}`,
           address: dbProp.address,
           price: dbProp.pricePerNight,
@@ -359,17 +363,23 @@ export default function PropertyDetail() {
           </div>
 
           <div className="border-b border-gray-200 pb-10">
-            <h2 className="text-xl font-bold text-gray-900 mb-4">Entire property hosted by Rentals</h2>
-            
-            {/* 💡 UPDATED: Clean ASCII pipes instead of unicode dots */}
-            <div className="flex flex-wrap gap-x-4 gap-y-2 text-gray-600 font-medium mb-6">
-              <span>{property.maxGuests || 2} guests</span>
-              {property.bedrooms && (
-                <><span>|</span><span>{property.bedrooms} bedroom{property.bedrooms > 1 ? 's' : ''}</span></>
-              )}
-              {property.bathrooms && (
-                <><span>|</span><span>{property.bathrooms} bath{property.bathrooms > 1 ? 's' : ''}</span></>
-              )}
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">
+                  Entire property hosted by {property.hostedBy}
+                </h2>
+                <div className="flex items-center mt-1 space-x-2 text-sm text-gray-500 font-medium">
+                  <Award className="w-4 h-4 text-brand-primary" />
+                  <span className="font-bold text-gray-900">{property.hostBadge}</span>
+                  <span>·</span>
+                  <span>Hosting since {property.hostJoinDate.getFullYear()}</span>
+                </div>
+              </div>
+              
+              {/* Optional: Host Avatar (Uses initial if no image provided) */}
+              <div className="w-14 h-14 bg-gray-900 text-white rounded-full flex items-center justify-center text-xl font-bold uppercase shadow-sm">
+                {property.hostedBy.charAt(0)}
+              </div>
             </div>
 
             {property.description && (

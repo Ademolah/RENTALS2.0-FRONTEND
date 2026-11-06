@@ -47,7 +47,7 @@ export default function BecomeHost() {
   const [isRechecking, setIsRechecking] = useState(false);
 
   const [showForm, setShowForm] = useState(false);
-  const [formData, setFormData] = useState({ address: '', city: '', state: 'Lagos', nin: '' });
+  const [formData, setFormData] = useState({ hostDisplayName: '', address: '', city: '', state: 'Lagos', nin: '' });
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -93,6 +93,7 @@ export default function BecomeHost() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (formData.hostDisplayName.trim().length < 2) return setError('Enter your Host or Brand Name.');
     if (formData.address.trim().length < 5) return setError('Enter your home or office address.');
     if (formData.city.trim().length < 2) return setError('Enter your area, for example Lekki or Wuse.');
     if (!/^\d{11}$/.test(formData.nin)) return setError('Your NIN is the 11-digit number on your national ID.');
@@ -207,6 +208,17 @@ export default function BecomeHost() {
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Brand Name</label>
+                <div className="relative">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text" name="hostDisplayName" required value={formData.hostDisplayName} onChange={handleChange}
+                    placeholder="e.g. Oyinmax Luxury or John"
+                    className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all"
+                  />
+                </div>
+              </div>
               <div>
                 <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Address</label>
                 <div className="relative">
