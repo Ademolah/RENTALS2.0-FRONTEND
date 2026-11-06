@@ -369,7 +369,7 @@ export default function PropertyDetail() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h2 className="text-xl font-bold text-gray-900">
-                  Entire property hosted by {property.hostedBy || 'Rentals'}
+                  Hosted by {property.hostedBy || 'Rentals'}
                 </h2>
                 <div className="flex items-center mt-1 space-x-2 text-sm text-gray-500 font-medium">
                   <Award className="w-4 h-4 text-brand-primary" />
