@@ -252,7 +252,7 @@ export default function AddPropertyModal({ isOpen, onClose, onPropertyAdded }) {
   const resetForm = () => {
     setTitle('');
     setDescription('');
-    setCategory('APARTMENT');
+    setCategory('SHORTLET');
     setPricePerNight(150000);
     setMaxGuests(2);
     setBedrooms(1);
