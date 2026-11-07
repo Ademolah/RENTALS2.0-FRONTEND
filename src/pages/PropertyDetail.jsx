@@ -13,6 +13,7 @@ import { useAuth } from '../context/AuthContext';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import ImageGallery from '../components/ImageGallery';
 import useGoBack from '../utils/useGoBack';
+import SimilarProperties from '../components/SimilarProperties';
 
 export default function PropertyDetail() {
   const { id } = useParams();
@@ -120,13 +121,28 @@ export default function PropertyDetail() {
         const res = await getProperties(); 
         const allProps = res?.data?.properties || res?.properties || res?.data || [];
         
-        const similar = allProps.filter(p => 
+        // 1. STRICT FILTER: Only Shortlets, same city, exclude current property
+        const validShortlets = allProps.filter(p => 
           p._id !== property.id && 
-          p.address?.city === property.address?.city &&
-          p.category !== 'HOTEL' 
-        ).slice(0, 4); 
+          p.category === 'SHORTLET' && 
+          p.address?.city === property.address?.city
+        );
         
-        setSimilarProperties(similar);
+        // 2. SMART SORT: Rank by closest price match
+        const currentPrice = property.price || 0;
+        const sortedByPriceMatch = validShortlets.sort((a, b) => {
+          const priceA = a.pricePerNight || a.price || 0;
+          const priceB = b.pricePerNight || b.price || 0;
+          
+          // Calculate how far off each property's price is from the current one
+          const diffA = Math.abs(priceA - currentPrice);
+          const diffB = Math.abs(priceB - currentPrice);
+          
+          return diffA - diffB; // Closest prices bubble to the top
+        });
+        
+        // 3. Take the top 4 mathematically closest matches
+        setSimilarProperties(sortedByPriceMatch.slice(0, 4));
       } catch (err) {
         console.error("Failed to load similar properties", err);
       }
@@ -577,6 +593,7 @@ export default function PropertyDetail() {
         </div>
 
       </div>
+      <SimilarProperties properties={similarProperties} />
       <FloatingPriceTag />
 
     </main>

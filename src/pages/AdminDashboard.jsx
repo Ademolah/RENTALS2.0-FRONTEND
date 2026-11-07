@@ -452,7 +452,7 @@ export default function AdminDashboard() {
                    ) : (
                      conciergeDrafts.map((draft) => {
                        const isCar = !!draft.carId;
-                       const assetTitle = isCar ? `${draft.carId?.make} ${draft.carId?.model}` : draft.propertyId?.title;
+                       const assetTitle = isCar ? `${draft.carId?.make} ${draft.carId?.carModel}` : draft.propertyId?.title;
                        const guestName = draft.userId ? `${draft.userId.firstName || ''} ${draft.userId.lastName || ''}`.trim() : 'Unknown';
                        const refCode = draft.paystackReference; // Temporary holding the WA-XXXXXX code
                        const link = generatedLinks[draft._id];
