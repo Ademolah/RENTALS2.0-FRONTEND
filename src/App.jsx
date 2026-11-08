@@ -23,7 +23,7 @@ import About from './pages/About';
 import Terms from './pages/Terms';
 import Privacy from './pages/Privacy';
 import Sitemap from './pages/Sitemap';
-import ResetPassword from './pages/ResetPassword';
+import ResetPasswordModal from './components/ResetPasswordModal';
 import VipServiceDetails from './components/VipServiceDetails';
 import BookingDetail from './pages/BookingDetail';
 import BookingPass from './pages/BookingPass';
@@ -179,7 +179,7 @@ function App() {
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
             <Route path="/sitemap" element={<Sitemap />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/reset-password" element={<ResetPasswordModal />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </ErrorBoundary>

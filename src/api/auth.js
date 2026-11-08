@@ -5,8 +5,13 @@ export const forgotPasswordApi = async (email) => {
   return response.data;
 };
 
-export const resetPasswordApi = async (token, newPassword) => {
-  const response = await apiClient.post('/auth/reset-password', { token, newPassword });
+// 💡 SURGICAL FIX: Update the parameters to accept email, token, and newPassword
+export const resetPasswordApi = async (email, token, newPassword) => {
+  const response = await apiClient.post('/auth/reset-password', { 
+    email, 
+    token, 
+    newPassword 
+  });
   return response.data;
 };
 
