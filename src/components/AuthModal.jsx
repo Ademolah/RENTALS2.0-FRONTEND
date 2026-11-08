@@ -38,7 +38,8 @@ export default function AuthModal({ isOpen, onClose }) {
   const [registeredEmail, setRegisteredEmail] = useState('');
 
   const [formData, setFormData] = useState({
-    email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber:'', role: 'USER' 
+    // 💡 SURGICAL FIX: Removed "role" from state.
+    email: '', password: '', confirmPassword: '', firstName: '', lastName: '', phoneNumber:'' 
   });
 
   // ==========================================
@@ -222,56 +223,30 @@ export default function AuthModal({ isOpen, onClose }) {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          {/* ... The rest of your exact form continues here ... */}
+          {/* 💡 SURGICAL FIX: The "Account Type" UI block has been completely removed from here! */}
           {!isLogin && (
-            <>
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Account Type</label>
-                <div className="grid grid-cols-2 gap-2 p-1 bg-gray-50 rounded-xl border border-gray-100">
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'USER' })}
-                    className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                      formData.role === 'USER' ? 'bg-white shadow-sm text-gray-900 border border-gray-200' : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    Guest
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setFormData({ ...formData, role: 'LANDLORD' })}
-                    className={`py-2 text-xs font-bold rounded-lg transition-all ${
-                      formData.role === 'LANDLORD' ? 'bg-white shadow-sm text-gray-900 border border-gray-200' : 'text-gray-500 hover:text-gray-900'
-                    }`}
-                  >
-                    Landlord
-                  </button>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">First Name</label>
+                <input type="text" name="firstName" required value={formData.firstName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
+              </div>
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Last Name</label>
+                <input type="text" name="lastName" required value={formData.lastName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
+              </div>
+              
+              <div className="col-span-2">
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Phone Number</label>
+                <div className="flex">
+                  <select value={dialCode} onChange={handleDialCodeChange} className="px-2 py-3 bg-gray-50 border border-gray-200 rounded-l-xl border-r-0 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-bold text-gray-700 cursor-pointer transition-all">
+                    <option value="+234">🇳🇬 +234</option>
+                    <option value="+44">🇬🇧 +44</option>
+                    <option value="+1">🇺🇸 +1</option>
+                  </select>
+                  <input type="tel" required value={localPhone} onChange={handleLocalPhoneChange} placeholder="803 000 0000" className="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-r-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
                 </div>
               </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">First Name</label>
-                  <input type="text" name="firstName" required value={formData.firstName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
-                </div>
-                <div>
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Last Name</label>
-                  <input type="text" name="lastName" required value={formData.lastName} onChange={handleChange} className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
-                </div>
-                
-                <div className="col-span-2">
-                  <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Phone Number</label>
-                  <div className="flex">
-                    <select value={dialCode} onChange={handleDialCodeChange} className="px-2 py-3 bg-gray-50 border border-gray-200 rounded-l-xl border-r-0 focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-bold text-gray-700 cursor-pointer transition-all">
-                      <option value="+234">🇳🇬 +234</option>
-                      <option value="+44">🇬🇧 +44</option>
-                      <option value="+1">🇺🇸 +1</option>
-                    </select>
-                    <input type="tel" required value={localPhone} onChange={handleLocalPhoneChange} placeholder="803 000 0000" className="w-full px-3 py-3 bg-gray-50 border border-gray-200 rounded-r-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all" />
-                  </div>
-                </div>
-              </div>
-            </>
+            </div>
           )}
 
           <div>
