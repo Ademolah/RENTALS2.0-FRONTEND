@@ -209,15 +209,20 @@ export default function BecomeHost() {
 
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Brand Name</label>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">
+                  Host or Brand Name <span className="text-red-500">*</span>
+                </label>
                 <div className="relative">
                   <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                   <input
                     type="text" name="hostDisplayName" required value={formData.hostDisplayName} onChange={handleChange}
-                    placeholder="e.g. Oyinmax Luxury or John"
+                    placeholder="e.g. Demola & Demola Properties"
                     className="w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary/20 focus:border-brand-primary outline-none text-sm font-medium transition-all"
                   />
                 </div>
+                <p className="text-[10px] text-gray-400 font-medium mt-1.5 ml-1">
+                  This will be publicly displayed on your future listings.
+                </p>
               </div>
               <div>
                 <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-1.5">Address</label>
