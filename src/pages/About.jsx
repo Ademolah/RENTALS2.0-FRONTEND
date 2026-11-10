@@ -45,25 +45,25 @@ export default function About() {
   ];
 
   const leaders = [
-    {
-      name: 'Tunde Adeleke',
-      role: 'Co-Founder & Chief Executive Officer',
-      bio: 'Former fintech director with 12+ years building digital banking and hospitality infrastructure across West Africa.',
-      image: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      name: 'Amara Okonkwo',
-      role: 'Chief Product & Design Officer',
-      bio: 'Luxury real estate designer passionate about creating frictionless digital booking experiences for global travelers.',
-      image: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=800&q=80'
-    },
-    {
-      name: 'David Mensah',
-      role: 'Head of VIP Escorts & Automotive',
-      bio: 'Ex-automotive executive overseeing high-profile fleet operations, armored vehicles, and private security protocols.',
-      image: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=800&q=80'
-    }
-  ];
+  {
+    name: 'Charles Ademola',
+    role: 'Co-Founder & Chief Executive Officer',
+    bio: 'Having built several software solutions across different industries, Charles leads the strategic vision and technical infrastructure of Rentals Africa, pioneering seamless, high-trust hospitality booking across the continent',
+    image: '/demola.jpg'
+  },
+  {
+    name: 'Nwogu Rhoda Amarachi',
+    role: 'Business manager & Partnership Lead',
+    bio: 'Oversees operations, coordinates teams, drives business development and manages client relationships, with a focus on operational efficiency and business growth.',
+    image: '/Rhoda.jpeg'
+  },
+  {
+    name: 'Ademola Richard Okunomo',
+    role: 'Co-Founder',
+    bio: 'Brings a wealth of deep industry expertise and a proven track record of innovation to our team as Cofounder. A seasoned real estate professional and dynamic serial entrepreneur, he has spent over a decade navigating property markets and building successful businesses from the ground up.',
+    image: '/rich.jpeg'
+  }
+];
 
   return (
     <div className="min-h-screen bg-white text-gray-900 flex flex-col font-sans">
