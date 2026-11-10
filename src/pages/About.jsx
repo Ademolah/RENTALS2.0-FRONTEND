@@ -57,12 +57,12 @@ export default function About() {
     bio: 'Oversees operations, coordinates teams, drives business development and manages client relationships, with a focus on operational efficiency and business growth.',
     image: '/Rhoda.jpeg'
   },
-  {
-    name: 'Ademola Richard Okunomo',
-    role: 'Co-Founder',
-    bio: 'Brings a wealth of deep industry expertise and a proven track record of innovation to our team as Cofounder. A seasoned real estate professional and dynamic serial entrepreneur, he has spent over a decade navigating property markets and building successful businesses from the ground up.',
-    image: '/rich.jpeg'
-  }
+  // {
+  //   name: 'Ademola Richard Okunomo',
+  //   role: 'Co-Founder',
+  //   bio: 'Brings a wealth of deep industry expertise and a proven track record of innovation to our team as Cofounder. A seasoned real estate professional and dynamic serial entrepreneur, he has spent over a decade navigating property markets and building successful businesses from the ground up.',
+  //   image: '/rich.jpeg'
+  // }
 ];
 
   return (
@@ -232,14 +232,14 @@ export default function About() {
             <h2 className="text-3xl sm:text-4xl font-extrabold text-gray-900 mt-2">Meet the team behind the vision</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 max-w-4xl mx-auto gap-8">
             {leaders.map((leader, idx) => (
               <div key={idx} className="bg-gray-50/60 rounded-3xl overflow-hidden border border-gray-100 group">
-                <div className="h-72 overflow-hidden relative">
+                <div className="h-80 overflow-hidden relative">
                   <img 
                     src={leader.image} 
                     alt={leader.name} 
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                    className="w-full h-full object-cover object-top group-hover:scale-105 transition-transform duration-500"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-gray-900/60 via-transparent to-transparent"></div>
                 </div>
