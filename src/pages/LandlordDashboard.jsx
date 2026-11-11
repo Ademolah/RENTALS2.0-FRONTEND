@@ -241,40 +241,42 @@ export default function LandlordDashboard() {
     const isHotel = type === 'HOTEL';
     const isVip = type === 'VIP' || type === 'VIP_SERVICE'; 
     
-    const hasGuestConfirmed = isCar ? booking.guestConfirmedPickup : booking.checkInConfirmedByGuest;
-    
     setProcessingId(id);
     try {
+      let result;
+      // 1. Trigger the single check-in endpoint
       if (isCar) {
-        await confirmCarHandover(id);
+        result = await confirmCarHandover(id);
       } else if (isHotel) {
-        await confirmHotelCheckIn(id); 
+        result = await confirmHotelCheckIn(id); 
       } else if (isVip) {
-        // Both Venues and Services use the same backend engine
-        await confirmVipArrival(id); 
+        result = await confirmVipArrival(id); 
       } else {
-        await confirmPropertyCheckIn(id);
+        result = await confirmPropertyCheckIn(id);
       }
 
-      let isPayoutReleased = false;
-      if (hasGuestConfirmed) {
-        isPayoutReleased = true;
-      }
+      // 2. Trust the backend response to tell us the final escrow state
+      const finalPayoutStatus = result?.data?.payoutStatus || result?.payoutStatus;
+      const isPayoutReleased = finalPayoutStatus === 'RELEASED_TO_LANDLORD' || finalPayoutStatus === 'RELEASED_TO_OWNER';
       
+      // 3. Update the local UI ledger
       setBookings(prev => prev.map(b => {
         if (b._id === id) {
           const updated = { ...b };
           if (isCar) updated.ownerConfirmedHandover = true;
           else updated.checkInConfirmedByHost = true; 
 
-          if (isPayoutReleased) updated.escrowStatus = 'RELEASED';
+          if (isPayoutReleased) {
+            updated.escrowStatus = 'RELEASED';
+            updated.payoutStatus = finalPayoutStatus;
+          }
           return updated;
         }
         return b;
       }));
 
       if (isPayoutReleased) {
-        alert("Action complete! Funds have been released to your bank account.");
+        alert("Action complete! Funds have been successfully released to your bank account.");
       } else {
         alert("Action confirmed. Awaiting guest confirmation to release funds.");
       }

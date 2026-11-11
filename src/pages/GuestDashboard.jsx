@@ -69,21 +69,21 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
   const handleConfirm = async () => {
     setIsConfirming(true);
     try {
+      let result;
+      // 1. Trigger the single check-in endpoint
       if (isCar) {
-        await confirmCarHandover(booking._id);
+        result = await confirmCarHandover(booking._id);
       } else if (isHotel) {
-        await confirmHotelGuestCheckIn(booking._id);
+        result = await confirmHotelGuestCheckIn(booking._id);
       } else {
-        // 💡 Both VIP Venues and VIP Services utilize the base property confirmation engine
-        await confirmPropertyCheckIn(booking._id);
+        result = await confirmPropertyCheckIn(booking._id);
       }
 
-      let isPayoutReleased = false;
-      if (hasHostConfirmed) {
-        await executePayout(booking._id);
-        isPayoutReleased = true;
-      }
+      // 2. Trust the backend response to tell us the final escrow state
+      const finalPayoutStatus = result?.data?.payoutStatus || result?.payoutStatus;
+      const isPayoutReleased = finalPayoutStatus === 'RELEASED_TO_LANDLORD' || finalPayoutStatus === 'RELEASED_TO_OWNER';
 
+      // 3. Update the UI state
       onConfirmEscrow(booking._id, booking.type, isPayoutReleased);
 
       if (isPayoutReleased) {
@@ -92,12 +92,13 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
         showLocalToast("Confirmed! Waiting for host to confirm.", "success");
       }
     } catch (error) {
-      console.error("Payout confirmation failed:", error);
+      console.error("Confirmation failed:", error);
       showLocalToast(error?.response?.data?.message || "Confirmation failed. Please try again.", "error");
     } finally {
       setIsConfirming(false);
     }
   };
+
 
   const handleCancel = async () => {
     setIsCancelling(true);
