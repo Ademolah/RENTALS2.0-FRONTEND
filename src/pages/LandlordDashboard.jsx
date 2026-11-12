@@ -257,7 +257,10 @@ export default function LandlordDashboard() {
 
       // 2. Trust the backend response to tell us the final escrow state
       const finalPayoutStatus = result?.data?.payoutStatus || result?.payoutStatus;
-      const isPayoutReleased = finalPayoutStatus === 'RELEASED_TO_LANDLORD' || finalPayoutStatus === 'RELEASED_TO_OWNER';
+      const isPayoutReleased = 
+        finalPayoutStatus === 'RELEASED_TO_LANDLORD' || 
+        finalPayoutStatus === 'RELEASED_TO_OWNER' || 
+        finalPayoutStatus === 'RELEASED';
       
       // 3. Update the local UI ledger
       setBookings(prev => prev.map(b => {

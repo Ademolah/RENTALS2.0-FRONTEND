@@ -11,7 +11,7 @@ import { getMyPropertyBookings, cancelBookingApi } from '../api/reservation';
 import { confirmPropertyCheckIn } from '../api/properties';
 import { getMyCarBookings, confirmCarHandover } from '../api/car';
 import { getMyHotelBookings, confirmHotelGuestCheckIn } from '../api/hotel';
-import { executePayout } from '../api/payouts';
+import { confirmVipArrival } from '../api/vip';
 import { getNotifications, markNotificationRead, markAllNotificationsRead, deleteNotification } from '../api/notifications';
 import { apiClient } from '../api/client';
 
@@ -75,13 +75,18 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
         result = await confirmCarHandover(booking._id);
       } else if (isHotel) {
         result = await confirmHotelGuestCheckIn(booking._id);
+      } else if (isVip || isVipService) {
+        result = await confirmVipArrival(booking._id);
       } else {
         result = await confirmPropertyCheckIn(booking._id);
       }
 
       // 2. Trust the backend response to tell us the final escrow state
       const finalPayoutStatus = result?.data?.payoutStatus || result?.payoutStatus;
-      const isPayoutReleased = finalPayoutStatus === 'RELEASED_TO_LANDLORD' || finalPayoutStatus === 'RELEASED_TO_OWNER';
+      const isPayoutReleased = 
+        finalPayoutStatus === 'RELEASED_TO_LANDLORD' || 
+        finalPayoutStatus === 'RELEASED_TO_OWNER' || 
+        finalPayoutStatus === 'RELEASED';
 
       // 3. Update the UI state
       onConfirmEscrow(booking._id, booking.type, isPayoutReleased);
