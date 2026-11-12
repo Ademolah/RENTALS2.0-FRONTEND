@@ -119,7 +119,7 @@ export default function LandlordDashboard() {
           reservationStatus: b.reservationStatus,
           escrowStatus: b.escrowStatus,
           checkInConfirmedByGuest: b.guestConfirmedDelivery || b.checkInConfirmedByGuest,
-          checkInConfirmedByHost: b.ownerConfirmedDelivery || b.checkInConfirmedByHost,
+          checkInConfirmedByHost: b.ownerConfirmedDelivery || b.checkInConfirmedByHost || b.checkInConfirmedByLandlord,
           payoutAmount: b.totalAmount, 
           dates: dateString,
           guest: { 
@@ -142,7 +142,7 @@ export default function LandlordDashboard() {
         reservationStatus: b.reservationStatus,
         escrowStatus: b.escrowStatus,
         checkInConfirmedByGuest: b.checkInConfirmedByGuest,
-        checkInConfirmedByHost: b.checkInConfirmedByHost,
+        checkInConfirmedByHost: b.checkInConfirmedByHost || b.checkInConfirmedByLandlord,
         payoutAmount: b.totalAmount, 
         dates: `${new Date(b.checkInDate).toLocaleDateString()} - ${new Date(b.checkOutDate).toLocaleDateString()}`,
         guest: { firstName: b.userId?.firstName || 'Guest', lastName: b.userId?.lastName || '', phone: b.userId?.phoneNumber || 'N/A' },
