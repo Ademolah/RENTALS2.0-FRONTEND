@@ -47,3 +47,17 @@ export const removeMyProfilePictureApi = async () => {
   const response = await apiClient.patch('/users/me', { profilePicture: '' });
   return response.data;
 };
+
+// --- ADD TO THE BOTTOM OF user.js ---
+
+export const saveGuestBankDetailsApi = async (bankData) => {
+  const response = await apiClient.post('/users/bank', bankData);
+  return response.data;
+};
+
+export const getBanksApi = async () => {
+  // Update this route if your backend bank fetcher uses a different path 
+  // (e.g., '/payments/banks' or '/properties/banks')
+  const response = await apiClient.get('/payouts/banks'); 
+  return response.data;
+};

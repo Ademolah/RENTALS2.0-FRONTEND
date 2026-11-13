@@ -2,12 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   User, Phone, Mail, Lock, Camera, Trash2,
-  AlertCircle, Loader2, CheckCircle, CheckCircle2, X
+  AlertCircle, Loader2, CheckCircle, CheckCircle2, X,
+  Landmark, Building2, CreditCard
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import {
   getMyProfileApi, updateMyProfileApi, deleteMyAccountApi,
-  updateMyProfilePictureApi, removeMyProfilePictureApi
+  updateMyProfilePictureApi, removeMyProfilePictureApi,
+  saveGuestBankDetailsApi, getBanksApi
 } from '../api/user';
 import { forgotPasswordApi } from '../api/auth';
 
@@ -44,6 +46,14 @@ export default function ProfileSettings() {
   const [isDeletingAccount, setIsDeletingAccount] = useState(false);
   const [deleteError, setDeleteError] = useState('');
 
+  // 💡 NEW: Bank Settings State
+  const [bankForm, setBankForm] = useState({ accountNumber: '', bankCode: '', bankName: '' });
+  const [isSavingBank, setIsSavingBank] = useState(false);
+  const [bankError, setBankError] = useState('');
+  const [bankSuccess, setBankSuccess] = useState('');
+  const [banks, setBanks] = useState([]);
+  const [isEditingBank, setIsEditingBank] = useState(false);
+
   useEffect(() => {
     getMyProfileApi().then(res => {
       const u = res?.data?.user;
@@ -51,6 +61,28 @@ export default function ProfileSettings() {
         setProfileForm({ firstName: u.firstName || '', lastName: u.lastName || '', phoneNumber: u.phoneNumber || '' });
       }
     }).catch(() => {});
+
+    // 💡 SURGICAL FIX: Safely parse, deduplicate, and sort the bank array
+    getBanksApi().then(res => {
+      const bankArray = res?.data?.banks || res?.data?.data || res?.data || res || [];
+      const safeArray = Array.isArray(bankArray) ? bankArray : [];
+      
+      // Filter out duplicate banks by tracking unique bank codes
+      const uniqueBanks = [];
+      const seenCodes = new Set();
+      
+      for (const bank of safeArray) {
+        if (bank?.code && !seenCodes.has(bank.code)) {
+          seenCodes.add(bank.code);
+          uniqueBanks.push(bank);
+        }
+      }
+      
+      // Sort alphabetically for a better user experience
+      uniqueBanks.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+      
+      setBanks(uniqueBanks);
+    }).catch(err => console.error('Failed to load banks', err));
   }, []);
 
   const handleProfileUpdate = async (e) => {
@@ -89,21 +121,15 @@ export default function ProfileSettings() {
     const localPreview = URL.createObjectURL(file);
     setAvatarPreview(localPreview);
     setIsUploadingAvatar(true);
-    const startedAt = performance.now();
+    
     try {
       const res = await updateMyProfilePictureApi(file);
-      const elapsedMs = Math.round(performance.now() - startedAt);
       const freshUser = res?.data?.user || res?.user;
-      console.log(`[ProfileSettings] Picture upload succeeded in ${elapsedMs}ms. Response:`, res, 'Extracted user:', freshUser);
-      const synced = syncUser(freshUser) || await refreshUser();
-      console.log('[ProfileSettings] After sync, user.profilePicture is now:', synced?.profilePicture);
+      syncUser(freshUser) || await refreshUser();
       setAvatarSuccess('Profile picture updated.');
-      // Now that user.profilePicture is confirmed in sync, drop the local blob preview
-      // so this and the Navbar avatar both render from the same real source.
       URL.revokeObjectURL(localPreview);
       setAvatarPreview(null);
     } catch (err) {
-      console.error('[ProfileSettings] Picture upload failed:', err?.response?.status, err?.response?.data, err?.message);
       setAvatarError('Could not upload your picture right now. Please try again.');
       URL.revokeObjectURL(localPreview);
       setAvatarPreview(null);
@@ -127,6 +153,28 @@ export default function ProfileSettings() {
       setAvatarError('Could not remove your picture right now. Please try again.');
     } finally {
       setIsUploadingAvatar(false);
+    }
+  };
+
+  // 💡 NEW: Bank Submit Handler
+  const handleBankSubmit = async (e) => {
+    e.preventDefault();
+    setBankError('');
+    setBankSuccess('');
+    setIsSavingBank(true);
+    try {
+      const res = await saveGuestBankDetailsApi(bankForm);
+      const newBankDetails = res?.data?.bankDetails;
+      
+      const updatedUser = { ...user, bankDetails: newBankDetails };
+      if (!syncUser(updatedUser)) await refreshUser();
+      
+      setBankSuccess('Bank details saved successfully.');
+      setIsEditingBank(false);
+    } catch (err) {
+      setBankError(err?.response?.data?.message || 'Could not verify account details. Please check your input.');
+    } finally {
+      setIsSavingBank(false);
     }
   };
 
@@ -248,6 +296,100 @@ export default function ProfileSettings() {
           </button>
           <FieldMessage error={profileError} success={profileSuccess} />
         </form>
+      </div>
+
+      {/* 💡 INJECTED: Caution Fee Bank Details */}
+      <div className="bg-white rounded-3xl border border-gray-100 p-8 shadow-sm">
+        <h2 className="text-2xl font-black text-gray-900 mb-2">Caution Fee Refunds</h2>
+        <p className="text-sm text-gray-500 font-medium mb-6">
+          Save your bank details to automatically receive caution fee refunds after your stay.
+        </p>
+
+        {user?.bankDetails?.accountName && !isEditingBank ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex items-center gap-4">
+              <div className="w-12 h-12 shrink-0 bg-white rounded-full border border-gray-200 flex items-center justify-center shadow-sm">
+                <Landmark className="w-5 h-5 text-gray-900" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-bold text-gray-900 truncate">{user.bankDetails.accountName}</p>
+                <p className="text-xs font-medium text-gray-500 truncate">
+                  {user.bankDetails.bankName} &bull; ****{String(user.bankDetails.accountNumber).slice(-4)}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setIsEditingBank(true)}
+              className="px-5 py-2.5 bg-white border border-gray-200 hover:border-gray-900 hover:text-gray-900 text-gray-500 rounded-xl font-bold text-xs uppercase tracking-widest transition-all shadow-sm shrink-0"
+            >
+              Change Bank
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleBankSubmit} className="space-y-5 animate-in fade-in slide-in-from-top-2 duration-300">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Select Bank</label>
+                <div className="relative">
+                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <select
+                    required
+                    value={bankForm.bankCode}
+                    onChange={(e) => {
+                      const selectedBank = banks.find(b => b.code === e.target.value);
+                      setBankForm({
+                        ...bankForm,
+                        bankCode: e.target.value,
+                        bankName: selectedBank ? selectedBank.name : ''
+                      });
+                    }}
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium appearance-none cursor-pointer"
+                  >
+                    <option value="" disabled>Choose your bank</option>
+                    {banks.map((bank) => (
+                      <option key={bank.code} value={bank.code}>{bank.name}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+              <div>
+                <label className="block text-[10px] font-extrabold uppercase tracking-widest text-gray-400 mb-2">Account Number</label>
+                <div className="relative">
+                  <CreditCard className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    required
+                    maxLength="10"
+                    pattern="\d{10}"
+                    value={bankForm.accountNumber}
+                    onChange={(e) => setBankForm({ ...bankForm, accountNumber: e.target.value.replace(/\D/g, '') })}
+                    placeholder="10-digit account number"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-brand-primary outline-none text-sm font-medium"
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="flex gap-3 mt-4">
+              {user?.bankDetails?.accountName && (
+                <button
+                  type="button"
+                  onClick={() => setIsEditingBank(false)}
+                  className="px-6 py-3.5 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-bold text-sm transition-all shadow-sm"
+                >
+                  Cancel
+                </button>
+              )}
+              <button
+                type="submit"
+                disabled={isSavingBank || bankForm.accountNumber.length !== 10 || !bankForm.bankCode}
+                className="flex-1 px-6 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-70"
+              >
+                {isSavingBank ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : 'Verify & Save Bank'}
+              </button>
+            </div>
+            <FieldMessage error={bankError} success={bankSuccess} />
+          </form>
+        )}
       </div>
 
       {/* Password */}
