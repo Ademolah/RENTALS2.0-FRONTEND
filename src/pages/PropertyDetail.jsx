@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { 
   Share, Heart, ArrowLeft, Loader2, 
   ChevronLeft, ChevronRight, MapPin, 
-  X, Star, MessageSquare, AlertCircle, Video , Award, Users, Bed, Bath
+  X, Star, MessageSquare, AlertCircle, Video , Award, Users, Bed, Bath, BadgeCheck
 } from 'lucide-react';
 import BookingWidget from '../components/BookingWidget';
 import InteractiveMap from '../components/InteractiveMap';
@@ -397,8 +397,9 @@ export default function PropertyDetail() {
                     })()}
                   </span>
                   <span>·</span>
-                  <span>
-                    Hosting since {property.createdAt ? new Date(property.createdAt).getFullYear() : new Date().getFullYear()}
+                  <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-800">
+                    <BadgeCheck className="w-4 h-4 text-brand-primary shrink-0" />
+                    <span>Rentals Africa Vetted</span>
                   </span>
                 </div>
               </div>
