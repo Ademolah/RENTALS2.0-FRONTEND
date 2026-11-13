@@ -605,10 +605,10 @@ export default function CarDetails() {
                     onChange={(e) => setDurationSlots(Number(e.target.value))}
                     className="w-full text-sm outline-none bg-transparent font-bold cursor-pointer text-gray-900"
                   >
-                    <option value={1}>12 Hours (Half Day)</option>
-                    <option value={2}>24 Hours (Full Day)</option>
-                    <option value={4}>48 Hours (2 Days)</option>
-                    <option value={6}>72 Hours (3 Days)</option>
+                    <option value={1}>12 Hours (Full Day)</option>
+                    <option value={2}>24 Hours (2 Days)</option>
+                    <option value={4}>36 Hours (3 Days)</option>
+                    <option value={6}>48 Hours (4 Days)</option>
                     <option value={14}>1 Week (14 x 12hr blocks)</option>
                   </select>
                 </div>
