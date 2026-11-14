@@ -510,7 +510,7 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
               <input 
                 type="range" 
                 min="20000" 
-                max="1500000" 
+                max="10000000" 
                 step="5000"
                 value={pricePer12Hours}
                 onChange={(e) => setPricePer12Hours(Number(e.target.value))}
