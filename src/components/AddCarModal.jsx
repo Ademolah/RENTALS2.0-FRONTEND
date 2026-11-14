@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { 
   X, UploadCloud, AlertCircle, CheckCircle2, 
-  Car, Check, MapPin, Settings2, Image as ImageIcon, Video // 💡 NEW: Imported Video icon
+  Car, Check, MapPin, Settings2, Image as ImageIcon, Video, Minus, Plus // 💡 NEW: Imported Video icon
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -23,6 +23,33 @@ const BrandSuccessToast = ({ message, isVisible, onClose }) => {
 };
 
 const API = import.meta.env.VITE_API_URL;
+
+const PRICE_TIERS = [
+  { min: 20000,   max: 150000,   step: 5000,   label: '₦20k' },
+  { min: 150000,  max: 500000,   step: 10000,  label: '₦150k' },
+  { min: 500000,  max: 1500000,  step: 25000,  label: '₦500k' },
+  { min: 1500000, max: 5000000,  step: 50000,  label: '₦1.5M' },
+  { min: 5000000, max: 15000000, step: 250000, label: '₦5M' },
+];
+
+const priceToSlider = (price) => {
+  const clamped = Math.min(15000000, Math.max(20000, price));
+  const tierIndex = PRICE_TIERS.findIndex((t, i) => clamped <= t.max || i === PRICE_TIERS.length - 1);
+  const tier = PRICE_TIERS[tierIndex];
+  const ratio = (clamped - tier.min) / (tier.max - tier.min);
+  return Math.round((tierIndex * 200) + (ratio * 200));
+};
+
+const sliderToPrice = (sliderVal) => {
+  const clamped = Math.min(1000, Math.max(0, sliderVal));
+  if (clamped >= 1000) return 15000000;
+  const tierIndex = Math.min(PRICE_TIERS.length - 1, Math.floor(clamped / 200));
+  const tier = PRICE_TIERS[tierIndex];
+  const localRatio = (clamped - tierIndex * 200) / 200;
+  const raw = tier.min + localRatio * (tier.max - tier.min);
+  const snapped = Math.round(raw / tier.step) * tier.step;
+  return Math.min(tier.max, Math.max(tier.min, snapped));
+};
 
 export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
   const [loading, setLoading] = useState(false);
@@ -497,25 +524,86 @@ export default function AddCarModal({ isOpen, onClose, onCarAdded }) {
           </div>
 
           {/* Pricing */}
+          {/* Pricing */}
           <div className="space-y-4 pb-4">
             <h3 className="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">Pricing Structure</h3>
             <div className="bg-gray-50 p-5 rounded-xl border border-gray-100">
               <div className="flex justify-between items-center mb-4">
-                <label className="text-xs font-semibold text-gray-700">Base 12-Hour Rate</label>
-                <div className="text-right">
-                  <span className="text-xl font-bold text-gray-900">₦{Number(pricePer12Hours).toLocaleString()}</span>
+                <div>
+                  <label className="text-xs font-semibold text-gray-700 block">Base 12-Hour Rate</label>
+                  <span className="text-[11px] text-gray-400 font-medium">Drag across intervals or fine-tune by ₦5k</span>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setPricePer12Hours((prev) => Math.max(20000, prev - 5000))}
+                    disabled={pricePer12Hours <= 20000}
+                    aria-label="Decrease rate by 5,000 Naira"
+                    className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:border-gray-900 flex items-center justify-center text-gray-700 transition-colors disabled:opacity-40"
+                  >
+                    <Minus className="w-3.5 h-3.5" />
+                  </button>
+
+                  <span className="text-lg sm:text-xl font-bold text-gray-900 min-w-[115px] text-center tabular-nums">
+                    ₦{Number(pricePer12Hours).toLocaleString()}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => setPricePer12Hours((prev) => Math.min(15000000, prev + 5000))}
+                    disabled={pricePer12Hours >= 15000000}
+                    aria-label="Increase rate by 5,000 Naira"
+                    className="w-8 h-8 rounded-lg bg-white border border-gray-200 hover:border-gray-900 flex items-center justify-center text-gray-700 transition-colors disabled:opacity-40"
+                  >
+                    <Plus className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
 
-              <input 
-                type="range" 
-                min="20000" 
-                max="15000000" 
-                step="5000"
-                value={pricePer12Hours}
-                onChange={(e) => setPricePer12Hours(Number(e.target.value))}
-                className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary"
-              />
+              {/* Smooth 5-Interval Slider */}
+              <div className="relative pt-1">
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="1000" 
+                  step="1"
+                  value={priceToSlider(pricePer12Hours)}
+                  onChange={(e) => setPricePer12Hours(sliderToPrice(Number(e.target.value)))}
+                  className="w-full h-1.5 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-primary relative z-10"
+                />
+
+                {/* 5-Interval Breakers & Clickable Markers */}
+                <div className="grid grid-cols-5 mt-2 pt-1 border-t border-dashed border-gray-200">
+                  {PRICE_TIERS.map((tier, idx) => (
+                    <div key={tier.min} className="relative flex justify-between items-center">
+                      <button
+                        type="button"
+                        onClick={() => setPricePer12Hours(tier.min)}
+                        className="flex flex-col items-start group focus:outline-none"
+                      >
+                        <span className="w-0.5 h-2 bg-gray-400 group-hover:bg-brand-primary mb-1 transition-colors" />
+                        <span className="text-[10px] font-bold text-gray-400 group-hover:text-gray-900 transition-colors">
+                          {tier.label}
+                        </span>
+                      </button>
+
+                      {idx === PRICE_TIERS.length - 1 && (
+                        <button
+                          type="button"
+                          onClick={() => setPricePer12Hours(15000000)}
+                          className="flex flex-col items-end group focus:outline-none"
+                        >
+                          <span className="w-0.5 h-2 bg-gray-400 group-hover:bg-brand-primary mb-1 transition-colors" />
+                          <span className="text-[10px] font-bold text-gray-400 group-hover:text-gray-900 transition-colors">
+                            ₦15M
+                          </span>
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
 
               <div className="flex justify-between items-center text-xs pt-4 mt-4 border-t border-gray-200">
                 <span className="text-gray-500">Platform Fee (5%)</span>
