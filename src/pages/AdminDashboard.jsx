@@ -4,13 +4,13 @@ import {
   Settings, CheckCircle2, XCircle, Eye, Loader2, 
   X, ShieldCheck, Mail, Phone, Clock,
   Home, Car, Menu, ListChecks, PlayCircle,
-  MessageSquare, Link as LinkIcon, Copy // 💡 NEW
+  MessageSquare, Link as LinkIcon, Copy , Search, Landmark// 💡 NEW
 } from 'lucide-react';
 import { 
   getHostApplications, approveHostApplication, rejectHostApplication,
   getDashboardStats, getEscrowLedger, getAssetOversight, toggleAssetStatus,
   updateAssetApprovalStatus,
-  getPendingConciergeDrafts, generateConciergeCheckoutUrl // 💡 NEW
+  getPendingConciergeDrafts, generateConciergeCheckoutUrl, getAllUsers, getUserDetails // 💡 NEW
 } from '../api/admin';
 
 export default function AdminDashboard() {
@@ -36,6 +36,53 @@ export default function AdminDashboard() {
   const [draftPrices, setDraftPrices] = useState({});
   const [generatedLinks, setGeneratedLinks] = useState({});
   const [linkLoading, setLinkLoading] = useState({});
+
+  // 💡 NEW: User Directory & Regulatory Dossier State
+  const [usersList, setUsersList] = useState([]);
+  const [usersPagination, setUsersPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
+  const [userEmailSearch, setUserEmailSearch] = useState('');
+  const [selectedUserDossier, setSelectedUserDossier] = useState(null);
+  const [dossierLoading, setDossierLoading] = useState(false);
+
+  // Debounced fetch when on the 'users' tab or when searching by email
+  useEffect(() => {
+    if (activeTab !== 'users') return;
+    const timer = setTimeout(() => {
+      fetchUsers(1, userEmailSearch);
+    }, 350);
+    return () => clearTimeout(timer);
+  }, [activeTab, userEmailSearch]);
+
+  const fetchUsers = async (page = 1, search = userEmailSearch) => {
+    setLoading(true);
+    try {
+      const res = await getAllUsers({ page, limit: 20, search: search.trim() });
+      setUsersList(res?.data?.users || []);
+      if (res?.pagination) {
+        setUsersPagination(res.pagination);
+      }
+    } catch (error) {
+      console.error('Failed to fetch users:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleInspectUser = async (userSummary) => {
+    // Open modal immediately with basic info while full regulatory dossier loads
+    setSelectedUserDossier({ user: userSummary });
+    setDossierLoading(true);
+    try {
+      const res = await getUserDetails(userSummary._id);
+      if (res?.data) {
+        setSelectedUserDossier(res.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch user dossier:', error);
+    } finally {
+      setDossierLoading(false);
+    }
+  };
 
   // 💡 NEW: Add the fetch trigger to your useEffect
   useEffect(() => {
@@ -241,6 +288,7 @@ export default function AdminDashboard() {
 
   const navItems = [
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
+    { id: 'users', label: 'User Directory', icon: Users },
     { id: 'concierge', label: 'Concierge Queue', icon: MessageSquare },
     { id: 'applications', label: 'Host Applications', icon: Users },
     { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
@@ -426,6 +474,211 @@ export default function AdminDashboard() {
               </div>
             ) : (
               <div className="text-gray-500 font-bold">No stats available.</div>
+            )}
+          </div>
+        )}
+
+        {/* --- TAB: USER DIRECTORY --- */}
+        {activeTab === 'users' && (
+          <div className="space-y-4 animate-in fade-in">
+            {/* Search & Count Bar */}
+            <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="relative flex-1 max-w-md">
+                <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                <input
+                  type="email"
+                  value={userEmailSearch}
+                  onChange={(e) => setUserEmailSearch(e.target.value)}
+                  placeholder="Search user by email address..."
+                  className="w-full pl-10 pr-9 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:bg-white focus:border-gray-900 outline-none transition-all"
+                />
+                {userEmailSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setUserEmailSearch('')}
+                    aria-label="Clear search"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-700"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+
+              <div className="text-xs font-bold text-gray-500">
+                Showing <span className="text-gray-900">{usersList.length}</span> of{' '}
+                <span className="text-gray-900">{usersPagination.total}</span> registered users
+              </div>
+            </div>
+
+            {/* Mobile Card List (< md) */}
+            <div className="md:hidden space-y-3">
+              {loading ? (
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 flex justify-center">
+                  <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+                </div>
+              ) : usersList.length === 0 ? (
+                <div className="bg-white border border-gray-200 rounded-2xl p-8 text-center text-sm text-gray-500 font-medium">
+                  No users found matching "{userEmailSearch}".
+                </div>
+              ) : (
+                usersList.map((u) => {
+                  const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Unnamed User';
+                  const initials = `${u.firstName?.[0] || ''}${u.lastName?.[0] || ''}`.toUpperCase() || 'U';
+                  const roleBadge =
+                    u.role === 'ADMIN'
+                      ? 'bg-purple-50 text-purple-700 border-purple-200'
+                      : u.role === 'LANDLORD'
+                      ? 'bg-blue-50 text-blue-700 border-blue-200'
+                      : 'bg-gray-100 text-gray-700 border-gray-200';
+
+                  return (
+                    <div
+                      key={u._id}
+                      onClick={() => handleInspectUser(u)}
+                      className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm active:scale-[0.99] transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {u.profilePicture ? (
+                            <img src={u.profilePicture} alt={fullName} className="w-10 h-10 rounded-full object-cover border border-gray-200 shrink-0" />
+                          ) : (
+                            <div className="w-10 h-10 rounded-full bg-gray-900 text-white flex items-center justify-center text-xs font-bold shrink-0">
+                              {initials}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-gray-900 truncate">{fullName}</p>
+                            <p className="text-xs text-gray-500 truncate">{u.email}</p>
+                          </div>
+                        </div>
+
+                        <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider border shrink-0 ${roleBadge}`}>
+                          {u.role}
+                        </span>
+                      </div>
+
+                      <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between text-xs">
+                        <span className="text-gray-500 font-medium">{u.phoneNumber || 'No phone'}</span>
+                        <span className="inline-flex items-center font-bold text-gray-900">
+                          <Eye className="w-3.5 h-3.5 mr-1 text-gray-400" /> View Details
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            {/* Desktop Table (>= md) */}
+            <div className="hidden md:block bg-white border border-gray-200 rounded-2xl shadow-sm overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-gray-50/50 border-b border-gray-100">
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">User</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Email</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Phone</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Role</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Bank Profile</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400">Joined</th>
+                    <th className="p-4 text-[10px] font-black uppercase tracking-widest text-gray-400 text-right">Dossier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {loading ? (
+                    <tr><td colSpan="7" className="p-8 text-center"><Loader2 className="w-6 h-6 animate-spin mx-auto text-gray-400" /></td></tr>
+                  ) : usersList.length === 0 ? (
+                    <tr><td colSpan="7" className="p-8 text-center text-gray-500 font-medium">No users found matching "{userEmailSearch}".</td></tr>
+                  ) : (
+                    usersList.map((u) => {
+                      const fullName = `${u.firstName || ''} ${u.lastName || ''}`.trim() || 'Unnamed User';
+                      const initials = `${u.firstName?.[0] || ''}${u.lastName?.[0] || ''}`.toUpperCase() || 'U';
+                      const roleBadge =
+                        u.role === 'ADMIN'
+                          ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : u.role === 'LANDLORD'
+                          ? 'bg-blue-50 text-blue-700 border-blue-200'
+                          : 'bg-gray-100 text-gray-700 border-gray-200';
+
+                      return (
+                        <tr
+                          key={u._id}
+                          onClick={() => handleInspectUser(u)}
+                          className="border-b border-gray-50 hover:bg-gray-50/80 transition-colors cursor-pointer"
+                        >
+                          <td className="p-4 whitespace-nowrap">
+                            <div className="flex items-center gap-3">
+                              {u.profilePicture ? (
+                                <img src={u.profilePicture} alt={fullName} className="w-8 h-8 rounded-full object-cover border border-gray-200 shrink-0" />
+                              ) : (
+                                <div className="w-8 h-8 rounded-full bg-gray-900 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
+                                  {initials}
+                                </div>
+                              )}
+                              <span className="text-sm font-bold text-gray-900">{fullName}</span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-sm text-gray-600 whitespace-nowrap">{u.email}</td>
+                          <td className="p-4 text-sm text-gray-500 whitespace-nowrap">{u.phoneNumber || '—'}</td>
+                          <td className="p-4 whitespace-nowrap">
+                            <span className={`text-[10px] font-black px-2.5 py-1 rounded-md uppercase tracking-wider border ${roleBadge}`}>
+                              {u.role}
+                            </span>
+                          </td>
+                          <td className="p-4 whitespace-nowrap">
+                            {u.bankDetails?.accountNumber ? (
+                              <span className="inline-flex items-center text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-md">
+                                {u.bankDetails.bankName}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-gray-400 font-medium">Not Linked</span>
+                            )}
+                          </td>
+                          <td className="p-4 text-xs font-bold text-gray-500 whitespace-nowrap">
+                            {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : '—'}
+                          </td>
+                          <td className="p-4 text-right whitespace-nowrap">
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleInspectUser(u);
+                              }}
+                              className="inline-flex items-center space-x-1 text-xs font-bold text-gray-900 hover:text-brand-primary transition-colors bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm"
+                            >
+                              <Eye className="w-3.5 h-3.5" /><span>Inspect</span>
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Pagination Footer */}
+            {usersPagination.totalPages > 1 && (
+              <div className="bg-white border border-gray-200 rounded-2xl px-4 py-3 flex items-center justify-between shadow-sm">
+                <button
+                  type="button"
+                  disabled={usersPagination.page <= 1 || loading}
+                  onClick={() => fetchUsers(usersPagination.page - 1)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg disabled:opacity-40"
+                >
+                  <ChevronLeft className="w-4 h-4" /> Prev
+                </button>
+                <span className="text-xs font-bold text-gray-600">
+                  Page {usersPagination.page} of {usersPagination.totalPages}
+                </span>
+                <button
+                  type="button"
+                  disabled={usersPagination.page >= usersPagination.totalPages || loading}
+                  onClick={() => fetchUsers(usersPagination.page + 1)}
+                  className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-gray-700 bg-gray-50 hover:bg-gray-100 border border-gray-200 rounded-lg disabled:opacity-40"
+                >
+                  Next <ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
             )}
           </div>
         )}
@@ -990,6 +1243,295 @@ export default function AdminDashboard() {
                 className="w-full sm:flex-1 py-3.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-sm transition-all shadow-md flex items-center justify-center disabled:opacity-50"
               >
                 {actionLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <><CheckCircle2 className="w-4 h-4 mr-2" /> Approve to Live Feed</>}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* --- FULL USER DOSSIER MODAL --- */}
+      {selectedUserDossier && (
+        <div
+          className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setSelectedUserDossier(null)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white w-full max-w-3xl rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] sm:max-h-[90vh]"
+          >
+            {/* Modal Header */}
+            <div className="flex justify-between items-start p-5 md:p-6 border-b border-gray-100 bg-gray-50/70 shrink-0">
+              <div className="flex items-center gap-3.5 min-w-0">
+                {selectedUserDossier.user?.profilePicture ? (
+                  <img
+                    src={selectedUserDossier.user.profilePicture}
+                    alt={selectedUserDossier.user.firstName}
+                    className="w-12 h-12 rounded-full object-cover border border-gray-200 shrink-0"
+                  />
+                ) : (
+                  <div className="w-12 h-12 rounded-full bg-gray-900 text-white flex items-center justify-center text-base font-black uppercase shrink-0">
+                    {`${selectedUserDossier.user?.firstName?.[0] || ''}${selectedUserDossier.user?.lastName?.[0] || ''}` || 'U'}
+                  </div>
+                )}
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <h2 className="text-lg md:text-xl font-extrabold text-gray-900 truncate">
+                      {`${selectedUserDossier.user?.firstName || ''} ${selectedUserDossier.user?.lastName || ''}`.trim() || 'User Dossier'}
+                    </h2>
+                    <span className="text-[10px] font-black px-2 py-0.5 rounded bg-gray-900 text-white uppercase tracking-wider">
+                      {selectedUserDossier.user?.role}
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-500 font-medium truncate mt-0.5">
+                    ID: {selectedUserDossier.user?._id}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setSelectedUserDossier(null)}
+                className="p-2 hover:bg-gray-200 rounded-full text-gray-500 transition-colors shrink-0"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Modal Scrollable Body */}
+            <div className="p-5 md:p-7 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+              {dossierLoading ? (
+                <div className="py-12 flex flex-col items-center justify-center text-gray-400 gap-2">
+                  <Loader2 className="w-7 h-7 animate-spin" />
+                  <span className="text-xs font-bold uppercase tracking-wider">Loading full compliance record...</span>
+                </div>
+              ) : (
+                <>
+                  {/* 1. Compliance & Financial Metrics */}
+                  {selectedUserDossier.complianceSummary && (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-black uppercase tracking-wider text-gray-400">Guest Spend</span>
+                        <span className="text-base font-black text-gray-900 mt-1 block">
+                          ₦{(selectedUserDossier.complianceSummary.totalSpentAsGuest || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-black uppercase tracking-wider text-gray-400">Host Volume</span>
+                        <span className="text-base font-black text-gray-900 mt-1 block">
+                          ₦{(selectedUserDossier.complianceSummary.totalGrossAsHost || 0).toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-black uppercase tracking-wider text-gray-400">Owned Assets</span>
+                        <span className="text-base font-black text-gray-900 mt-1 block">
+                          {selectedUserDossier.complianceSummary.totalOwnedAssets || 0}
+                        </span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-black uppercase tracking-wider text-gray-400">Bookings</span>
+                        <span className="text-base font-black text-gray-900 mt-1 block">
+                          {(selectedUserDossier.complianceSummary.totalGuestBookings || 0) +
+                            (selectedUserDossier.complianceSummary.totalHostBookings || 0)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 2. Identity & Contact Information */}
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                      Identity & Contact Details
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-center gap-3">
+                        <Mail className="w-4 h-4 text-gray-400 shrink-0" />
+                        <div className="min-w-0">
+                          <span className="block text-[10px] font-bold text-gray-400 uppercase">Email Address</span>
+                          <span className="text-sm font-bold text-gray-900 break-all">{selectedUserDossier.user?.email}</span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-center gap-3">
+                        <Phone className="w-4 h-4 text-gray-400 shrink-0" />
+                        <div>
+                          <span className="block text-[10px] font-bold text-gray-400 uppercase">Phone Number</span>
+                          <span className="text-sm font-bold text-gray-900">
+                            {selectedUserDossier.user?.phoneNumber || 'Not Provided'}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Email Verification</span>
+                        <span className={`text-xs font-extrabold mt-0.5 inline-block ${selectedUserDossier.user?.isVerified ? 'text-emerald-600' : 'text-amber-600'}`}>
+                          {selectedUserDossier.user?.isVerified ? 'Verified Account' : 'Unverified'}
+                        </span>
+                      </div>
+                      <div className="bg-gray-50 p-3.5 rounded-xl border border-gray-100">
+                        <span className="block text-[10px] font-bold text-gray-400 uppercase">Registered Date</span>
+                        <span className="text-sm font-bold text-gray-900">
+                          {selectedUserDossier.user?.createdAt
+                            ? new Date(selectedUserDossier.user.createdAt).toLocaleString()
+                            : 'N/A'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 3. Banking & Settlement Profile */}
+                  <div>
+                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                      Banking & Settlement Profile
+                    </h3>
+                    {selectedUserDossier.user?.bankDetails?.accountNumber ? (
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="flex items-start gap-2.5">
+                          <Landmark className="w-4 h-4 text-gray-700 mt-0.5 shrink-0" />
+                          <div>
+                            <span className="block text-[10px] font-bold text-gray-400 uppercase">Bank & Account Name</span>
+                            <span className="text-sm font-bold text-gray-900 block">
+                              {selectedUserDossier.user.bankDetails.accountName}
+                            </span>
+                            <span className="text-xs font-medium text-gray-500">
+                              {selectedUserDossier.user.bankDetails.bankName} ({selectedUserDossier.user.bankDetails.bankCode})
+                            </span>
+                          </div>
+                        </div>
+                        <div>
+                          <span className="block text-[10px] font-bold text-gray-400 uppercase">NUBAN Account Number</span>
+                          <span className="text-sm font-black text-gray-900 tracking-wider block">
+                            {selectedUserDossier.user.bankDetails.accountNumber}
+                          </span>
+                          <span className="text-[11px] font-medium text-gray-500">
+                            {selectedUserDossier.user.bankDetails.recipientCode
+                              ? `Paystack Recipient: ${selectedUserDossier.user.bankDetails.recipientCode}`
+                              : 'Guest Refund Account (No Recipient Code)'}
+                          </span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-xs font-medium text-gray-500">
+                        No bank account details saved on this profile.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. KYC / Host Verification Records */}
+                  {selectedUserDossier.kyc?.hostApplications?.length > 0 && (
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                        KYC & Host Applications ({selectedUserDossier.kyc.hostApplications.length})
+                      </h3>
+                      <div className="space-y-2">
+                        {selectedUserDossier.kyc.hostApplications.map((kycItem) => (
+                          <div key={kycItem._id} className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex flex-wrap items-center justify-between gap-2">
+                            <div>
+                              <span className="text-xs font-bold text-gray-900 block">
+                                NIN / ID: {kycItem.nin || 'Not Provided'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {kycItem.city}, {kycItem.state} • {new Date(kycItem.createdAt).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <span className="text-[10px] font-black px-2.5 py-1 rounded-md bg-white border border-gray-200 uppercase">
+                              {kycItem.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 5. Owned Assets */}
+                  {(selectedUserDossier.assets?.properties?.length > 0 || selectedUserDossier.assets?.cars?.length > 0) && (
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                        Owned Assets ({(selectedUserDossier.assets?.properties?.length || 0) + (selectedUserDossier.assets?.cars?.length || 0)})
+                      </h3>
+                      <div className="space-y-2">
+                        {selectedUserDossier.assets?.properties?.map((prop) => (
+                          <div key={prop._id} className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-gray-900 truncate">{prop.title}</p>
+                              <p className="text-[11px] text-gray-500">{prop.category} • ₦{(prop.pricePerNight || 0).toLocaleString()}/night</p>
+                            </div>
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white border border-gray-200 uppercase shrink-0">
+                              {prop.status}
+                            </span>
+                          </div>
+                        ))}
+                        {selectedUserDossier.assets?.cars?.map((car) => (
+                          <div key={car._id} className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-center justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-xs font-bold text-gray-900 truncate">{car.make} {car.carModel || car.model} ({car.year})</p>
+                              <p className="text-[11px] text-gray-500">{car.category} • ₦{(car.pricePer12Hours || 0).toLocaleString()}/12hr</p>
+                            </div>
+                            <span className="text-[10px] font-black px-2 py-0.5 rounded bg-white border border-gray-200 uppercase shrink-0">
+                              {car.status}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 6. Recent Activity / Transactions */}
+                  {selectedUserDossier.transactions && (
+                    <div>
+                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                        Recent Bookings & Transactions
+                      </h3>
+                      {(() => {
+                        const allTx = [
+                          ...(selectedUserDossier.transactions.asGuest?.properties || []).map((t) => ({ ...t, _role: 'Guest (Stay)' })),
+                          ...(selectedUserDossier.transactions.asGuest?.cars || []).map((t) => ({ ...t, _role: 'Guest (Car)' })),
+                          ...(selectedUserDossier.transactions.asHost?.properties || []).map((t) => ({ ...t, _role: 'Host (Stay)' })),
+                          ...(selectedUserDossier.transactions.asHost?.cars || []).map((t) => ({ ...t, _role: 'Host (Car)' })),
+                        ].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+
+                        if (allTx.length === 0) {
+                          return (
+                            <div className="bg-gray-50 p-4 rounded-xl border border-gray-100 text-xs font-medium text-gray-500">
+                              No reservation transactions recorded for this user.
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="space-y-2">
+                            {allTx.slice(0, 10).map((tx) => {
+                              const label = tx.carId
+                                ? `${tx.carId.make || ''} ${tx.carId.carModel || tx.carId.model || ''}`.trim()
+                                : tx.propertyId?.title || 'Reservation';
+                              return (
+                                <div key={tx._id} className="bg-gray-50 p-3.5 rounded-xl border border-gray-100 flex items-center justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-xs font-bold text-gray-900 truncate">{label}</p>
+                                    <p className="text-[11px] text-gray-500">
+                                      {tx._role} • {new Date(tx.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  <div className="text-right shrink-0">
+                                    <p className="text-xs font-black text-gray-900">₦{(tx.totalAmount || 0).toLocaleString()}</p>
+                                    <span className="text-[10px] font-bold uppercase text-gray-500">{tx.paymentStatus}</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* Modal Footer */}
+            <div className="p-4 border-t border-gray-100 bg-gray-50/70 flex justify-end shrink-0">
+              <button
+                type="button"
+                onClick={() => setSelectedUserDossier(null)}
+                className="px-6 py-2.5 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-xs uppercase tracking-wider transition-colors"
+              >
+                Close Dossier
               </button>
             </div>
           </div>

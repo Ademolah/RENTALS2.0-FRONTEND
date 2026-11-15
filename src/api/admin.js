@@ -73,3 +73,19 @@ export const generateConciergeCheckoutUrl = async (payload) => {
 export const getPendingConciergeDrafts = async () => {
   return apiClient.get(`/reservations/whatsapp-pending`);
 };
+
+
+export const getAllUsers = async (params = {}) => {
+  // Strip empty strings / undefined values so query strings stay clean
+  const cleanParams = Object.fromEntries(
+    Object.entries(params).filter(([_, value]) => value !== '' && value !== undefined && value !== null)
+  );
+
+  const response = await apiClient.get('/admin/users', { params: cleanParams });
+  return response.data;
+};
+
+export const getUserDetails = async (userId) => {
+  const response = await apiClient.get(`/admin/users/${userId}`);
+  return response.data;
+};
