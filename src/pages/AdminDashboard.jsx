@@ -454,17 +454,22 @@ export default function AdminDashboard() {
                   <div className="space-y-4">
                     <div>
                       <div className="text-3xl font-black tracking-tight">
-                        ₦{(stats.financials.totalPlatformVolume / 1000000).toFixed(1)}M
+                        {(() => {
+                          const vol = Number(stats.financials?.totalPlatformVolume || 0);
+                          if (vol >= 1_000_000_000) return `₦${(vol / 1_000_000_000).toFixed(2).replace(/\.?0+$/, '')}B`;
+                          if (vol >= 1_000_000) return `₦${(vol / 1_000_000).toFixed(2).replace(/\.?0+$/, '')}M`;
+                          return `₦${vol.toLocaleString()}`;
+                        })()}
                       </div>
                       <div className="text-sm font-bold text-gray-400 mt-1">Total Transaction Volume</div>
                     </div>
                     <div className="pt-5 border-t border-gray-800 flex justify-between">
                       <div>
-                        <div className="text-sm font-extrabold text-emerald-400">₦{stats.financials.totalPlatformRevenue.toLocaleString()}</div>
+                        <div className="text-sm font-extrabold text-emerald-400">₦{(stats.financials?.totalPlatformRevenue || 0).toLocaleString()}</div>
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Platform Cut (5%)</div>
                       </div>
                       <div className="text-right">
-                        <div className="text-sm font-extrabold text-amber-400">₦{stats.financials.escrowCurrentlyHeld.toLocaleString()}</div>
+                        <div className="text-sm font-extrabold text-amber-400">₦{(stats.financials?.escrowCurrentlyHeld || 0).toLocaleString()}</div>
                         <div className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mt-1">Funds Held</div>
                       </div>
                     </div>
