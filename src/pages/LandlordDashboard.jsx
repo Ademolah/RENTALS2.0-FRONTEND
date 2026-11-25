@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
   Building, Car, Hotel, Crown, Plus, ShieldCheck,
-  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp
+  CheckCircle, Clock, MapPin, Loader2, Landmark, Wallet, TrendingUp, Headphones
 } from 'lucide-react';
 
 import { getLandlordPropertyBookings, confirmPropertyCheckIn, getLandlordProperties } from '../api/properties';
@@ -21,6 +21,7 @@ import EditCarModal from '../components/EditCarModal';
 import EditPropertyModal from '../components/EditPropertyModal';
 import EditHotelModal from '../components/EditHotelModal';
 import ProfileSettings from '../components/ProfileSettings';
+import SupportChatDrawer from '../components/SupportChatDrawer';
 
 export default function LandlordDashboard() {
   const [searchParams] = useSearchParams();
@@ -47,6 +48,21 @@ export default function LandlordDashboard() {
   const [editingPropertyId, setEditingPropertyId] = useState(null);
   const [editingHotelId, setEditingHotelId] = useState(null);
   const [editingVipId, setEditingVipId] = useState(null);
+
+  // In-app Host Support Desk state
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportPrefillContext, setSupportPrefillContext] = useState(null);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  const handleOpenSupportForItem = (item) => {
+    setSupportPrefillContext({
+      id: item._id,
+      type: item.type,
+      title: item.asset?.title || 'Portfolio Item',
+      isRawAsset: Boolean(item.isRawAsset),
+    });
+    setIsSupportOpen(true);
+  };
 
   useEffect(() => {
     fetchPortfolioData();
@@ -480,8 +496,18 @@ export default function LandlordDashboard() {
                     <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                       <div>
                         <h3 className="text-2xl font-black text-gray-900 mb-2 leading-tight group-hover:text-brand-primary transition-colors">{booking.asset.title}</h3>
-                        <div className="flex items-center text-gray-500 text-sm font-medium">
-                          <MapPin className="w-4 h-4 mr-1.5 text-gray-400" /> {booking.asset.location}
+                        <div className="flex flex-wrap items-center gap-3 text-gray-500 text-sm font-medium">
+                          <span className="flex items-center">
+                            <MapPin className="w-4 h-4 mr-1.5 text-gray-400" /> {booking.asset.location}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenSupportForItem(booking)}
+                            className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A2540] hover:text-black bg-gray-100 hover:bg-gray-200/80 px-3 py-1 rounded-full transition-colors"
+                          >
+                            <Headphones className="w-3.5 h-3.5" />
+                            <span>Need help?</span>
+                          </button>
                         </div>
                       </div>
                       
@@ -574,6 +600,15 @@ export default function LandlordDashboard() {
                   >
                     Manage Asset &rarr;
                   </button>
+                  <button
+                      type="button"
+                      onClick={() => handleOpenSupportForItem(booking)}
+                      className="inline-flex items-center gap-1 text-[11px] font-bold text-gray-500 hover:text-[#0A2540] transition-colors"
+                      title="Get support for this listing"
+                    >
+                      <Headphones className="w-3.5 h-3.5" />
+                      <span>Help</span>
+                    </button>
                 </div>
               </div>
             ))}
@@ -603,6 +638,37 @@ export default function LandlordDashboard() {
       <EditPropertyModal isOpen={!!editingPropertyId} propertyId={editingPropertyId} onClose={() => setEditingPropertyId(null)} onSuccess={() => fetchPortfolioData()} />
       <EditHotelModal isOpen={!!editingHotelId} hotelId={editingHotelId} onClose={() => setEditingHotelId(null)} onSuccess={() => fetchPortfolioData()} />
       <EditVipModal isOpen={!!editingVipId} establishmentId={editingVipId} onClose={() => setEditingVipId(null)} onSuccess={() => fetchPortfolioData()} />
+        {/* Floating Host Support Launcher */}
+      {!isSupportOpen && (
+        <button
+          type="button"
+          onClick={() => setIsSupportOpen(true)}
+          aria-label="Open host support chat"
+          className="fixed bottom-6 right-6 z-40 group flex items-center gap-3 bg-[#0A2540] hover:bg-black text-white pl-4 pr-5 py-3.5 rounded-full shadow-[0_12px_35px_rgba(10,37,64,0.3)] border border-white/10 transition-all duration-200 hover:scale-[1.03] active:scale-95"
+        >
+          <div className="relative flex items-center justify-center">
+            <Headphones className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0A2540]" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest">Host Help</span>
+          {unreadSupportCount > 0 && (
+            <span className="ml-0.5 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-black">
+              {unreadSupportCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Real-Time Host Support Chat Drawer */}
+      <SupportChatDrawer
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        portalType="HOST"
+        bookings={bookings}
+        prefillBooking={supportPrefillContext}
+        onClearPrefill={() => setSupportPrefillContext(null)}
+        onUnreadCountChange={setUnreadSupportCount}
+      />
     </main>
   );
 }

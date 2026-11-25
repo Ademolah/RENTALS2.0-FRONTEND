@@ -4,7 +4,7 @@ import {
   Settings, CheckCircle2, XCircle, Eye, Loader2, 
   X, ShieldCheck, Mail, Phone, Clock,
   Home, Car, Menu, ListChecks, PlayCircle,
-  MessageSquare, Link as LinkIcon, Copy , Search, Landmark// 💡 NEW
+  MessageSquare, Link as LinkIcon, Copy , Search, Landmark, Headphones
 } from 'lucide-react';
 import { 
   getHostApplications, approveHostApplication, rejectHostApplication,
@@ -12,6 +12,8 @@ import {
   updateAssetApprovalStatus,
   getPendingConciergeDrafts, generateConciergeCheckoutUrl, getAllUsers, getUserDetails // 💡 NEW
 } from '../api/admin';
+import { getSupportTicketsApi } from '../api/support';
+import AdminSupportConsole from '../components/AdminSupportConsole';
 
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('applications');
@@ -43,6 +45,21 @@ export default function AdminDashboard() {
   const [userEmailSearch, setUserEmailSearch] = useState('');
   const [selectedUserDossier, setSelectedUserDossier] = useState(null);
   const [dossierLoading, setDossierLoading] = useState(false);
+
+  // Live Support Desk unread/open badge count
+  const [supportAttentionCount, setSupportAttentionCount] = useState(0);
+
+  useEffect(() => {
+    getSupportTicketsApi({ limit: 50 })
+      .then((res) => {
+        const list = res?.data?.tickets || res?.tickets || [];
+        const count = list.filter(
+          (t) => Number(t.unreadByStaff || 0) > 0 || t.status === 'OPEN'
+        ).length;
+        setSupportAttentionCount(count);
+      })
+      .catch(() => {});
+  }, []);
 
   // Debounced fetch when on the 'users' tab or when searching by email
   useEffect(() => {
@@ -289,6 +306,7 @@ export default function AdminDashboard() {
   const navItems = [
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
     { id: 'users', label: 'User Directory', icon: Users },
+    { id: 'support', label: 'Support Desk', icon: Headphones },
     { id: 'concierge', label: 'Concierge Queue', icon: MessageSquare },
     { id: 'applications', label: 'Host Applications', icon: Users },
     { id: 'pending-assets', label: 'Pending Listings', icon: ListChecks },
@@ -340,6 +358,7 @@ export default function AdminDashboard() {
             const isActive = activeTab === item.id;
             
             let badgeCount = 0;
+            if (item.id === 'support') badgeCount = supportAttentionCount;
             if (item.id === 'applications') badgeCount = applications.length;
             if (item.id === 'pending-assets') badgeCount = pendingListings.length;
             if (item.id === 'concierge') badgeCount = conciergeDrafts.length;
@@ -686,6 +705,14 @@ export default function AdminDashboard() {
               </div>
             )}
           </div>
+        )}
+
+        {/* --- TAB: LIVE SUPPORT DESK --- */}
+        {activeTab === 'support' && (
+          <AdminSupportConsole
+            onAttentionCountChange={setSupportAttentionCount}
+            onInspectUser={handleInspectUser}
+          />
         )}
 
         {/* --- TAB 6: CONCIERGE QUEUE (WHATSAPP DRAFTS) --- */}

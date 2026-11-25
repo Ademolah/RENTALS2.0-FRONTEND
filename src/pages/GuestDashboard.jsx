@@ -4,7 +4,7 @@ import {
   ShieldCheck,
   MapPin, Calendar, Clock, Loader2, CheckCircle,
   AlertCircle, Heart, Star,
-  Trash2, X, Bell
+  Trash2, X, Bell, Headphones
 } from 'lucide-react';
 
 import { getMyPropertyBookings, cancelBookingApi } from '../api/reservation';
@@ -18,9 +18,10 @@ import { apiClient } from '../api/client';
 import { getMyFavoritesApi, toggleFavoriteApi } from '../api/user';
 import ProfileSettings from '../components/ProfileSettings';
 import { useAuth } from '../context/AuthContext';
+import SupportChatDrawer from '../components/SupportChatDrawer';
 
 // --- SUB-COMPONENT: The Unified Booking Card ---
-const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
+const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess, onNeedHelp }) => {
   const [isConfirming, setIsConfirming] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isCancelling, setIsCancelling] = useState(false);
@@ -170,6 +171,17 @@ const BookingCard = ({ booking, onConfirmEscrow, onCancelSuccess }) => {
               </span>
             </div>
           </div>
+
+          {onNeedHelp && (
+              <button
+                type="button"
+                onClick={() => onNeedHelp({ id: booking._id, type: booking.type, title })}
+                className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A2540] hover:text-black bg-gray-100 hover:bg-gray-200/80 px-3 py-1.5 rounded-full transition-colors"
+              >
+                <Headphones className="w-3.5 h-3.5" />
+                <span>Need help?</span>
+              </button>
+            )}
         </div>
 
         {/* Action Panel */}
@@ -415,6 +427,15 @@ export default function GuestDashboard() {
   
   const [loading, setLoading] = useState(true);
   const [toastMessage, setToastMessage] = useState('');
+  // In-app Support Concierge state
+  const [isSupportOpen, setIsSupportOpen] = useState(false);
+  const [supportPrefillBooking, setSupportPrefillBooking] = useState(null);
+  const [unreadSupportCount, setUnreadSupportCount] = useState(0);
+
+  const handleOpenSupportForBooking = (bookingContext) => {
+    setSupportPrefillBooking(bookingContext);
+    setIsSupportOpen(true);
+  };
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -742,6 +763,7 @@ export default function GuestDashboard() {
                   booking={booking} 
                   onConfirmEscrow={handleEscrowSuccess} 
                   onCancelSuccess={handleCancelSuccess}
+                  onNeedHelp={handleOpenSupportForBooking}
                 />
               ))
             )}
@@ -857,6 +879,37 @@ export default function GuestDashboard() {
         </div>
       )}
 
+
+      {/* Floating Support Concierge Launcher */}
+      {!isSupportOpen && (
+        <button
+          type="button"
+          onClick={() => setIsSupportOpen(true)}
+          aria-label="Open live support chat"
+          className="fixed bottom-6 right-6 z-40 group flex items-center gap-3 bg-[#0A2540] hover:bg-black text-white pl-4 pr-5 py-3.5 rounded-full shadow-[0_12px_35px_rgba(10,37,64,0.3)] border border-white/10 transition-all duration-200 hover:scale-[1.03] active:scale-95"
+        >
+          <div className="relative flex items-center justify-center">
+            <Headphones className="w-5 h-5" />
+            <span className="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-emerald-400 ring-2 ring-[#0A2540]" />
+          </div>
+          <span className="text-xs font-black uppercase tracking-widest">Help</span>
+          {unreadSupportCount > 0 && (
+            <span className="ml-0.5 px-2 py-0.5 rounded-full bg-blue-500 text-white text-[10px] font-black">
+              {unreadSupportCount}
+            </span>
+          )}
+        </button>
+      )}
+
+      {/* Real-Time Support Chat Drawer */}
+      <SupportChatDrawer
+        isOpen={isSupportOpen}
+        onClose={() => setIsSupportOpen(false)}
+        bookings={bookings}
+        prefillBooking={supportPrefillBooking}
+        onClearPrefill={() => setSupportPrefillBooking(null)}
+        onUnreadCountChange={setUnreadSupportCount}
+      />
 
     </div>
   );
