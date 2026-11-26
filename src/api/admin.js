@@ -69,12 +69,13 @@ export const generateConciergeCheckoutUrl = async (payload) => {
   return apiClient.post(`/reservations/generate-checkout`, payload);
 };
 
-
 export const getPendingConciergeDrafts = async () => {
   return apiClient.get(`/reservations/whatsapp-pending`);
 };
 
-
+// ==========================================
+// 6. USER DIRECTORY & ROLE MANAGEMENT
+// ==========================================
 export const getAllUsers = async (params = {}) => {
   // Strip empty strings / undefined values so query strings stay clean
   const cleanParams = Object.fromEntries(
@@ -87,5 +88,10 @@ export const getAllUsers = async (params = {}) => {
 
 export const getUserDetails = async (userId) => {
   const response = await apiClient.get(`/admin/users/${userId}`);
+  return response.data;
+};
+
+export const updateUserRole = async (userId, role) => {
+  const response = await apiClient.patch(`/admin/users/${userId}/role`, { role });
   return response.data;
 };

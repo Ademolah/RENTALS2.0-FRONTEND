@@ -109,6 +109,7 @@ export function AuthProvider({ children }) {
   const redirectUserByRole = (role) => {
     switch (role?.toUpperCase()) {
       case 'ADMIN':
+      case 'SUPPORT_AGENT':
         navigate('/dashboard/admin');
         break;
       case 'LANDLORD':

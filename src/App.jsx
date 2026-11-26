@@ -47,7 +47,9 @@ function DashboardRedirect() {
   if (loading) return null;
   if (!user) return <Navigate to="/" replace />;
   const role = user.role?.toUpperCase();
-  if (role === 'ADMIN') return <Navigate to="/dashboard/admin" replace />;
+  if (role === 'ADMIN' || role === 'SUPPORT_AGENT') {
+    return <Navigate to="/dashboard/admin" replace />;
+  }
   if (role === 'LANDLORD') return <Navigate to="/dashboard/landlord" replace />;
   return <Navigate to="/dashboard/guest" replace />;
 }
@@ -172,7 +174,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardRedirect />} />
             <Route path="/dashboard/guest" element={<ProtectedRoute><GuestDashboard /></ProtectedRoute>} />
             <Route path="/dashboard/landlord" element={<ProtectedRoute roles={['LANDLORD', 'ADMIN']}><LandlordDashboard /></ProtectedRoute>} />
-            <Route path="/dashboard/admin" element={<ProtectedRoute roles={['ADMIN']}><AdminDashboard /></ProtectedRoute>} />
+            <Route path="/dashboard/admin" element={<ProtectedRoute roles={['ADMIN', 'SUPPORT_AGENT']}><AdminDashboard /></ProtectedRoute>} />
             <Route path="/list-property" element={<ListYourProperty />} />
             <Route path="/become-host" element={<ProtectedRoute><BecomeHost /></ProtectedRoute>} />
             <Route path="/about" element={<About />} />

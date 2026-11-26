@@ -4,19 +4,29 @@ import {
   Settings, CheckCircle2, XCircle, Eye, Loader2, 
   X, ShieldCheck, Mail, Phone, Clock,
   Home, Car, Menu, ListChecks, PlayCircle,
-  MessageSquare, Link as LinkIcon, Copy , Search, Landmark, Headphones
+  MessageSquare, Link as LinkIcon, Copy, Search, Landmark, Headphones,
+  ChevronLeft, ChevronRight, UserCog
 } from 'lucide-react';
 import { 
   getHostApplications, approveHostApplication, rejectHostApplication,
   getDashboardStats, getEscrowLedger, getAssetOversight, toggleAssetStatus,
   updateAssetApprovalStatus,
-  getPendingConciergeDrafts, generateConciergeCheckoutUrl, getAllUsers, getUserDetails // 💡 NEW
+  getPendingConciergeDrafts, generateConciergeCheckoutUrl, getAllUsers, getUserDetails,
+  updateUserRole
 } from '../api/admin';
 import { getSupportTicketsApi } from '../api/support';
 import AdminSupportConsole from '../components/AdminSupportConsole';
+import { useAuth } from '../context/AuthContext';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('applications');
+  const { user } = useAuth();
+  const normalizedRole = String(user?.role || '').toUpperCase();
+  const isSupportOnly = normalizedRole === 'SUPPORT_AGENT';
+  const isSuperAdmin = normalizedRole === 'ADMIN';
+
+  const [activeTab, setActiveTab] = useState(() =>
+    String(user?.role || '').toUpperCase() === 'SUPPORT_AGENT' ? 'support' : 'applications'
+  );
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   // --- STATE ---
@@ -33,26 +43,34 @@ export default function AdminDashboard() {
   const [selectedListing, setSelectedListing] = useState(null);
   const [mediaViewer, setMediaViewer] = useState(null);
 
-  // 💡 NEW: Concierge State
+  // Concierge State
   const [conciergeDrafts, setConciergeDrafts] = useState([]);
   const [draftPrices, setDraftPrices] = useState({});
   const [generatedLinks, setGeneratedLinks] = useState({});
   const [linkLoading, setLinkLoading] = useState({});
 
-  // 💡 NEW: User Directory & Regulatory Dossier State
+  // User Directory & Regulatory Dossier State
   const [usersList, setUsersList] = useState([]);
   const [usersPagination, setUsersPagination] = useState({ total: 0, page: 1, limit: 20, totalPages: 1 });
   const [userEmailSearch, setUserEmailSearch] = useState('');
   const [selectedUserDossier, setSelectedUserDossier] = useState(null);
   const [dossierLoading, setDossierLoading] = useState(false);
+  const [roleUpdating, setRoleUpdating] = useState(false);
 
   // Live Support Desk unread/open badge count
   const [supportAttentionCount, setSupportAttentionCount] = useState(0);
 
+  // Enforce Support-only tab lock if user is a SUPPORT_AGENT
+  useEffect(() => {
+    if (isSupportOnly && activeTab !== 'support') {
+      setActiveTab('support');
+    }
+  }, [isSupportOnly, activeTab]);
+
   useEffect(() => {
     getSupportTicketsApi({ limit: 50 })
       .then((res) => {
-        const list = res?.data?.tickets || res?.tickets || [];
+        const list = res?.data?.tickets || res?.data?.items || res?.tickets || [];
         const count = list.filter(
           (t) => Number(t.unreadByStaff || 0) > 0 || t.status === 'OPEN'
         ).length;
@@ -61,16 +79,17 @@ export default function AdminDashboard() {
       .catch(() => {});
   }, []);
 
-  // Debounced fetch when on the 'users' tab or when searching by email
+  // Debounced fetch when on the 'users' tab (Super Admin only)
   useEffect(() => {
-    if (activeTab !== 'users') return;
+    if (!isSuperAdmin || activeTab !== 'users') return;
     const timer = setTimeout(() => {
       fetchUsers(1, userEmailSearch);
     }, 350);
     return () => clearTimeout(timer);
-  }, [activeTab, userEmailSearch]);
+  }, [activeTab, userEmailSearch, isSuperAdmin]);
 
   const fetchUsers = async (page = 1, search = userEmailSearch) => {
+    if (!isSuperAdmin) return;
     setLoading(true);
     try {
       const res = await getAllUsers({ page, limit: 20, search: search.trim() });
@@ -86,7 +105,7 @@ export default function AdminDashboard() {
   };
 
   const handleInspectUser = async (userSummary) => {
-    // Open modal immediately with basic info while full regulatory dossier loads
+    if (!isSuperAdmin) return;
     setSelectedUserDossier({ user: userSummary });
     setDossierLoading(true);
     try {
@@ -101,21 +120,50 @@ export default function AdminDashboard() {
     }
   };
 
-  // 💡 NEW: Add the fetch trigger to your useEffect
+  const handleUpdateUserRole = async (targetUser, nextRole) => {
+    if (!isSuperAdmin || !targetUser?._id || targetUser._id === user?._id) return;
+
+    const fullName = `${targetUser.firstName || ''} ${targetUser.lastName || ''}`.trim() || targetUser.email;
+    const actionLabel =
+      nextRole === 'SUPPORT_AGENT'
+        ? `Promote ${fullName} to Support Agent? They will gain access to the Support Desk.`
+        : `Revoke Support Agent access for ${fullName} and revert them to standard USER?`;
+
+    if (!window.confirm(actionLabel)) return;
+
+    setRoleUpdating(true);
+    try {
+      await updateUserRole(targetUser._id, nextRole);
+
+      setUsersList((prev) =>
+        prev.map((u) => (u._id === targetUser._id ? { ...u, role: nextRole } : u))
+      );
+
+      setSelectedUserDossier((prev) =>
+        prev ? { ...prev, user: { ...prev.user, role: nextRole } } : prev
+      );
+    } catch (error) {
+      console.error('Failed to update user role:', error);
+      alert(error.response?.data?.message || 'Failed to update user role.');
+    } finally {
+      setRoleUpdating(false);
+    }
+  };
+
+  // Single unified tab router effect (Super Admin data tabs)
   useEffect(() => {
+    if (!isSuperAdmin) return;
     if (activeTab === 'applications') fetchApplications();
     if (activeTab === 'overview') fetchStats();
     if (activeTab === 'escrow') fetchLedger();
     if (activeTab === 'assets' || activeTab === 'pending-assets') fetchAssets();
-    if (activeTab === 'concierge') fetchConciergeDrafts(); // <-- ADD THIS
-  }, [activeTab]);
+    if (activeTab === 'concierge') fetchConciergeDrafts();
+  }, [activeTab, isSuperAdmin]);
 
-  // 💡 NEW: The Fetcher Function
   const fetchConciergeDrafts = async () => {
     setLoading(true);
     try {
       const res = await getPendingConciergeDrafts();
-      // 💡 SURGICAL FIX: Checks multiple levels to prevent the nested 'data.data' Axios bug
       const fetchedDrafts = res.data?.data?.drafts || res.data?.drafts || res?.drafts || [];
       setConciergeDrafts(fetchedDrafts);
     } catch (error) {
@@ -125,7 +173,6 @@ export default function AdminDashboard() {
     }
   };
 
-  // 💡 NEW: The Link Generator Action
   const handleGenerateLink = async (referenceCode, draftId) => {
     const finalAmount = draftPrices[draftId];
     if (!finalAmount || finalAmount <= 0) {
@@ -136,8 +183,6 @@ export default function AdminDashboard() {
     setLinkLoading(prev => ({ ...prev, [draftId]: true }));
     try {
       const res = await generateConciergeCheckoutUrl({ referenceCode, finalAmount });
-      
-      // 💡 SURGICAL FIX: Dig into the nested Axios data object
       const checkoutUrl = res.data?.data?.checkoutUrl || res.data?.checkoutUrl || res?.checkoutUrl;
       
       if (checkoutUrl) {
@@ -157,14 +202,6 @@ export default function AdminDashboard() {
     navigator.clipboard.writeText(text);
     alert('Payment link copied! You can now paste this to the guest on WhatsApp.');
   };
-
-  // --- ROUTER EFFECT ---
-  useEffect(() => {
-    if (activeTab === 'applications') fetchApplications();
-    if (activeTab === 'overview') fetchStats();
-    if (activeTab === 'escrow') fetchLedger();
-    if (activeTab === 'assets' || activeTab === 'pending-assets') fetchAssets();
-  }, [activeTab]);
 
   // --- FETCHERS ---
   const fetchApplications = async () => {
@@ -270,24 +307,17 @@ export default function AdminDashboard() {
     try {
       let reason = undefined;
 
-      // 💡 THE FIX: Intercept rejections and mandate a reason
       if (status === 'REJECTED') {
         reason = window.prompt("Please provide a reason for rejecting this listing (this will be sent to the host):");
-        
-        // If the admin clicks "Cancel" on the prompt, abort the entire process
         if (reason === null) {
           return; 
         }
-        
-        // If they leave it completely blank, provide a professional fallback
         if (reason.trim() === '') {
           reason = "Listing does not meet platform quality standards.";
         }
       }
 
-      setActionLoading(true); // Start loading only after the prompt is handled
-
-      // 💡 Pass the reason into your API call
+      setActionLoading(true);
       await updateAssetApprovalStatus(type, id, status, reason);
       
       setAssets(prev => ({
@@ -303,7 +333,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const navItems = [
+  const allNavItems = [
     { id: 'overview', label: 'Platform Overview', icon: LayoutDashboard },
     { id: 'users', label: 'User Directory', icon: Users },
     { id: 'support', label: 'Support Desk', icon: Headphones },
@@ -314,6 +344,11 @@ export default function AdminDashboard() {
     { id: 'escrow', label: 'Payout Ledger', icon: Wallet },
     { id: 'settings', label: 'Platform Settings', icon: Settings },
   ];
+
+  // Scope sidebar strictly to Support Desk for SUPPORT_AGENT staff
+  const navItems = isSupportOnly
+    ? allNavItems.filter((item) => item.id === 'support')
+    : allNavItems;
 
   const pendingListings = [
     ...assets.properties.filter(p => p.status === 'PENDING'),
@@ -327,7 +362,9 @@ export default function AdminDashboard() {
       <div className="md:hidden bg-white border-b border-gray-200 px-4 py-4 flex justify-between items-center sticky top-0 z-30 shadow-sm">
         <div className="flex items-center space-x-2">
           <ShieldCheck className="w-6 h-6 text-gray-900" />
-          <span className="text-sm font-black tracking-widest uppercase text-gray-900">Rentals Admin</span>
+          <span className="text-sm font-black tracking-widest uppercase text-gray-900">
+            {isSupportOnly ? 'Support Desk' : 'Rentals Admin'}
+          </span>
         </div>
         <button 
           onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} 
@@ -349,7 +386,9 @@ export default function AdminDashboard() {
       <aside className={`w-64 bg-white border-r border-gray-200 fixed h-full z-50 flex flex-col transition-transform duration-300 ease-in-out ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}>
         <div className="p-6 border-b border-gray-100 hidden md:flex items-center space-x-2">
           <ShieldCheck className="w-6 h-6 text-gray-900" />
-          <span className="text-sm font-black tracking-widest uppercase text-gray-900">Rentals Admin</span>
+          <span className="text-sm font-black tracking-widest uppercase text-gray-900">
+            {isSupportOnly ? 'Support Desk' : 'Rentals Admin'}
+          </span>
         </div>
         
         <nav className="flex-1 p-4 space-y-1 overflow-y-auto custom-scrollbar">
@@ -367,6 +406,7 @@ export default function AdminDashboard() {
               <button
                 key={item.id}
                 onClick={() => {
+                  if (isSupportOnly && item.id !== 'support') return;
                   setActiveTab(item.id);
                   setIsMobileMenuOpen(false); 
                 }}
@@ -395,14 +435,26 @@ export default function AdminDashboard() {
         <header className="flex flex-col md:flex-row md:justify-between md:items-end mb-6 md:mb-8 gap-4">
           <div>
             <h1 className="text-2xl md:text-3xl font-extrabold text-gray-900 tracking-tight capitalize">
-              {activeTab.replace('-', ' ')}
+              {isSupportOnly ? 'Support Desk' : activeTab.replace('-', ' ')}
             </h1>
-            <p className="text-xs md:text-sm text-gray-500 font-medium mt-1">Manage and oversee platform operations.</p>
+            <p className="text-xs md:text-sm text-gray-500 font-medium mt-1">
+              {isSupportOnly
+                ? 'Respond to live guest and host support tickets.'
+                : 'Manage and oversee platform operations.'}
+            </p>
           </div>
         </header>
 
-        {/* --- TAB 1: OVERVIEW STATS --- */}
-        {activeTab === 'overview' && (
+        {/* --- TAB: LIVE SUPPORT DESK (Accessible by ADMIN & SUPPORT_AGENT) --- */}
+        {(activeTab === 'support' || isSupportOnly) && (
+          <AdminSupportConsole
+            onAttentionCountChange={setSupportAttentionCount}
+            onInspectUser={isSuperAdmin ? handleInspectUser : undefined}
+          />
+        )}
+
+        {/* --- SUPER ADMIN ONLY TABS --- */}
+        {isSuperAdmin && activeTab === 'overview' && (
           <div className="animate-in fade-in">
             {loading ? (
               <div className="flex justify-center p-12"><Loader2 className="w-8 h-8 animate-spin text-gray-400" /></div>
@@ -503,7 +555,7 @@ export default function AdminDashboard() {
         )}
 
         {/* --- TAB: USER DIRECTORY --- */}
-        {activeTab === 'users' && (
+        {isSuperAdmin && activeTab === 'users' && (
           <div className="space-y-4 animate-in fade-in">
             {/* Search & Count Bar */}
             <div className="bg-white border border-gray-200 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -551,6 +603,8 @@ export default function AdminDashboard() {
                   const roleBadge =
                     u.role === 'ADMIN'
                       ? 'bg-purple-50 text-purple-700 border-purple-200'
+                      : u.role === 'SUPPORT_AGENT'
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                       : u.role === 'LANDLORD'
                       ? 'bg-blue-50 text-blue-700 border-blue-200'
                       : 'bg-gray-100 text-gray-700 border-gray-200';
@@ -619,6 +673,8 @@ export default function AdminDashboard() {
                       const roleBadge =
                         u.role === 'ADMIN'
                           ? 'bg-purple-50 text-purple-700 border-purple-200'
+                          : u.role === 'SUPPORT_AGENT'
+                          ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
                           : u.role === 'LANDLORD'
                           ? 'bg-blue-50 text-blue-700 border-blue-200'
                           : 'bg-gray-100 text-gray-700 border-gray-200';
@@ -707,16 +763,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB: LIVE SUPPORT DESK --- */}
-        {activeTab === 'support' && (
-          <AdminSupportConsole
-            onAttentionCountChange={setSupportAttentionCount}
-            onInspectUser={handleInspectUser}
-          />
-        )}
-
-        {/* --- TAB 6: CONCIERGE QUEUE (WHATSAPP DRAFTS) --- */}
-        {activeTab === 'concierge' && (
+        {/* --- TAB: CONCIERGE QUEUE (WHATSAPP DRAFTS) --- */}
+        {isSuperAdmin && activeTab === 'concierge' && (
            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
              <div className="min-w-[900px]">
                <table className="w-full text-left border-collapse">
@@ -739,7 +787,7 @@ export default function AdminDashboard() {
                        const isCar = !!draft.carId;
                        const assetTitle = isCar ? `${draft.carId?.make} ${draft.carId?.carModel}` : draft.propertyId?.title;
                        const guestName = draft.userId ? `${draft.userId.firstName || ''} ${draft.userId.lastName || ''}`.trim() : 'Unknown';
-                       const refCode = draft.paystackReference; // Temporary holding the WA-XXXXXX code
+                       const refCode = draft.paystackReference;
                        const link = generatedLinks[draft._id];
 
                        return (
@@ -764,7 +812,7 @@ export default function AdminDashboard() {
                              <input 
                                type="number"
                                placeholder="e.g. 450000"
-                               disabled={!!link} // Lock input if link is already generated
+                               disabled={!!link}
                                value={draftPrices[draft._id] || ''}
                                onChange={(e) => setDraftPrices(prev => ({ ...prev, [draft._id]: e.target.value }))}
                                className="w-32 px-3 py-2 text-sm font-bold border border-gray-200 rounded-lg outline-none focus:border-gray-900 text-center disabled:bg-gray-100 disabled:text-gray-400"
@@ -808,8 +856,8 @@ export default function AdminDashboard() {
            </div>
          )}
 
-        {/* --- TAB 2: HOST APPLICATIONS --- */}
-        {activeTab === 'applications' && (
+        {/* --- TAB: HOST APPLICATIONS --- */}
+        {isSuperAdmin && activeTab === 'applications' && (
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="w-full text-left border-collapse">
@@ -830,8 +878,6 @@ export default function AdminDashboard() {
                   ) : (
                     applications.map((app) => {
                       const name = app.user ? `${app.user.firstName || ''} ${app.user.lastName || ''}`.trim() : (app.firstName || 'Unknown');
-                      
-                      // Dynamic Icon and Status Color Logic for Applications
                       const currentStatus = app.status || 'PENDING'; 
                       let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
                       let StatusIcon = CheckCircle2; 
@@ -876,8 +922,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 3: PENDING LISTINGS (APPROVAL WORKFLOW) --- */}
-        {activeTab === 'pending-assets' && (
+        {/* --- TAB: PENDING LISTINGS (APPROVAL WORKFLOW) --- */}
+        {isSuperAdmin && activeTab === 'pending-assets' && (
           <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
             <div className="min-w-[800px]">
               <table className="w-full text-left border-collapse">
@@ -928,8 +974,8 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* --- TAB 4: ASSET OVERSIGHT (ALL LISTINGS) --- */}
-        {activeTab === 'assets' && (
+        {/* --- TAB: ASSET OVERSIGHT (ALL LISTINGS) --- */}
+        {isSuperAdmin && activeTab === 'assets' && (
            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
              <div className="min-w-[800px]">
                <table className="w-full text-left border-collapse">
@@ -949,11 +995,8 @@ export default function AdminDashboard() {
                      [...assets.properties, ...assets.cars].map((asset) => {
                        const isCar = !!asset.make;
                        const typeStr = isCar ? 'CAR' : asset.category;
-                       
-                       // Safely pick carModel if it exists to match pending-assets list
                        const title = isCar ? `${asset.make} ${asset.carModel || asset.model}` : asset.title;
                        
-                       // Dynamic Icon and Status Color Logic for Assets
                        const currentStatus = asset.status || 'APPROVED'; 
                        let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
                        let StatusIcon = CheckCircle2; 
@@ -1008,8 +1051,8 @@ export default function AdminDashboard() {
            </div>
          )}
 
-        {/* --- TAB 5: PAYOUT LEDGER --- */}
-        {activeTab === 'escrow' && (
+        {/* --- TAB: PAYOUT LEDGER --- */}
+        {isSuperAdmin && activeTab === 'escrow' && (
            <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden animate-in fade-in w-full max-w-[100vw] overflow-x-auto">
              <div className="min-w-[800px]">
                <table className="w-full text-left border-collapse">
@@ -1035,7 +1078,6 @@ export default function AdminDashboard() {
                        const amount = (record.totalAmount || 0).toLocaleString();
                        const eStatus = record.escrowStatus || record.payoutStatus || 'PROCESSING';
                        
-                       // Dynamic Icon and Status Color Logic for Payout Ledger
                        let statusColor = 'bg-gray-100 text-gray-600 border border-gray-200';
                        let StatusIcon = Clock; 
 
@@ -1070,8 +1112,8 @@ export default function AdminDashboard() {
          )}
       </main>
 
-      {/* --- APPLICATION REVIEW MODAL (HOSTS) --- */}
-      {selectedApp && (
+      {/* --- APPLICATION REVIEW MODAL (SUPER ADMIN ONLY) --- */}
+      {isSuperAdmin && selectedApp && (
         <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
             
@@ -1123,8 +1165,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* --- LISTING REVIEW MODAL (ASSETS) --- */}
-      {selectedListing && (
+      {/* --- LISTING REVIEW MODAL (SUPER ADMIN ONLY) --- */}
+      {isSuperAdmin && selectedListing && (
         <div className="fixed inset-0 z-[990] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
           <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[95vh] md:max-h-[90vh]">
             
@@ -1141,11 +1183,7 @@ export default function AdminDashboard() {
             </div>
 
             <div className="p-4 md:p-8 overflow-y-auto custom-scrollbar flex-1 space-y-6">
-              
-              {/* 💡 SURGICALLY REPLACED: Expanded Details Block */}
               <div className="bg-gray-50 p-5 rounded-xl border border-gray-100 space-y-5">
-                 
-                 {/* 1. Description Section (Only properties have a description) */}
                  {selectedListing.description && (
                    <div>
                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Description</h3>
@@ -1153,30 +1191,25 @@ export default function AdminDashboard() {
                    </div>
                  )}
 
-                 {/* 2. Core Details & Pricing */}
                  <div>
                    <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">Primary Details</h3>
                    <div className="flex flex-wrap gap-2">
-                     {/* Price */}
                      <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
                        Price: ₦{(selectedListing.pricePerNight || selectedListing.pricePer12Hours || 0).toLocaleString()}
                      </span>
                      
-                     {/* Caution Fee (If present on Shortlet) */}
                      {selectedListing.cautionFee > 0 && (
                        <span className="text-xs font-bold text-amber-900 bg-amber-50 border border-amber-200 px-3 py-1.5 rounded-lg shadow-sm">
                          Caution Fee: ₦{selectedListing.cautionFee.toLocaleString()}
                        </span>
                      )}
 
-                     {/* Location (Handles both property address and car location schemas) */}
                      {(selectedListing.address || selectedListing.location) && (
                        <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
                          Location: {selectedListing.address?.city || selectedListing.location?.city}, {selectedListing.address?.state || selectedListing.location?.state}
                        </span>
                      )}
 
-                     {/* Car Specific Specs */}
                      {selectedListing.make && (
                        <>
                          <span className="text-xs font-bold text-gray-900 bg-white border border-gray-200 px-3 py-1.5 rounded-lg shadow-sm">
@@ -1188,7 +1221,6 @@ export default function AdminDashboard() {
                        </>
                      )}
 
-                     {/* Property Specific Specs */}
                      {!selectedListing.make && (
                        <>
                          {selectedListing.bedrooms && (
@@ -1211,7 +1243,6 @@ export default function AdminDashboard() {
                    </div>
                  </div>
 
-                 {/* 3. Amenities or Car Features */}
                  {(selectedListing.amenities?.length > 0 || selectedListing.features?.length > 0) && (
                    <div>
                      <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-2">
@@ -1226,16 +1257,11 @@ export default function AdminDashboard() {
                      </div>
                    </div>
                  )}
-
               </div>
-              {/* 💡 END SURGICALLY REPLACED BLOCK */}
 
-              {/* Media Gallery Grid */}
               <div>
                 <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">Media Inspection (Click to enlarge)</h3>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                  
-                  {/* Video Thumbnail (If exists) */}
                   {selectedListing.video && (
                     <div 
                       onClick={() => setMediaViewer({ url: selectedListing.video, type: 'video' })}
@@ -1247,7 +1273,6 @@ export default function AdminDashboard() {
                     </div>
                   )}
 
-                  {/* Image Thumbnails */}
                   {selectedListing.images?.map((img, idx) => (
                     <div 
                       key={idx}
@@ -1281,8 +1306,8 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* --- FULL USER DOSSIER MODAL --- */}
-      {selectedUserDossier && (
+      {/* --- FULL USER DOSSIER MODAL (SUPER ADMIN ONLY) --- */}
+      {isSuperAdmin && selectedUserDossier && (
         <div
           className="fixed inset-0 z-[990] flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm sm:p-4 animate-in fade-in duration-200"
           onClick={() => setSelectedUserDossier(null)}
@@ -1406,6 +1431,64 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                   </div>
+
+                  {/* 2B. Staff Role & Access Control (Super Admin Only) */}
+                  {selectedUserDossier.user?._id !== user?._id &&
+                    (selectedUserDossier.user?.role === 'USER' ||
+                      selectedUserDossier.user?.role === 'SUPPORT_AGENT') && (
+                      <div>
+                        <h3 className="text-[10px] font-black uppercase tracking-widest text-gray-400 mb-3">
+                          Staff Role & Access Control
+                        </h3>
+                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                          <div className="flex items-start gap-2.5">
+                            <UserCog className="w-4 h-4 text-gray-700 mt-0.5 shrink-0" />
+                            <div>
+                              <span className="text-sm font-bold text-gray-900 block">
+                                {selectedUserDossier.user?.role === 'SUPPORT_AGENT'
+                                  ? 'Active Support Agent'
+                                  : 'Standard Guest Account'}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {selectedUserDossier.user?.role === 'SUPPORT_AGENT'
+                                  ? 'Can view and reply to support tickets. Blocked from payouts, KYC, and directory.'
+                                  : 'Promote this account to grant Support Desk access only.'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {selectedUserDossier.user?.role === 'USER' ? (
+                            <button
+                              type="button"
+                              disabled={roleUpdating}
+                              onClick={() => handleUpdateUserRole(selectedUserDossier.user, 'SUPPORT_AGENT')}
+                              className="px-4 py-2 bg-gray-900 hover:bg-black text-white rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
+                            >
+                              {roleUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <ShieldCheck className="w-3.5 h-3.5" />
+                              )}
+                              <span>Promote to Support Agent</span>
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={roleUpdating}
+                              onClick={() => handleUpdateUserRole(selectedUserDossier.user, 'USER')}
+                              className="px-4 py-2 bg-white border border-red-200 hover:bg-red-50 text-red-600 rounded-xl font-bold text-xs transition-all flex items-center justify-center gap-1.5 shrink-0 disabled:opacity-50"
+                            >
+                              {roleUpdating ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <XCircle className="w-3.5 h-3.5" />
+                              )}
+                              <span>Revoke Agent Access</span>
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                   {/* 3. Banking & Settlement Profile */}
                   <div>
