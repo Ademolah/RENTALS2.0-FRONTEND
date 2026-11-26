@@ -11,12 +11,22 @@ export const apiClient = axios.create({
 });
 
 // Intercept requests to inject the authorization token
+// Intercept requests to inject the authorization token
 apiClient.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('rentals_token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Let the browser set multipart/form-data with its boundary when sending FormData
+    if (config.data instanceof FormData) {
+      if (typeof config.headers.delete === 'function') {
+        config.headers.delete('Content-Type');
+      }
+      delete config.headers['Content-Type'];
+    }
+
     return config;
   },
   (error) => Promise.reject(error)
