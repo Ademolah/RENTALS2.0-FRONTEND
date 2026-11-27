@@ -70,7 +70,7 @@ export default function VipListingView({ defaultLocation: selectedLocation }) {
             }`}
           >
             <Building className="w-4 h-4" />
-            <span>VIP Venues</span>
+            <span>VIP Reservation</span>
           </button>
           <button
             onClick={() => setActiveTab('services')}

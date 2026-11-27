@@ -98,7 +98,7 @@ export default function PropertyCard({ property }) {
         <div className="flex flex-col text-brand-dark">
           <div className="flex justify-between items-start">
             <h3 className="font-semibold text-[15px] leading-tight truncate pr-4">
-              {property.location || `${property.address?.city}, ${property.address?.state}`}
+              {property.title}
             </h3>
             
             {/* SURGICAL INSERTION: Dynamic Rating Check */}
@@ -114,8 +114,9 @@ export default function PropertyCard({ property }) {
               </div>
             )}
           </div>
-          <p className="text-gray-500 text-sm truncate">{property.title}</p>
-          <p className="text-gray-500 text-sm">{property.dates}</p>
+          <p className="text-gray-500 text-sm truncate">
+            {property.location || `${property.address?.city}, ${property.address?.state}`}
+          </p>
           <div className="mt-1 flex items-center space-x-1">
             <span className="font-semibold">₦{Number(property.price || property.pricePerNight || 0).toLocaleString()}</span>
             <span className="text-gray-800 text-sm">night</span>
