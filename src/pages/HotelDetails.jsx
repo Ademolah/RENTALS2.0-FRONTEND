@@ -3,18 +3,17 @@ import {
   MapPin, Star, Coffee, Wifi, ChevronLeft, ChevronRight, 
   Droplets, Bed, Utensils, Car, CheckCircle2, Wine, 
   CalendarDays, Users, Info, ArrowLeft, AlertCircle, Loader2,
-  Dumbbell, Leaf, X, MessageSquare, CalendarSearch
+  Dumbbell, Leaf, X, MessageSquare, Camera, Maximize2, Check
 } from 'lucide-react';
 import { useNavigate, useParams, Link } from 'react-router-dom';
 import BookModal from '../components/BookModal';
 import InteractiveMap from '../components/InteractiveMap';
-import { getHotelById } from '../api/hotel';
+import { getHotelById, checkHotelRoomAvailability } from '../api/hotel';
 import { getPropertyReviewsApi, createPropertyReviewApi } from '../api/reviews';
 import { useAuth } from '../context/AuthContext';
 import { logUnifiedWhatsappIntent } from '../api/reservation';
 import FloatingPriceTag from '../components/FloatingPriceTag';
 import ImageGallery from '../components/ImageGallery';
-import { checkHotelRoomAvailability } from '../api/hotel';
 import { getMaxBookableDate, isMonthBeyondMax, toLocalDateStr, toApiCheckoutDate } from '../utils/dateLimits';
 import { parseLocalDateStr, parseBookedRanges, parseApiBookedRanges, isDateBooked, rangeOverlapsBooking, buildConflictMessage, describeUnavailable } from '../utils/availability';
 import useGoBack from '../utils/useGoBack';
@@ -31,11 +30,311 @@ const getAmenityIcon = (amenity) => {
   if (name.includes('bar') || name.includes('lounge')) return Wine;
   if (name.includes('spa') || name.includes('wellness')) return Leaf;
   if (name.includes('valet') || name.includes('park')) return Car;
-  if (name.includes('room service')) return Coffee;
+  if (name.includes('room service') || name.includes('breakfast')) return Coffee;
   if (name.includes('bed') || name.includes('room') || name.includes('suite')) return Bed;
   
   return CheckCircle2; 
 };
+
+function SuiteOptionCard({
+  room,
+  fallbackImages,
+  hasBreakfast,
+  nights,
+  hasSelectedDates,
+  isSelected,
+  onSelect,
+  onOpenLightbox,
+}) {
+  const [activeImgIdx, setActiveImgIdx] = useState(0);
+
+  const hasDedicatedPhotos = Array.isArray(room.images) && room.images.length > 0;
+  const galleryImages = hasDedicatedPhotos
+    ? room.images
+    : Array.isArray(fallbackImages) && fallbackImages.length > 0
+      ? [fallbackImages[0]]
+      : [];
+
+  const safeIdx = galleryImages.length > 0 ? activeImgIdx % galleryImages.length : 0;
+  const currentImage = galleryImages[safeIdx] || '';
+  const hasMultiplePhotos = galleryImages.length > 1;
+
+  const adultsCount = room.capacity?.adults || 2;
+  const childrenCount = Number(room.capacity?.children) || 0;
+  const staySubtotal = (Number(room.pricePerNight) || 0) * nights;
+
+  const handlePrevPhoto = (e) => {
+    e.stopPropagation();
+    setActiveImgIdx((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+  };
+
+  const handleNextPhoto = (e) => {
+    e.stopPropagation();
+    setActiveImgIdx((prev) => (prev + 1) % galleryImages.length);
+  };
+
+  const handleExpandGallery = (e, targetIdx = safeIdx) => {
+    e.stopPropagation();
+    if (galleryImages.length === 0) return;
+    onOpenLightbox({
+      images: galleryImages,
+      index: targetIdx,
+      title: room.name,
+    });
+  };
+
+  return (
+    <div
+      onClick={onSelect}
+      className={`group/card flex flex-col md:flex-row bg-white rounded-2xl overflow-hidden border transition-all duration-200 cursor-pointer ${
+        isSelected
+          ? 'border-brand-primary ring-2 ring-brand-primary/20 shadow-md'
+          : 'border-gray-200 hover:border-gray-300 shadow-sm hover:shadow-md'
+      }`}
+    >
+      {/* Left: Suite Media Showcase */}
+      <div className="relative w-full md:w-[38%] lg:w-[40%] shrink-0 bg-gray-100 flex flex-col">
+        <div
+          onClick={(e) => handleExpandGallery(e, safeIdx)}
+          className="relative aspect-[16/10] md:aspect-auto md:flex-1 min-h-[210px] overflow-hidden bg-gray-200"
+        >
+          {currentImage ? (
+            <img
+              src={currentImage}
+              alt={`${room.name} view ${safeIdx + 1}`}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover/card:scale-[1.03]"
+            />
+          ) : (
+            <div className="w-full h-full flex flex-col items-center justify-center text-gray-400 p-6">
+              <Bed className="w-8 h-8 mb-2 opacity-40" />
+              <span className="text-xs font-semibold">No suite photo available</span>
+            </div>
+          )}
+
+          {/* Subtle top/bottom gradient for legibility */}
+          {currentImage && (
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-black/55 via-black/15 to-transparent" />
+          )}
+
+          {/* Top-left Photo Counter Pill */}
+          {hasMultiplePhotos && (
+            <div className="absolute top-3 left-3 bg-gray-900/75 backdrop-blur-md text-white text-[11px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5">
+              <Camera className="w-3 h-3 text-white/80" />
+              <span>
+                {safeIdx + 1} / {galleryImages.length}
+              </span>
+            </div>
+          )}
+
+          {/* Top-right Fullscreen Expand Trigger */}
+          {currentImage && (
+            <button
+              type="button"
+              onClick={(e) => handleExpandGallery(e, safeIdx)}
+              aria-label={`View ${room.name} photos`}
+              title="Expand suite gallery"
+              className="absolute top-3 right-3 bg-white/90 hover:bg-white text-gray-900 p-2 rounded-full shadow-sm transition-all opacity-90 hover:scale-105"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
+          )}
+
+          {/* Prev / Next Controls for Multi-Photo Suites */}
+          {hasMultiplePhotos && (
+            <>
+              <button
+                type="button"
+                onClick={handlePrevPhoto}
+                aria-label="Previous suite photo"
+                className="absolute left-2.5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md transition-all opacity-100 md:opacity-0 md:group-hover/card:opacity-100 active:scale-95"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <button
+                type="button"
+                onClick={handleNextPhoto}
+                aria-label="Next suite photo"
+                className="absolute right-2.5 top-1/2 -translate-y-1/2 bg-white/90 hover:bg-white text-gray-900 p-1.5 rounded-full shadow-md transition-all opacity-100 md:opacity-0 md:group-hover/card:opacity-100 active:scale-95"
+              >
+                <ChevronRight className="w-4 h-4" />
+              </button>
+            </>
+          )}
+
+          {/* Dot Indicators */}
+          {hasMultiplePhotos && (
+            <div className="absolute bottom-2.5 inset-x-0 flex justify-center gap-1.5 px-3">
+              {galleryImages.slice(0, 6).map((_, dotIdx) => (
+                <button
+                  key={dotIdx}
+                  type="button"
+                  aria-label={`View photo ${dotIdx + 1}`}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setActiveImgIdx(dotIdx);
+                  }}
+                  className={`h-1.5 rounded-full transition-all ${
+                    dotIdx === safeIdx ? 'w-4 bg-white' : 'w-1.5 bg-white/55 hover:bg-white/80'
+                  }`}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Interactive Thumbnail Strip when Suite Has Multiple Photos */}
+        {hasMultiplePhotos && (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="flex items-center gap-1.5 p-2 bg-gray-50 border-t border-gray-100 overflow-x-auto hide-scrollbar"
+          >
+            {galleryImages.slice(0, 4).map((thumbUrl, thumbIdx) => {
+              const isExtraSlot = thumbIdx === 3 && galleryImages.length > 4;
+              return (
+                <button
+                  key={thumbIdx}
+                  type="button"
+                  onClick={(e) => {
+                    if (isExtraSlot) {
+                      handleExpandGallery(e, thumbIdx);
+                    } else {
+                      setActiveImgIdx(thumbIdx);
+                    }
+                  }}
+                  className={`relative h-11 flex-1 min-w-[52px] rounded-lg overflow-hidden border transition-all ${
+                    thumbIdx === safeIdx
+                      ? 'border-brand-primary ring-1 ring-brand-primary'
+                      : 'border-transparent opacity-75 hover:opacity-100'
+                  }`}
+                >
+                  <img
+                    src={thumbUrl}
+                    alt={`${room.name} thumbnail ${thumbIdx + 1}`}
+                    className="w-full h-full object-cover"
+                  />
+                  {isExtraSlot && (
+                    <div className="absolute inset-0 bg-gray-900/70 flex items-center justify-center text-white text-[11px] font-extrabold">
+                      +{galleryImages.length - 3}
+                    </div>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        )}
+      </div>
+
+      {/* Right: Suite Details, Amenities & Pricing */}
+      <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between">
+        <div>
+          {/* Header Row */}
+          <div className="flex justify-between items-start gap-3">
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h3 className="text-lg sm:text-xl font-extrabold text-gray-900 leading-snug">
+                  {room.name}
+                </h3>
+                {isSelected && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider bg-brand-primary/10 text-brand-primary px-2.5 py-0.5 rounded-full">
+                    <Check className="w-3 h-3" /> Selected
+                  </span>
+                )}
+              </div>
+
+              {/* Capacity & Perks Metadata */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs sm:text-sm text-gray-600 font-medium mt-2">
+                <span className="inline-flex items-center">
+                  <Users className="w-4 h-4 mr-1.5 text-gray-400" />
+                  {adultsCount} {adultsCount === 1 ? 'Adult' : 'Adults'}
+                  {childrenCount > 0 && `, ${childrenCount} ${childrenCount === 1 ? 'Child' : 'Children'}`}
+                </span>
+
+                {hasBreakfast && (
+                  <span className="inline-flex items-center text-emerald-700 font-semibold">
+                    <Coffee className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+                    Breakfast Included
+                  </span>
+                )}
+
+                {room.totalInventory > 0 && room.totalInventory <= 3 && (
+                  <span className="text-xs font-bold text-amber-700 bg-amber-50 border border-amber-200/70 px-2 py-0.5 rounded-md">
+                    {room.totalInventory === 1 ? '1 suite left' : `${room.totalInventory} suites left`}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Radio Indicator */}
+            <div
+              className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 mt-1 transition-colors ${
+                isSelected ? 'border-brand-primary bg-brand-primary' : 'border-gray-300 group-hover/card:border-gray-400'
+              }`}
+            >
+              {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
+            </div>
+          </div>
+
+          {/* Optional Suite Description */}
+          {room.description && (
+            <p className="text-sm text-gray-600 leading-relaxed mt-3 line-clamp-2">
+              {room.description}
+            </p>
+          )}
+
+          {/* Suite Amenities */}
+          {room.amenities && room.amenities.length > 0 && (
+            <div className="flex flex-wrap gap-1.5 mt-4">
+              {room.amenities.map((am, i) => {
+                const AmenityIcon = getAmenityIcon(am);
+                return (
+                  <span
+                    key={i}
+                    className="inline-flex items-center gap-1.5 text-[11px] font-semibold text-gray-700 bg-gray-100 border border-gray-200/70 px-2.5 py-1 rounded-lg"
+                  >
+                    <AmenityIcon className="w-3 h-3 text-brand-primary shrink-0" />
+                    {am}
+                  </span>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {/* Footer: Nightly Price & Selection Action */}
+        <div className="mt-5 pt-4 border-t border-gray-100 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <div className="flex items-baseline gap-1">
+              <span className="text-xl sm:text-2xl font-black text-gray-900 tracking-tight">
+                ₦{Number(room.pricePerNight || 0).toLocaleString()}
+              </span>
+              <span className="text-xs sm:text-sm font-medium text-gray-500">/ night</span>
+            </div>
+            {hasSelectedDates && (
+              <p className="text-xs font-semibold text-gray-500 mt-0.5">
+                ₦{staySubtotal.toLocaleString()} total for {nights} {nights === 1 ? 'night' : 'nights'}
+              </p>
+            )}
+          </div>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect();
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
+              isSelected
+                ? 'bg-gray-900 text-white shadow-sm'
+                : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+            }`}
+          >
+            {isSelected ? 'Selected Suite' : 'Select Suite'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function HotelDetails() {
   const { id } = useParams();
@@ -57,8 +356,8 @@ export default function HotelDetails() {
   const [isWhatsappLoading, setIsWhatsappLoading] = useState(false);
   const CONCIERGE_WHATSAPP = "2347087937649";
 
-  // --- LIGHTBOX STATE ---
-  const [lightboxIndex, setLightboxIndex] = useState(null);
+  // --- UNIFIED LIGHTBOX STATE (Supports Hotel Gallery & Individual Suite Galleries) ---
+  const [lightbox, setLightbox] = useState(null); // { images: string[], index: number, title?: string } | null
 
   // --- REVIEWS STATE ---
   const [reviews, setReviews] = useState([]);
@@ -80,6 +379,24 @@ export default function HotelDetails() {
   useEffect(() => {
     setAvailabilityStatus(null);
   }, [checkInDate, checkOutDate, selectedRoom]);
+
+  // Keyboard navigation for Lightbox
+  useEffect(() => {
+    if (!lightbox) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setLightbox(null);
+      if (e.key === 'ArrowRight' && lightbox.images.length > 1) {
+        setLightbox((prev) => prev ? { ...prev, index: (prev.index + 1) % prev.images.length } : null);
+      }
+      if (e.key === 'ArrowLeft' && lightbox.images.length > 1) {
+        setLightbox((prev) =>
+          prev ? { ...prev, index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1 } : null
+        );
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [lightbox]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -189,9 +506,6 @@ export default function HotelDetails() {
 
     setIsCheckingAvailability(true);
 
-    // Local pre-check against the room's own booked ranges (the hotel's bookedDates
-    // entries are tagged with roomTypeId), so the guest gets an immediate, specific
-    // "pick from X" answer.
     const roomBookedRanges = parseBookedRanges(hotel, selectedRoom);
     const checkInObj = parseLocalDateStr(checkInDate);
     const checkOutObj = parseLocalDateStr(checkOutDate);
@@ -214,8 +528,6 @@ export default function HotelDetails() {
         return true;
       }
       setAvailabilityStatus('booked');
-      // Prefer the live, authoritative ranges the endpoint just returned for this
-      // exact stay; fall back to the room's own bookedDates if it didn't send any.
       const liveRanges = parseApiBookedRanges(response?.bookedRanges ?? response?.data?.bookedRanges);
       showToast(describeUnavailable({
         isListingPaused: hotel?.isAvailable === false,
@@ -243,12 +555,9 @@ export default function HotelDetails() {
       showToast("Please select your check-in and check-out dates.");
       return;
     }
-    // The accurate, specific reason was already shown via toast from the last
-    // availability check — don't replace it with a generic one here.
     if (availabilityStatus === 'booked') {
       return;
     }
-    // Auto-check if the guest bypassed the manual Check Availability button
     if (availabilityStatus !== 'available') {
       const isAvailable = await handleCheckAvailability();
       if (!isAvailable) return;
@@ -272,10 +581,7 @@ export default function HotelDetails() {
 
     try {
       setIsSubmittingReview(true);
-      
-      // 💡 THE FIX: Securely grab the token from localStorage if user.token is undefined
       const token = user?.token || localStorage.getItem('rentals_token');
-      
       const res = await createPropertyReviewApi(hotel._id, reviewForm, token);
       
       if (res.success) {
@@ -294,7 +600,7 @@ export default function HotelDetails() {
         setHotel(prev => ({
           ...prev,
           rating: res.updatedPropertyStats?.rating || prev.rating,
-          reviewsCount: res.updatedPropertyStats?.numReviews || prev.reviewsCount + 1
+          reviewsCount: res.updatedPropertyStats?.numReviews || (prev.reviewsCount || 0) + 1
         }));
 
         setShowReviewModal(false);
@@ -307,9 +613,19 @@ export default function HotelDetails() {
       setIsSubmittingReview(false);
     }
   };
-  // --- LIGHTBOX LOGIC ---
-  const nextImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev + 1) % hotel.images.length); };
-  const prevImage = (e) => { e.stopPropagation(); setLightboxIndex((prev) => (prev === 0 ? hotel.images.length - 1 : prev - 1)); };
+
+  // --- LIGHTBOX CONTROLS ---
+  const nextLightboxImage = (e) => {
+    e.stopPropagation();
+    setLightbox((prev) => (prev ? { ...prev, index: (prev.index + 1) % prev.images.length } : null));
+  };
+
+  const prevLightboxImage = (e) => {
+    e.stopPropagation();
+    setLightbox((prev) =>
+      prev ? { ...prev, index: prev.index === 0 ? prev.images.length - 1 : prev.index - 1 } : null
+    );
+  };
 
   // --- BESPOKE CALENDAR LOGIC ---
   const todayDateObj = new Date();
@@ -387,12 +703,11 @@ export default function HotelDetails() {
   const activeRoomData = hotel.roomTypes?.find(r => r._id === selectedRoom);
   const bookedRanges = parseBookedRanges(hotel, selectedRoom);
   const nights = calculateNights();
+  const hasSelectedDates = Boolean(checkInDate && checkOutDate);
   const basePricePerNight = activeRoomData?.pricePerNight || hotel.startingPrice || 0;
   const totalPrice = basePricePerNight * nights;
 
   const isRestrictedRole = user?.role === 'ADMIN' || user?.role === 'LANDLORD';
-
-  
 
   return (
     <main className="bg-gray-50 min-h-screen pb-32 lg:pb-12 relative animate-in fade-in duration-500">
@@ -466,53 +781,112 @@ export default function HotelDetails() {
         </div>
       )}
 
-      {/* RESTORED LIGHTBOX */}
-      {lightboxIndex !== null && (
-        <div className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex items-center justify-center animate-in fade-in duration-200">
-          <button 
-            onClick={() => setLightboxIndex(null)} 
-            className="absolute top-8 right-8 text-white/50 hover:text-white bg-white/10 rounded-full p-2 transition-colors"
+      {/* UNIFIED LIGHTBOX (HOTEL GALLERY & INDIVIDUAL SUITE GALLERIES) */}
+      {lightbox && lightbox.images?.length > 0 && (
+        <div
+          onClick={() => setLightbox(null)}
+          className="fixed inset-0 z-[999] bg-black/95 backdrop-blur-sm flex flex-col items-center justify-center p-4 animate-in fade-in duration-200"
+        >
+          {/* Top Bar */}
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="absolute top-0 inset-x-0 px-5 py-4 sm:px-8 sm:py-6 flex items-center justify-between text-white z-20"
           >
-            <X className="w-8 h-8" />
-          </button>
-          
-          {hotel.images.length > 1 && (
-            <button 
-              onClick={prevImage} 
-              className="absolute left-4 md:left-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+            <div>
+              {lightbox.title && (
+                <p className="text-sm sm:text-base font-bold tracking-tight text-white">
+                  {lightbox.title}
+                </p>
+              )}
+              <p className="text-xs font-bold tracking-widest uppercase text-white/60">
+                {lightbox.index + 1} / {lightbox.images.length}
+              </p>
+            </div>
+
+            <button
+              type="button"
+              onClick={() => setLightbox(null)}
+              aria-label="Close gallery"
+              className="text-white/75 hover:text-white bg-white/10 hover:bg-white/20 rounded-full p-2.5 transition-colors"
             >
-              <ChevronLeft className="w-10 h-10" />
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+          
+          {lightbox.images.length > 1 && (
+            <button 
+              type="button"
+              onClick={prevLightboxImage} 
+              aria-label="Previous image"
+              className="absolute left-3 sm:left-8 top-1/2 -translate-y-1/2 z-20 text-white/75 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all"
+            >
+              <ChevronLeft className="w-7 h-7 sm:w-9 sm:h-9" />
             </button>
           )}
 
           <img 
-            src={hotel.images[lightboxIndex]} 
-            alt="Expanded view" 
-            className="max-h-[90vh] max-w-[90vw] object-contain select-none"
+            onClick={(e) => e.stopPropagation()}
+            src={lightbox.images[lightbox.index]} 
+            alt={lightbox.title || 'Expanded view'} 
+            className="max-h-[74vh] max-w-[90vw] object-contain rounded-lg select-none"
           />
 
-          {hotel.images.length > 1 && (
+          {lightbox.images.length > 1 && (
             <button 
-              onClick={nextImage} 
-              className="absolute right-4 md:right-12 text-white/50 hover:text-white bg-white/5 hover:bg-white/10 p-3 rounded-full transition-all"
+              type="button"
+              onClick={nextLightboxImage} 
+              aria-label="Next image"
+              className="absolute right-3 sm:right-8 top-1/2 -translate-y-1/2 z-20 text-white/75 hover:text-white bg-white/10 hover:bg-white/20 p-3 rounded-full transition-all"
             >
-              <ChevronRight className="w-10 h-10" />
+              <ChevronRight className="w-7 h-7 sm:w-9 sm:h-9" />
             </button>
           )}
           
-          <div className="absolute bottom-8 left-0 w-full text-center text-white/50 font-bold tracking-widest text-xs">
-            {lightboxIndex + 1} / {hotel.images.length}
-          </div>
+          {/* Bottom Thumbnail Strip */}
+          {lightbox.images.length > 1 && (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="absolute bottom-5 inset-x-0 flex justify-center px-4 z-20"
+            >
+              <div className="flex items-center gap-2 overflow-x-auto max-w-full py-1.5 px-2 bg-white/10 backdrop-blur-md rounded-xl hide-scrollbar">
+                {lightbox.images.map((imgUrl, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => setLightbox((prev) => (prev ? { ...prev, index: idx } : null))}
+                    className={`w-12 h-12 sm:w-14 sm:h-14 rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                      idx === lightbox.index
+                        ? 'border-white scale-105 opacity-100'
+                        : 'border-transparent opacity-50 hover:opacity-85'
+                    }`}
+                  >
+                    <img src={imgUrl} alt={`Thumbnail ${idx + 1}`} className="w-full h-full object-cover" />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
 
-      {/* 1. SCROLLABLE IMAGE GALLERY */}
+      {/* 1. HOTEL EXTERIOR & SHARED SPACES GALLERY */}
       <div className="w-full bg-black overflow-hidden relative group">
         <button onClick={goBack} className="absolute top-6 left-6 z-30 bg-white/10 backdrop-blur-md p-3 rounded-full text-white hover:bg-brand-primary transition shadow-md">
           <ArrowLeft className="w-6 h-6" />
         </button>
 
-        <ImageGallery images={hotel.images || []} alt={hotel.title} onImageClick={setLightboxIndex} className="h-[40vh] md:h-[60vh]" />
+        <ImageGallery
+          images={hotel.images || []}
+          alt={hotel.title}
+          onImageClick={(idx) =>
+            setLightbox({
+              images: hotel.images || [],
+              index: idx,
+              title: hotel.title,
+            })
+          }
+          className="h-[40vh] md:h-[60vh]"
+        />
       </div>
 
       {/* 2. MAIN CONTENT AREA */}
@@ -523,10 +897,17 @@ export default function HotelDetails() {
           <div className="w-full lg:w-2/3 space-y-10">
             <div>
               <div className="flex justify-between items-start mb-4">
-                <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
-                  {hotel.title}
-                </h1>
-                <div className="hidden md:flex flex-col items-end ml-4">
+                <div>
+                  {hotel.hasBreakfast && (
+                    <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-3 py-1 rounded-full mb-3">
+                      <Coffee className="w-3.5 h-3.5" /> Complimentary Breakfast Included
+                    </span>
+                  )}
+                  <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight">
+                    {hotel.title}
+                  </h1>
+                </div>
+                <div className="hidden md:flex flex-col items-end ml-4 shrink-0">
                   <div className="bg-brand-primary text-white font-black text-xl px-4 py-2 rounded-xl shadow-sm">
                     {hotel.reviewsCount > 0 ? hotel.rating?.toFixed(1) : 'New'}
                   </div>
@@ -572,7 +953,7 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
-            {/* BESPOKE DATE PICKER INJECTED HERE */}
+            {/* BESPOKE DATE PICKER */}
             <div id="dates-section" className="pt-2 pb-4">
               <h2 className="text-2xl font-bold text-gray-900 mb-2">Select your dates</h2>
               <p className="text-gray-500 text-sm font-medium mb-6">
@@ -676,60 +1057,42 @@ export default function HotelDetails() {
 
             <hr className="border-gray-200" />
 
+            {/* AVAILABLE SUITES (DEDICATED PHOTOS & DETAILS PER SUITE) */}
             <div id="rooms-section">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Available Suites</h2>
+              <div className="flex flex-wrap items-baseline justify-between gap-2 mb-6">
+                <div>
+                  <h2 className="text-2xl font-bold text-gray-900">Available Suites</h2>
+                  <p className="text-sm text-gray-500 font-medium mt-1">
+                    Select a suite below to inspect its dedicated gallery and lock in your rate.
+                  </p>
+                </div>
+                {hotel.roomTypes?.length > 0 && (
+                  <span className="text-xs font-extrabold uppercase tracking-wider text-gray-500 bg-gray-100 px-3 py-1.5 rounded-full">
+                    {hotel.roomTypes.length} {hotel.roomTypes.length === 1 ? 'Suite Type' : 'Suite Types'}
+                  </span>
+                )}
+              </div>
+
               <div className="space-y-6">
-                {hotel.roomTypes?.map((room) => {
-                  const isSelected = selectedRoom === room._id;
-                  const roomImage = room.images && room.images.length > 0 ? room.images[0] : hotel.images[0];
-                  
-                  return (
-                    <div 
-                      key={room._id} 
-                      onClick={() => setSelectedRoom(room._id)}
-                      className={`flex flex-col sm:flex-row bg-white rounded-2xl overflow-hidden border transition-all cursor-pointer shadow-sm hover:shadow-md ${
-                        isSelected ? 'border-brand-primary ring-1 ring-brand-primary bg-brand-primary/5' : 'border-gray-200 hover:border-gray-300'
-                      }`}
-                    >
-                      <div className="w-full sm:w-1/3 h-48 sm:h-auto">
-                        <img src={roomImage} alt={room.name} className="w-full h-full object-cover" />
-                      </div>
-                      <div className="p-6 flex-1 flex flex-col justify-between">
-                        <div>
-                          <div className="flex justify-between items-start">
-                            <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
-                            <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 ${isSelected ? 'border-brand-primary bg-brand-primary' : 'border-gray-300'}`}>
-                              {isSelected && <div className="w-2 h-2 bg-white rounded-full" />}
-                            </div>
-                          </div>
-                          <div className="flex items-center text-gray-500 text-sm mt-2 mb-4 space-x-4">
-                            <span className="flex items-center"><Users className="w-4 h-4 mr-1" /> {room.capacity?.adults || 2} Guests</span>
-                            <span className="flex items-center"><Bed className="w-4 h-4 mr-1" /> Suite</span>
-                          </div>
-                          
-                          <div className="flex flex-wrap gap-2">
-                            {room.amenities?.map((am, i) => (
-                              <span key={i} className="text-[10px] font-bold uppercase tracking-wider text-brand-primary bg-brand-primary/10 px-2.5 py-1 rounded-md">
-                                {am}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-end">
-                          <span className="text-2xl font-black text-gray-900 tracking-tight">
-                            ₦{room.pricePerNight.toLocaleString()} <span className="text-sm font-medium text-gray-500">/ night</span>
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                {hotel.roomTypes?.map((room) => (
+                  <SuiteOptionCard
+                    key={room._id}
+                    room={room}
+                    fallbackImages={hotel.images}
+                    hasBreakfast={hotel.hasBreakfast}
+                    nights={nights}
+                    hasSelectedDates={hasSelectedDates}
+                    isSelected={selectedRoom === room._id}
+                    onSelect={() => setSelectedRoom(room._id)}
+                    onOpenLightbox={setLightbox}
+                  />
+                ))}
               </div>
             </div>
 
             <hr className="border-gray-200" />
 
-            {/* 💡 REVIEWS SECTION */}
+            {/* REVIEWS SECTION */}
             <div id="reviews-section" className="pt-4 pb-8">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-3">
@@ -843,9 +1206,6 @@ export default function HotelDetails() {
                 </div>
               </div>
 
-              {/* The "booked"/failure case is surfaced via the toast with the real,
-                  specific reason — a second, hardcoded box here would just repeat
-                  (or contradict) that message. */}
               {availabilityStatus === 'available' && (
                 <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-3 rounded-xl border border-green-200 mb-4 animate-in fade-in">
                   <CheckCircle2 className="w-4 h-4 text-green-600" />
@@ -854,25 +1214,6 @@ export default function HotelDetails() {
               )}
 
               <div className="space-y-3 relative z-0">
-                {/* COMMENTED OUT: Merged with WhatsApp CTA while suite availability is confirmed manually
-                {isLoggedIn && (
-                  <button
-                    type="button"
-                    onClick={handleCheckAvailability}
-                    disabled={isCheckingAvailability}
-                    className="w-full py-3.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-900 rounded-xl font-bold text-sm transition-all flex items-center justify-center disabled:opacity-70 active:scale-95 duration-200"
-                  >
-                    {isCheckingAvailability ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <>
-                        <CalendarSearch className="w-4 h-4 mr-2" />
-                        Check Availability
-                      </>
-                    )}
-                  </button>
-                )}
-                */}
                 {isRestrictedRole ? (
                   <div className="bg-gray-100 border border-gray-200 rounded-xl p-4 text-center mt-2">
                     <span className="text-gray-900 text-xs font-black uppercase tracking-wider">Action Restricted</span>
@@ -964,6 +1305,7 @@ export default function HotelDetails() {
           </button>
         </div>
       </div>
+
       {/* PREMIUM TOAST NOTIFICATION */}
       {toastMessage && (
         <div className="fixed bottom-28 lg:bottom-10 left-1/2 -translate-x-1/2 z-[150] animate-in slide-in-from-bottom-8 fade-in duration-300">
